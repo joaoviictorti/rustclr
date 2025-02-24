@@ -58,6 +58,8 @@ fn main() -> Result<(), ClrError> {
         // Convert Vec<String> to Vec<&str>
         let args = inputs.iter().map(|s| s.as_str()).collect::<Vec<&str>>();
         clr = clr.with_args(args);
+    } else {
+        clr = clr.with_args(vec![]);
     }
 
     // Run the .NET assembly
