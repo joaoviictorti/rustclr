@@ -1,37 +1,30 @@
-use {
-    std::{
-        ffi::c_void, 
-        ptr::{copy_nonoverlapping, null_mut}
-    },
-    windows_sys::Win32::{
-        Foundation::{
-            SysFreeString, VARIANT_FALSE, 
-            VARIANT_TRUE
+use super::WinStr;
+use crate::error::ClrError;
+use std::{
+    ffi::c_void, 
+    ptr::{copy_nonoverlapping, null_mut}
+};
+use windows_sys::Win32::{
+    Foundation::{
+        SysFreeString, VARIANT_FALSE, 
+        VARIANT_TRUE
+    }, 
+    System::{
+        Com::{SAFEARRAY, SAFEARRAYBOUND}, 
+        Ole::{
+            SafeArrayAccessData, SafeArrayCreate, 
+            SafeArrayCreateVector, SafeArrayPutElement, 
+            SafeArrayUnaccessData
         }, 
-        System::{
-            Com::{SAFEARRAY, SAFEARRAYBOUND}, 
-            Ole::{
-                SafeArrayAccessData, SafeArrayCreate, 
-                SafeArrayCreateVector, SafeArrayPutElement, 
-                SafeArrayUnaccessData
-            }, 
-            Variant::{
-                VARIANT, VT_ARRAY, VT_BSTR, VT_BOOL, 
-                VT_I4, VT_UI1, VT_VARIANT,
-            } 
-        }
+        Variant::{
+            VARIANT, VT_ARRAY, VT_BSTR, VT_BOOL, 
+            VT_I4, VT_UI1, VT_VARIANT,
+        } 
     }
 };
 
-use {
-    super::WinStr,
-    crate::error::ClrError,
-};
 
 /// Trait to convert various Rust types to Windows COM-compatible `VARIANT` types.
-/// 
-/// `VARIANT` is a COM structure used to represent different data types in a unified format,
-/// making it possible to pass arguments of different types in the COM interface.
 /// 
 /// This trait is implemented for common Rust types like `String`, `&str`, `bool`, and `i32`.
 pub trait Variant {
@@ -121,9 +114,6 @@ impl Variant for i32 {
 }
 
 /// Creates a `SAFEARRAY` from a vector of elements implementing the `Variant` trait.
-/// 
-/// This function is used to pass arrays of arguments to COM methods, where each element is 
-/// converted to its corresponding `VARIANT` type.
 ///
 /// # Arguments
 ///
@@ -182,8 +172,6 @@ pub fn create_safe_array_args<T: Variant>(args: Vec<T>) -> Result<*mut SAFEARRAY
 
 /// Creates a `SAFEARRAY` from a vector of `VARIANT` elements.
 ///
-/// This function is used to pass a vector of `VARIANT` arguments to COM methods.
-///
 /// # Arguments
 ///
 /// * `args` - A vector of `VARIANT` elements.
@@ -213,8 +201,6 @@ pub fn create_safe_args(args: Vec<VARIANT>) -> Result<*mut SAFEARRAY, ClrError> 
 }
 
 /// Creates a `SAFEARRAY` from a byte buffer for loading assemblies.
-///
-/// This function is useful for loading byte arrays into COM-compatible structures.
 ///
 /// # Arguments
 ///

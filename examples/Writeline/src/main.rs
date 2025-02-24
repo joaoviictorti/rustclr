@@ -1,6 +1,6 @@
 use rustclr::{
     RustClrEnv, ClrOutput, 
-    InvocationType, Variant,
+    Invocation, Variant,
 };
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -17,7 +17,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let args = vec!["Hello World".to_variant()];
 
     // Invoke the WriteLine method
-    console.invoke("WriteLine", None, Some(args), InvocationType::Static)?;
+    console.invoke("WriteLine", None, Some(args), Invocation::Static)?;
 
     // Restore the original output and capture redirected content
     clr_output.restore()?;

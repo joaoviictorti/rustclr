@@ -1,3 +1,4 @@
+use crate::error::ClrError;
 use windows_sys::Win32::System::{
     Diagnostics::Debug::{
         IMAGE_DIRECTORY_ENTRY_COM_DESCRIPTOR, IMAGE_FILE_DLL, 
@@ -10,8 +11,6 @@ use windows_sys::Win32::System::{
         IMAGE_NT_SIGNATURE
     }
 };
-
-use crate::error::ClrError;
 
 /// Extracts the NT header from the given buffer if it represents a valid PE file.
 /// 

@@ -1,14 +1,8 @@
-use {
-    crate::error::ClrError,
-    windows_core::{Interface, GUID},    
-    std::{ffi::c_void , sync::OnceLock},
-    windows_sys::{
-        core::HRESULT, s, 
-        Win32::System::LibraryLoader::{
-            GetProcAddress, LoadLibraryA
-        }
-    },
-};
+use crate::error::ClrError;
+use windows_core::{Interface, GUID};    
+use std::{ffi::c_void , sync::OnceLock};
+use dinvk::{LoadLibraryA, GetProcAddress};
+use windows_sys::core::HRESULT;
 
 /// CLSID (Class ID) constants for various CLR components.
 /// 
@@ -24,8 +18,6 @@ pub const CLSID_COR_RUNTIME_HOST: GUID = GUID::from_u128(0xCB2F6723_AB3A_11d2_9C
 static CLR_CREATE_INSTANCE: OnceLock<Option<CLRCreateInstanceFn>> = OnceLock::new();
 
 /// Function type for creating instances of the CLR (Common Language Runtime).
-///
-/// This function is used to instantiate a class identified by the CLSID and obtain a corresponding interface.
 ///
 /// # Arguments
 ///
@@ -44,8 +36,6 @@ type CLRCreateInstanceFn = fn(
 
 /// Attempts to load the `CLRCreateInstance` function from `mscoree.dll`.
 /// 
-/// This function is called once and caches the result for future use.
-/// 
 /// # Returns
 /// 
 /// * `Some(CLRCreateInstanceFn)` - if the function is found and loaded successfully.
@@ -53,13 +43,13 @@ type CLRCreateInstanceFn = fn(
 fn init_clr_create_instance() -> Option<CLRCreateInstanceFn> {
     unsafe {
         // Load 'mscoree.dll' and get the address of 'CLRCreateInstance'
-        let lib = LoadLibraryA(s!("mscoree.dll"));
+        let lib = LoadLibraryA("mscoree.dll");
         if !lib.is_null() {
             // Get the address of 'CLRCreateInstance'
-            return GetProcAddress(lib, s!("CLRCreateInstance")).map(|addr| {
-                // Transmute the address to the function type
-                core::mem::transmute::<*mut c_void, CLRCreateInstanceFn>(addr as *mut c_void)
-            })
+            let addr = GetProcAddress(lib, "CLRCreateInstance", None);
+            
+            // Transmute the address to the function type
+            return Some(core::mem::transmute::<*mut c_void, CLRCreateInstanceFn>(addr));
         }
 
         None
@@ -67,9 +57,6 @@ fn init_clr_create_instance() -> Option<CLRCreateInstanceFn> {
 }
 
 /// Helper function to create a CLR instance based on the provided CLSID.
-///
-/// This function dynamically loads `mscoree.dll`, retrieves the `CLRCreateInstance` function,
-/// and uses it to create an instance of the CLR.
 ///
 /// # Arguments
 ///

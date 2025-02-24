@@ -1,7 +1,8 @@
 use rustclr::{
     create_safe_args,
-    RustClrEnv, InvocationType,
-    schema::_Assembly, Variant, WinStr,
+    RustClrEnv, Invocation,
+    data::_Assembly, Variant,
+    WinStr
 };
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -30,13 +31,13 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // Invoke `CreatePipeline` method.
     let assembly_runspace = automation.resolve_type("System.Management.Automation.Runspaces.Runspace")?;
-    assembly_runspace.invoke("Open", Some(runspace), None, InvocationType::Instance)?;
+    assembly_runspace.invoke("Open", Some(runspace), None, Invocation::Instance)?;
     let create_pipeline = assembly_runspace.method_signature("System.Management.Automation.Runspaces.Pipeline CreatePipeline()")?;
     let pipe = create_pipeline.invoke(Some(runspace), None)?;
 
     // Invoke `get_Commands` method.
     let pipeline = automation.resolve_type("System.Management.Automation.Runspaces.Pipeline")?;
-    let get_command = pipeline.invoke("get_Commands", Some(pipe), None, InvocationType::Instance)?;
+    let get_command = pipeline.invoke("get_Commands", Some(pipe), None, Invocation::Instance)?;
     
     // Invoke `AddScript` method.
     let command_collection = automation.resolve_type("System.Management.Automation.Runspaces.CommandCollection")?;
@@ -46,10 +47,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     add_script.invoke(Some(get_command), Some(args))?;
 
     // Invoke `InvokeAsync` method.
-    pipeline.invoke("InvokeAsync", Some(pipe), None, InvocationType::Instance)?;
+    pipeline.invoke("InvokeAsync", Some(pipe), None, Invocation::Instance)?;
 
     // Invoke `get_Output` method.
-    let get_output = pipeline.invoke("get_Output", Some(pipe), None, InvocationType::Instance)?;
+    let get_output = pipeline.invoke("get_Output", Some(pipe), None, Invocation::Instance)?;
 
     // Invoke `Read` method.
     let pipeline_reader = automation.resolve_type("System.Management.Automation.Runspaces.PipelineReader`1[System.Management.Automation.PSObject]")?;
@@ -65,7 +66,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let str = unsafe { output.Anonymous.Anonymous.Anonymous.bstrVal.to_string() };
     println!("{}", str);
 
-    assembly_runspace.invoke("Close", Some(runspace), None, InvocationType::Instance)?;
+    assembly_runspace.invoke("Close", Some(runspace), None, Invocation::Instance)?;
 
     Ok(())
 }

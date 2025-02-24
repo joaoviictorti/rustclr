@@ -1,6 +1,6 @@
 [package]
 name = "rustclr"
-version = "0.1.1"
+version = "0.1.2"
 edition = "2021"
 description = "Host CLR and run .NET binaries using Rust"
 license = "MIT"
@@ -17,6 +17,7 @@ exclude = [
 ]
 
 [dependencies]
+dinvk = "0.1.0"
 thiserror = "1.0.65"
 windows-core = "0.58.0"
 

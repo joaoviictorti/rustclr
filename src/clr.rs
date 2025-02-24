@@ -1,22 +1,21 @@
-use crate::{ 
-    WinStr, error::ClrError, InvocationType,
-    file::validate_file, create_safe_array_args,
-    com::{
-        CLRCreateInstance, 
-        CLSID_CLRMETAHOST, 
-        CLSID_COR_RUNTIME_HOST
-    }, 
-    schema::{
-        _AppDomain, ICLRMetaHost, 
-        ICLRRuntimeInfo, ICorRuntimeHost, 
-        _Assembly 
-    }, 
+use windows_core::PCWSTR;
+use windows_sys::Win32::System::Variant::VARIANT;
+use crate::{
+    WinStr, 
+    Invocation,
+    error::ClrError, 
+    file::validate_file, 
+    create_safe_array_args,
 };
-
-use {
-    std::ptr::null_mut,
-    windows_core::PCWSTR,
-    windows_sys::Win32::System::Variant::VARIANT,
+use crate::com::{
+    CLRCreateInstance, 
+    CLSID_CLRMETAHOST, 
+    CLSID_COR_RUNTIME_HOST
+};
+use crate::data::{
+    _AppDomain, ICLRMetaHost, 
+    ICLRRuntimeInfo, ICorRuntimeHost, 
+    _Assembly 
 };
 
 /// Represents a Rust interface to the Common Language Runtime (CLR).
@@ -312,7 +311,7 @@ impl<'a> RustClr<'a> {
 
         // Prepares the parameters for the `Main` method
         let parameters = self.args.as_ref().map_or_else(
-            || Ok(null_mut()),
+            || Ok(std::ptr::null_mut()),
             |args| create_safe_array_args(args.to_vec())
         )?;
 
@@ -409,7 +408,6 @@ impl<'a> RustClr<'a> {
     /// * `Ok(())` - If the runtime starts successfully.
     /// * `Err(ClrError)` - If the runtime fails to start.
     fn start_runtime(&self, cor_runtime_host: &ICorRuntimeHost) -> Result<(), ClrError> {
-
         if cor_runtime_host.Start() != 0 {
             return Err(ClrError::RuntimeStartError);
         }
@@ -431,7 +429,7 @@ impl<'a> RustClr<'a> {
         // Creates the application domain based on the specified name or uses the default domain
         let app_domain = if let Some(domain_name) = &self.domain_name {
             let wide_domain_name = domain_name.encode_utf16().chain(Some(0)).collect::<Vec<u16>>();
-            cor_runtime_host.CreateDomain(PCWSTR(wide_domain_name.as_ptr()), null_mut())?
+            cor_runtime_host.CreateDomain(PCWSTR(wide_domain_name.as_ptr()), std::ptr::null_mut())?
         } else {
             cor_runtime_host.GetDefaultDomain()?
         };
@@ -493,9 +491,6 @@ impl<'a> ClrOutput<'a> {
 
     /// Redirects standard output and error streams to a `StringWriter`.
     ///
-    /// This function replaces the standard output and error streams with a 
-    /// `StringWriter` to capture any output produced by the .NET code.
-    ///
     /// # Returns
     ///
     /// * `Ok(())` - If the redirection is successful.
@@ -505,12 +500,12 @@ impl<'a> ClrOutput<'a> {
         let string_writer =  self.mscorlib.create_instance("System.IO.StringWriter")?;
 
         // Save the original output and error streams
-        self.out = Some(console.invoke("get_Out", None, None, InvocationType::Static)?);
-        self.error = Some(console.invoke("get_Error", None, None, InvocationType::Static)?);
+        self.out = Some(console.invoke("get_Out", None, None, Invocation::Static)?);
+        self.error = Some(console.invoke("get_Error", None, None, Invocation::Static)?);
 
         // Invokes the methods
-        console.invoke("SetOut", None, Some(vec![string_writer]), InvocationType::Static)?;
-        console.invoke("SetError", None, Some(vec![string_writer]), InvocationType::Static)?;
+        console.invoke("SetOut", None, Some(vec![string_writer]), Invocation::Static)?;
+        console.invoke("SetError", None, Some(vec![string_writer]), Invocation::Static)?;
 
         self.string_writer = Some(string_writer);
 
@@ -518,9 +513,6 @@ impl<'a> ClrOutput<'a> {
     }
 
     /// Restores the original standard output and error streams.
-    ///
-    /// This function restores the original output and error streams, undoing the 
-    /// redirection previously set up by the `redirect` method.
     ///
     /// # Returns
     ///
@@ -530,20 +522,17 @@ impl<'a> ClrOutput<'a> {
         let console =  self.mscorlib.resolve_type("System.Console")?;
 
         if let Some(out) = self.out.take() {
-            console.invoke("SetOut", None, Some(vec![out]), InvocationType::Static)?;
+            console.invoke("SetOut", None, Some(vec![out]), Invocation::Static)?;
         }
 
         if let Some(error) = self.error.take() {
-            console.invoke("SetError", None, Some(vec![error]), InvocationType::Static)?;
+            console.invoke("SetError", None, Some(vec![error]), Invocation::Static)?;
         }
 
         Ok(())
     }
 
     /// Captures the content of the `StringWriter` as a `String`.
-    ///
-    /// This function retrieves the current content of the `StringWriter` used to 
-    /// capture output, converting it to a Rust `String`.
     ///
     /// # Returns
     ///

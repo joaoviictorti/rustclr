@@ -1,23 +1,23 @@
-use {
-    std::{
-        ops::Deref,
-        ffi::c_void, 
-        ptr::null_mut, 
-        collections::HashMap
-    },
-    windows_core::{
-        IUnknown, GUID, 
-        PCWSTR, PWSTR, 
-        Interface
-    },
-    windows_sys::{
-        core::HRESULT,
-        Win32::Foundation::HANDLE
-    }
+use std::{
+    ops::Deref,
+    ffi::c_void, 
+    ptr::null_mut, 
+    collections::HashMap
 };
-
 use crate::error::ClrError;
-use super::{ICLRRuntimeInfo,IEnumUnknown};
+use super::{
+    ICLRRuntimeInfo, 
+    IEnumUnknown
+};
+use windows_core::{
+    IUnknown, GUID, 
+    PCWSTR, PWSTR, 
+    Interface
+};
+use windows_sys::{
+    core::HRESULT,
+    Win32::Foundation::HANDLE
+};
 
 /// Function pointer type for the callback invoked when a runtime is loaded.
 ///

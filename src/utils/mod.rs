@@ -63,9 +63,6 @@ impl WinStr for &str {
     /// # Returns
     ///
     /// * `*const u16` - A pointer to the UTF-16 encoded BSTR.
-    ///
-    /// The string is converted to UTF-16, null-terminated, and memory
-    /// is allocated using `SysAllocString`.
     fn to_bstr(&self) -> *const u16 {
         let utf16_str = self.encode_utf16().chain(Some(0)).collect::<Vec<u16>>();
         unsafe { SysAllocString(utf16_str.as_ptr()) }
@@ -78,9 +75,6 @@ impl WinStr for String {
     /// # Returns
     ///
     /// * `*const u16` - A pointer to the UTF-16 encoded BSTR.
-    ///
-    /// The string is converted to UTF-16, null-terminated, and memory
-    /// is allocated using `SysAllocString`.
     fn to_bstr(&self) -> *const u16 {
         let utf16_str = self.encode_utf16().chain(Some(0)).collect::<Vec<u16>>();
         unsafe { SysAllocString(utf16_str.as_ptr()) }
@@ -102,10 +96,6 @@ impl WinStr for *const u16 {
     /// # Returns
     ///
     /// * `String` - A `String` containing the UTF-16 encoded text from the BSTR.
-    ///
-    /// This method reads the length of the BSTR, creates a slice, and then
-    /// converts the UTF-16 slice into a `String`. If the BSTR length is zero,
-    /// it returns an empty `String`.
     fn to_string(&self) -> String {
         let len = unsafe { SysStringLen(*self) };
         if len == 0 {
@@ -118,7 +108,7 @@ impl WinStr for *const u16 {
 }
 
 /// Specifies the invocation type for a method, indicating if it is static or instance-based.
-pub enum InvocationType {
+pub enum Invocation {
     /// Indicates that the method to invoke is static.
     Static,
 
