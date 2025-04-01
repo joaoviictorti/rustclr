@@ -18,6 +18,8 @@
   - [Configuration with RustClrEnv and ClrOutput](#configuration-with-rustclrenv-and-clroutput)
 - [Additional Resources](#additional-resources)
 - [CLI](#cli)
+    [Example Command](#example-command)
+    [CLI Help](#cli-help)
 - [Contributing to rustclr](#contributing-to-rustclr)
 - [References](#references)
 - [License](#license)
@@ -145,6 +147,22 @@ The CLI accepts the following options:
 
 ```powershell
 clr.exe -f Rubeus.exe -i "triage" -i "/consoleoutfile:C:\Path" -r v4 -d "CustomDomain"
+```
+
+### CLI Help
+
+```
+Host CLR and run .NET binaries using Rust
+
+Usage: clr.exe [OPTIONS] --file <FILE>
+
+Options:
+  -f, --file <FILE>                        Path to the .NET assembly file
+  -i, --inputs <INPUTS>                    String arguments for the .NET program
+  -r, --runtime-version <RUNTIME_VERSION>  Specify .NET runtime version [default: v4]
+  -d, --domain <DOMAIN>                    Set custom application domain name
+  -h, --help                               Print help
+  -V, --version                            Print version
 ```
 
 ## Contributing to rustclr

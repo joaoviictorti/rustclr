@@ -8,7 +8,7 @@ use rustclr::{
 
 /// The main command-line interface struct.
 #[derive(Parser)]
-#[clap(author="joaoviictorti", about="rustclr", version="1.0")]
+#[clap(author="joaoviictorti", about="Host CLR and run .NET binaries using Rust", version="1.0")]
 pub struct Cli {
     /// Path to the .NET assembly file to be executed.
     #[arg(short, long, required = true, help = "Path to the .NET assembly file")]
