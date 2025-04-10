@@ -4,6 +4,7 @@ use std::{
     ptr::null_mut, 
     collections::HashMap
 };
+use crate::Result;
 use crate::error::ClrError;
 use super::{
     ICLRRuntimeInfo, 
@@ -63,7 +64,7 @@ impl ICLRMetaHost {
     /// * `Ok(HashMap<String, ICLRRuntimeInfo>)` - A map where keys are runtime versions (as strings) and values
     ///   are `ICLRRuntimeInfo` instances with details about each runtime.
     /// * `Err(ClrError)` - Returns a `ClrError::CastingError` if casting to `ICLRRuntimeInfo` fails.
-    pub fn runtimes(&self) -> Result<HashMap<String, ICLRRuntimeInfo>, ClrError> {
+    pub fn runtimes(&self) -> Result<HashMap<String, ICLRRuntimeInfo>> {
         let enum_unknown = self.EnumerateInstalledRuntimes()?;
         let mut fetched = 0;
         let mut rgelt: [Option<IUnknown>; 1] = [None];
@@ -103,7 +104,7 @@ impl ICLRMetaHost {
     /// * `Ok(T)` - Returns the requested runtime as the generic type `T` if successful.
     /// * `Err(ClrError)` - Returns a `ClrError::ApiError` if the runtime could not be retrieved.
     #[inline]
-    pub fn GetRuntime<T>(&self, pwzversion: PCWSTR) -> Result<T, ClrError>
+    pub fn GetRuntime<T>(&self, pwzversion: PCWSTR) -> Result<T>
     where
         T: Interface,
     {
@@ -124,7 +125,7 @@ impl ICLRMetaHost {
     ///
     /// * `Ok(IEnumUnknown)` - An enumerator containing all installed CLR runtimes.
     /// * `Err(ClrError)` - Returns a `ClrError::ApiError` if enumeration fails.
-    pub fn EnumerateInstalledRuntimes(&self) -> Result<IEnumUnknown, ClrError> {
+    pub fn EnumerateInstalledRuntimes(&self) -> Result<IEnumUnknown> {
         unsafe {
             let mut result = std::mem::zeroed();
             let hr = (Interface::vtable(self).EnumerateInstalledRuntimes)(Interface::as_raw(self), &mut result);
@@ -148,7 +149,7 @@ impl ICLRMetaHost {
     ///
     /// * `Ok(())` - On success, the version string is written to `pwzbuffer`.
     /// * `Err(ClrError)` - If the operation fails, returns a `ClrError`.
-    pub fn GetVersionFromFile(&self, pwzfilepath: PCWSTR, pwzbuffer: PWSTR, pcchbuffer: *mut u32) -> Result<(), ClrError> {
+    pub fn GetVersionFromFile(&self, pwzfilepath: PCWSTR, pwzbuffer: PWSTR, pcchbuffer: *mut u32) -> Result<()> {
         unsafe {
             let hr = (Interface::vtable(self).GetVersionFromFile)(Interface::as_raw(self), pwzfilepath, pwzbuffer, pcchbuffer);
             if hr == 0 {
@@ -169,7 +170,7 @@ impl ICLRMetaHost {
     ///
     /// * `Ok(IEnumUnknown)` - On success, returns an enumerator for loaded runtimes.
     /// * `Err(ClrError)` - If enumeration fails, returns a `ClrError`.
-    pub fn EnumerateLoadedRuntimes(&self, hndprocess: HANDLE) -> Result<IEnumUnknown, ClrError> {
+    pub fn EnumerateLoadedRuntimes(&self, hndprocess: HANDLE) -> Result<IEnumUnknown> {
         unsafe {
             let mut result = std::mem::zeroed();
             let hr = (Interface::vtable(self).EnumerateLoadedRuntimes)(Interface::as_raw(self), hndprocess, &mut result);
@@ -191,7 +192,7 @@ impl ICLRMetaHost {
     ///
     /// * `Ok(())` - On success, the callback is registered.
     /// * `Err(ClrError)` - If registration fails, returns a `ClrError`.
-    pub fn RequestRuntimeLoadedNotification(&self, pcallbackfunction: RuntimeLoadedCallbackFnPtr) -> Result<(), ClrError> {
+    pub fn RequestRuntimeLoadedNotification(&self, pcallbackfunction: RuntimeLoadedCallbackFnPtr) -> Result<()> {
         unsafe {
             let hr = (Interface::vtable(self).RequestRuntimeLoadedNotification)(Interface::as_raw(self), pcallbackfunction);
             if hr == 0 {
@@ -208,7 +209,7 @@ impl ICLRMetaHost {
     ///
     /// * `Ok(T)` - On success, returns an instance of the requested legacy binding as type `T`.
     /// * `Err(ClrError)` - If the operation fails, returns a `ClrError`.
-    pub fn QueryLegacyV2RuntimeBinding<T>(&self) -> Result<T, ClrError>
+    pub fn QueryLegacyV2RuntimeBinding<T>(&self) -> Result<T>
     where
         T: Interface,
     {
@@ -233,7 +234,7 @@ impl ICLRMetaHost {
     ///
     /// * `Ok(())` - On success, the process is terminated.
     /// * `Err(ClrError)` - If the operation fails, returns a `ClrError`.
-    pub fn ExitProcess(&self, iexitcode: i32) -> Result<(), ClrError> {
+    pub fn ExitProcess(&self, iexitcode: i32) -> Result<()> {
         unsafe {
             let hr = (Interface::vtable(self).ExitProcess)(Interface::as_raw(self), iexitcode);
             if hr == 0 {

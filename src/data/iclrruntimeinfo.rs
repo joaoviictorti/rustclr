@@ -1,4 +1,5 @@
 use crate::error::ClrError;
+use crate::Result;
 use std::{
     ffi::c_void, 
     ops::Deref
@@ -48,7 +49,7 @@ impl ICLRRuntimeInfo {
     ///
     /// * `Ok(BOOL)` - A `BOOL` indicating if the runtime is loadable.
     /// * `Err(ClrError)` - If the call fails, returns a `ClrError`.
-    pub fn IsLoadable(&self) -> Result<BOOL, ClrError> {
+    pub fn IsLoadable(&self) -> Result<BOOL> {
         unsafe {
             let mut result = 0;
             let hr = (Interface::vtable(self).IsLoadable)(Interface::as_raw(self), &mut result);
@@ -70,7 +71,7 @@ impl ICLRRuntimeInfo {
     ///
     /// * `Ok(T)` - On success, returns an instance of the requested interface type `T`.
     /// * `Err(ClrError)` - If the call fails, returns a `ClrError`.
-    pub fn GetInterface<T>(&self, rclsid: *const GUID) -> Result<T, ClrError>
+    pub fn GetInterface<T>(&self, rclsid: *const GUID) -> Result<T>
     where
         T: Interface,
     {
@@ -97,7 +98,7 @@ impl ICLRRuntimeInfo {
     ///
     /// * `Ok(())` - On success, the version string is written to `pwzbuffer`.
     /// * `Err(ClrError)` - If retrieval fails, returns a `ClrError`.
-    pub fn GetVersionString(&self, pwzbuffer: PWSTR, pcchbuffer: *mut u32) -> Result<(), ClrError> {
+    pub fn GetVersionString(&self, pwzbuffer: PWSTR, pcchbuffer: *mut u32) -> Result<()> {
         unsafe {
             let hr = (Interface::vtable(self).GetVersionString)(Interface::as_raw(self), pwzbuffer, pcchbuffer);
             if hr == 0 {
@@ -119,7 +120,7 @@ impl ICLRRuntimeInfo {
     ///
     /// * `Ok(())` - On success, the directory path is written to `pwzbuffer`.
     /// * `Err(ClrError)` - If retrieval fails, returns a `ClrError`.
-    pub fn GetRuntimeDirectory(&self, pwzbuffer: PWSTR, pcchbuffer: *mut u32) -> Result<(), ClrError> {
+    pub fn GetRuntimeDirectory(&self, pwzbuffer: PWSTR, pcchbuffer: *mut u32) -> Result<()> {
         unsafe {
             let hr = (Interface::vtable(self).GetRuntimeDirectory)(Interface::as_raw(self), pwzbuffer, pcchbuffer);
             if hr == 0 {
@@ -140,7 +141,7 @@ impl ICLRRuntimeInfo {
     ///
     /// * `Ok(BOOL)` - On success, returns a `BOOL` indicating whether the runtime is loaded.
     /// * `Err(ClrError)` - If the call fails, returns a `ClrError`.
-    pub fn IsLoaded(&self, hndProcess: HANDLE) -> Result<BOOL, ClrError> {
+    pub fn IsLoaded(&self, hndProcess: HANDLE) -> Result<BOOL> {
         unsafe {
             let mut pbLoaded = 0;
             let hr = (Interface::vtable(self).IsLoaded)(Interface::as_raw(self), hndProcess, &mut pbLoaded);
@@ -165,7 +166,7 @@ impl ICLRRuntimeInfo {
     ///
     /// * `Ok(())` - On success, the error string is written to `pwzBuffer`.
     /// * `Err(ClrError)` - If retrieval fails, returns a `ClrError`.
-    pub fn LoadErrorString(&self, iResourceID: u32, pwzBuffer: PWSTR, pcchBuffer: *mut u32, iLocaleID: i32) -> Result<(), ClrError> {
+    pub fn LoadErrorString(&self, iResourceID: u32, pwzBuffer: PWSTR, pcchBuffer: *mut u32, iLocaleID: i32) -> Result<()> {
         unsafe {
             let hr = (Interface::vtable(self).LoadErrorString)(Interface::as_raw(self), iResourceID, pwzBuffer, pcchBuffer, iLocaleID);
             if hr == 0 {
@@ -186,7 +187,7 @@ impl ICLRRuntimeInfo {
     ///
     /// * `Ok(HMODULE)` - On success, returns a handle to the loaded module.
     /// * `Err(ClrError)` - If loading fails, returns a `ClrError`.
-    pub fn LoadLibraryA(&self, pwzDllName: PCWSTR) -> Result<HMODULE, ClrError> {
+    pub fn LoadLibraryA(&self, pwzDllName: PCWSTR) -> Result<HMODULE> {
         unsafe {
             let mut result = std::mem::zeroed();
             let hr = (Interface::vtable(self).LoadLibraryA)(Interface::as_raw(self), pwzDllName, &mut result);
@@ -208,7 +209,7 @@ impl ICLRRuntimeInfo {
     ///
     /// * `Ok(*mut c_void)` - On success, returns a pointer to the procedure.
     /// * `Err(ClrError)` - If retrieval fails, returns a `ClrError`.
-    pub fn GetProcAddress(&self, pszProcName: PCSTR) -> Result<*mut c_void, ClrError> {
+    pub fn GetProcAddress(&self, pszProcName: PCSTR) -> Result<*mut c_void> {
         unsafe {
             let mut result = std::mem::zeroed();
             let hr = (Interface::vtable(self).GetProcAddress)(Interface::as_raw(self), pszProcName, &mut result);
@@ -231,7 +232,7 @@ impl ICLRRuntimeInfo {
     ///
     /// * `Ok(())` - On success.
     /// * `Err(ClrError)` - If the operation fails, returns a `ClrError`.
-    pub fn SetDefaultStartupFlags(&self, dwstartupflags: u32, pwzhostconfigfile: PCWSTR) -> Result<(), ClrError> {
+    pub fn SetDefaultStartupFlags(&self, dwstartupflags: u32, pwzhostconfigfile: PCWSTR) -> Result<()> {
         unsafe {
             let hr = (Interface::vtable(self).SetDefaultStartupFlags)(Interface::as_raw(self), dwstartupflags, pwzhostconfigfile);
             if hr == 0 {
@@ -254,7 +255,7 @@ impl ICLRRuntimeInfo {
     ///
     /// * `Ok(())` - On success, the startup flags and file path are written to the respective parameters.
     /// * `Err(ClrError)` - If retrieval fails, returns a `ClrError`.
-    pub fn GetDefaultStartupFlags(&self, pdwstartupflags: *mut u32, pwzhostconfigfile: PWSTR, pcchhostconfigfile: *mut u32) -> Result<(), ClrError> {
+    pub fn GetDefaultStartupFlags(&self, pdwstartupflags: *mut u32, pwzhostconfigfile: PWSTR, pcchhostconfigfile: *mut u32) -> Result<()> {
         unsafe {
             let hr = (Interface::vtable(self).GetDefaultStartupFlags)(Interface::as_raw(self), pdwstartupflags, core::mem::transmute(pwzhostconfigfile), pcchhostconfigfile);
             if hr == 0 {
@@ -271,7 +272,7 @@ impl ICLRRuntimeInfo {
     ///
     /// * `Ok(())` - On success.
     /// * `Err(ClrError)` - If the operation fails, returns a `ClrError`.
-    pub fn BindAsLegacyV2Runtime(&self) -> Result<(), ClrError> {
+    pub fn BindAsLegacyV2Runtime(&self) -> Result<()> {
         unsafe {
             let hr = (Interface::vtable(self).BindAsLegacyV2Runtime)(Interface::as_raw(self));
             if hr == 0 {
@@ -293,7 +294,7 @@ impl ICLRRuntimeInfo {
     ///
     /// * `Ok(())` - On success.
     /// * `Err(ClrError)` - If the operation fails, returns a `ClrError`.
-    pub fn IsStarted(&self, pbstarted: *mut BOOL, pdwstartupflags: *mut u32) -> Result<(), ClrError> {
+    pub fn IsStarted(&self, pbstarted: *mut BOOL, pdwstartupflags: *mut u32) -> Result<()> {
         unsafe {
             let hr = (Interface::vtable(self).IsStarted)(Interface::as_raw(self), pbstarted, pdwstartupflags);
             if hr == 0 {

@@ -1,4 +1,4 @@
-use crate::error::ClrError;
+use crate::{error::ClrError, Result};
 use windows_sys::Win32::System::{
     Diagnostics::Debug::{
         IMAGE_DIRECTORY_ENTRY_COM_DESCRIPTOR, IMAGE_FILE_DLL, 
@@ -99,7 +99,7 @@ pub(crate) fn is_dotnet(buffer: &[u8]) -> bool {
 /// 
 /// * `Ok(())` - If the environment is successfully prepared.
 /// * `Err(ClrError)` - If any error occurs during the preparation process.
-pub(crate) fn validate_file(buffer: &[u8]) -> Result<(), ClrError> {
+pub(crate) fn validate_file(buffer: &[u8]) -> Result<()> {
     if !is_exe(buffer) {
         return Err(ClrError::InvalidExecutable);
     }

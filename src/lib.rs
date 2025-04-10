@@ -19,3 +19,5 @@ mod utils;
 
 pub use clr::*;
 pub use utils::*;
+
+type Result<T> = core::result::Result<T, error::ClrError>;

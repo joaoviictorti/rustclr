@@ -7,7 +7,7 @@ use crate::{
     error::ClrError, 
     data::_MethodInfo,
     WinStr, Invocation,
-    create_safe_args
+    create_safe_args, Result
 };
 use windows_core::{IUnknown, Interface, GUID};
 use windows_sys::{
@@ -44,7 +44,7 @@ impl _Type {
     ///
     /// * `Ok(_MethodInfo)` - On success, returns the method's `_MethodInfo`.
     /// * `Err(ClrError)` - On failure, returns a `ClrError`.
-    pub fn method(&self, name: &str) -> Result<_MethodInfo, ClrError> {
+    pub fn method(&self, name: &str) -> Result<_MethodInfo> {
         let method_name = name.to_bstr();
         self.GetMethod_6(method_name)
     }
@@ -59,7 +59,7 @@ impl _Type {
     ///
     /// * `Ok(_MethodInfo)` - On success, returns the matching `_MethodInfo`.
     /// * `Err(ClrError)` - On failure, returns `ClrError::MethodNotFound`.
-    pub fn method_signature(&self, name: &str) -> Result<_MethodInfo, ClrError> {
+    pub fn method_signature(&self, name: &str) -> Result<_MethodInfo> {
         let methods = self.methods();
         if let Ok(methods) = methods {
             for (method_name, method_info) in methods {
@@ -91,10 +91,10 @@ impl _Type {
         instance: Option<VARIANT>, 
         args: Option<Vec<VARIANT>>, 
         invocation_type: Invocation
-    ) -> Result<VARIANT, ClrError> {
+    ) -> Result<VARIANT> {
         let flags = match invocation_type {
-            Invocation::Static => BindingFlags::Public | BindingFlags::Static | BindingFlags::InvokeMethod,
-            Invocation::Instance => BindingFlags::Public | BindingFlags::Instance | BindingFlags::InvokeMethod,
+            Invocation::Static => BindingFlags::NonPublic | BindingFlags::Public | BindingFlags::Static | BindingFlags::InvokeMethod,
+            Invocation::Instance => BindingFlags::NonPublic | BindingFlags::Public | BindingFlags::Instance | BindingFlags::InvokeMethod,
         };
 
         let method_name = name.to_bstr();
@@ -113,9 +113,9 @@ impl _Type {
     ///
     /// * `Ok(Vec<(String, _MethodInfo)>)` - On success, returns a vector of method names and `_MethodInfo`.
     /// * `Err(ClrError)` - On failure, returns a `ClrError`.
-    pub fn methods(&self) -> Result<Vec<(String, _MethodInfo)>, ClrError> {
-        let binding_flags = BindingFlags::Public | BindingFlags::Instance | 
-            BindingFlags::Static | BindingFlags::FlattenHierarchy;
+    pub fn methods(&self) -> Result<Vec<(String, _MethodInfo)>> {
+        let binding_flags = BindingFlags::Public | BindingFlags::Instance |
+            BindingFlags::Static | BindingFlags::FlattenHierarchy | BindingFlags::NonPublic;
         
         let sa_methods = self.GetMethods(binding_flags)?;
         if sa_methods.is_null() {
@@ -156,7 +156,7 @@ impl _Type {
     /// * `Ok(_Type)` - On success, returns the `_Type` wrapping the COM interface.
     /// * `Err(ClrError)` - If creation fails, returns a `ClrError`.
     #[inline(always)]
-    pub fn from_raw(raw: *mut c_void) -> Result<_Type, ClrError> {
+    pub fn from_raw(raw: *mut c_void) -> Result<_Type> {
         let iunknown = unsafe { IUnknown::from_raw(raw) };
         iunknown.cast::<_Type>().map_err(|_| ClrError::CastingError("_Type"))
     }
@@ -172,7 +172,7 @@ impl _Type {
     ///
     /// * `Ok(String)` - On success, returns the type's name as a `String`.
     /// * `Err(ClrError)` - On failure, returns a `ClrError`.
-    pub fn ToString(&self) -> Result<String, ClrError> {
+    pub fn ToString(&self) -> Result<String> {
         unsafe {
             let mut result= null::<u16>();
             let hr = (Interface::vtable(self).get_ToString)(Interface::as_raw(self), &mut result);
@@ -202,7 +202,7 @@ impl _Type {
     ///
     /// * `Ok(*mut SAFEARRAY)` - On success, returns a pointer to a `SAFEARRAY` of methods.
     /// * `Err(ClrError)` - On failure, returns a `ClrError`.
-    pub fn GetMethods(&self, bindingAttr: BindingFlags) -> Result<*mut SAFEARRAY, ClrError> {
+    pub fn GetMethods(&self, bindingAttr: BindingFlags) -> Result<*mut SAFEARRAY> {
         unsafe {
             let mut result = null_mut();
             let hr = (Interface::vtable(self).GetMethods)(Interface::as_raw(self), bindingAttr, &mut result);
@@ -224,7 +224,7 @@ impl _Type {
     ///
     /// * `Ok(_MethodInfo)` - On success, returns the `_MethodInfo` for the method.
     /// * `Err(ClrError)` - On failure, returns a `ClrError`. 
-    pub fn GetMethod_6(&self, name: BSTR) -> Result<_MethodInfo, ClrError> {
+    pub fn GetMethod_6(&self, name: BSTR) -> Result<_MethodInfo> {
         unsafe {
             let mut result = std::mem::zeroed();
             let hr = (Interface::vtable(self).GetMethod_6)(Interface::as_raw(self), name, &mut result);
@@ -251,7 +251,7 @@ impl _Type {
     ///
     /// * `Ok(VARIANT)` - On success, returns the result of the invocation as a `VARIANT`.
     /// * `Err(ClrError)` - If invocation fails, returns an appropriate `ClrError`.
-    pub fn InvokeMember_3(&self, name: BSTR, invoke_attr: BindingFlags, instance: VARIANT, args: *mut SAFEARRAY) -> Result<VARIANT, ClrError> {
+    pub fn InvokeMember_3(&self, name: BSTR, invoke_attr: BindingFlags, instance: VARIANT, args: *mut SAFEARRAY) -> Result<VARIANT> {
         unsafe {
             let mut result = std::mem::zeroed();
             let hr = (Interface::vtable(self).InvokeMember_3)(Interface::as_raw(self), name, invoke_attr, null_mut(), instance, args, &mut result);

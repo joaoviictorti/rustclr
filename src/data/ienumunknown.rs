@@ -1,4 +1,5 @@
 use crate::error::ClrError;
+use crate::Result;
 use windows_sys::core::HRESULT;
 use windows_core::{IUnknown, GUID, Interface};
 use std::{
@@ -48,7 +49,7 @@ impl IEnumUnknown {
     ///
     /// * `Ok(())` - If successful, returns an empty `Ok`.
     /// * `Err(ClrError)` - If skipping fails, returns a `ClrError`.
-    pub fn Skip(&self, celt: u32) -> Result<(), ClrError> {
+    pub fn Skip(&self, celt: u32) -> Result<()> {
         let hr = unsafe { (Interface::vtable(self).Skip)(Interface::as_raw(self), celt) };
         if hr == 0 {
             Ok(())
@@ -63,7 +64,7 @@ impl IEnumUnknown {
     ///
     /// * `Ok(())` - If successful, returns an empty `Ok`.
     /// * `Err(ClrError)` - If resetting fails, returns a `ClrError`.
-    pub fn Reset(&self) -> Result<(), ClrError> {
+    pub fn Reset(&self) -> Result<()> {
         let hr = unsafe { (Interface::vtable(self).Reset)(Interface::as_raw(self)) };
         if hr == 0 {
             Ok(())
@@ -78,7 +79,7 @@ impl IEnumUnknown {
     ///
     /// * `Ok(*mut IEnumUnknown)` - If successful, returns a pointer to the new `IEnumUnknown`.
     /// * `Err(ClrError)` - If cloning fails, returns a `ClrError`.
-    pub fn Clone(&self) -> Result<*mut IEnumUnknown, ClrError> {
+    pub fn Clone(&self) -> Result<*mut IEnumUnknown> {
         let mut result = null_mut();
         let hr = unsafe { (Interface::vtable(self).Clone)(Interface::as_raw(self), &mut result) };
         if hr == 0 {

@@ -1,5 +1,6 @@
 use super::WinStr;
 use crate::error::ClrError;
+use crate::Result;
 use std::{
     ffi::c_void, 
     ptr::{copy_nonoverlapping, null_mut}
@@ -123,7 +124,7 @@ impl Variant for i32 {
 ///
 /// * `Ok(*mut SAFEARRAY)` - The created `SAFEARRAY`.
 /// * `Err(ClrError)` - If the creation or element insertion into the `SAFEARRAY` fails.
-pub fn create_safe_array_args<T: Variant>(args: Vec<T>) -> Result<*mut SAFEARRAY, ClrError> {
+pub fn create_safe_array_args<T: Variant>(args: Vec<T>) -> Result<*mut SAFEARRAY> {
     unsafe {
         let vartype = T::var_type();
         let psa = SafeArrayCreateVector(vartype, 0, args.len() as u32);
@@ -180,7 +181,7 @@ pub fn create_safe_array_args<T: Variant>(args: Vec<T>) -> Result<*mut SAFEARRAY
 ///
 /// * `Ok(*mut SAFEARRAY)` - The created `SAFEARRAY`.
 /// * `Err(ClrError)` - If the creation or element insertion into the `SAFEARRAY` fails.
-pub fn create_safe_args(args: Vec<VARIANT>) -> Result<*mut SAFEARRAY, ClrError> {
+pub fn create_safe_args(args: Vec<VARIANT>) -> Result<*mut SAFEARRAY> {
     unsafe {       
         let arg = SafeArrayCreateVector(VT_VARIANT, 0, args.len() as u32);
         for (i, var) in args.iter().enumerate() {
@@ -210,7 +211,7 @@ pub fn create_safe_args(args: Vec<VARIANT>) -> Result<*mut SAFEARRAY, ClrError> 
 ///
 /// * `Ok(*mut SAFEARRAY)` - The created `SAFEARRAY`.
 /// * `Err(ClrError)` - If the creation or data copying into the `SAFEARRAY` fails.
-pub fn create_safe_array_buffer(data: &[u8]) -> Result<*mut SAFEARRAY, ClrError> {
+pub fn create_safe_array_buffer(data: &[u8]) -> Result<*mut SAFEARRAY> {
     let len: u32 = data.len() as u32;
     let bounds = SAFEARRAYBOUND {
         cElements: data.len() as _,

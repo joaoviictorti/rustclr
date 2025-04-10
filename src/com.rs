@@ -1,4 +1,5 @@
 use crate::error::ClrError;
+use crate::Result;
 use windows_core::{Interface, GUID};    
 use std::{ffi::c_void , sync::OnceLock};
 use dinvk::{LoadLibraryA, GetProcAddress};
@@ -66,7 +67,7 @@ fn init_clr_create_instance() -> Option<CLRCreateInstanceFn> {
 ///
 /// * `Ok(T)` - if the instance is created successfully, with `T` representing the interface requested.
 /// * `Err(ClrError)` - if the function fails to load `CLRCreateInstance` or if the instance creation fails.
-pub fn CLRCreateInstance<T>(clsid: *const GUID) -> Result<T, ClrError>
+pub fn CLRCreateInstance<T>(clsid: *const GUID) -> Result<T>
 where
     T: Interface
 {

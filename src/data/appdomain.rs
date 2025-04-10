@@ -7,11 +7,19 @@ use super::{_Type, _Assembly};
 use crate::{
     create_safe_array_buffer,
     WinStr, error::ClrError,
+    Result
 };
 use windows_core::{IUnknown, Interface, GUID};
 use windows_sys::{
     core::{BSTR, HRESULT},
-    Win32::System::Com::SAFEARRAY
+    Win32::System::{
+        Com::SAFEARRAY, 
+        Ole::{
+            SafeArrayGetElement, 
+            SafeArrayGetLBound, 
+            SafeArrayGetUBound
+        }
+    }
 };
 
 /// This struct represents the COM `_AppDomain` interface, which is part of the 
@@ -41,7 +49,7 @@ impl _AppDomain {
     ///
     /// * `Ok(_Assembly)` - If successful, returns an `_Assembly` instance.
     /// * `Err(ClrError)` - If loading fails, returns a `ClrError`.
-    pub fn load_assembly(&self, buffer: &[u8]) -> Result<_Assembly, ClrError> {
+    pub fn load_assembly(&self, buffer: &[u8]) -> Result<_Assembly> {
         let safe_array = create_safe_array_buffer(&buffer)?;
         self.Load_3(safe_array)
     }
@@ -58,7 +66,7 @@ impl _AppDomain {
     ///
     /// * `Ok(_Assembly)` - If successful, returns an `_Assembly` instance.
     /// * `Err(ClrError)` - If loading fails, returns a `ClrError`.
-    pub fn load_lib(&self, name: &str) -> Result<_Assembly, ClrError> {
+    pub fn load_lib(&self, name: &str) -> Result<_Assembly> {
         let lib_name = name.to_bstr();
         self.Load_2(lib_name)
     }
@@ -74,9 +82,65 @@ impl _AppDomain {
     /// * `Ok(_AppDomain)` - Wraps the given COM interface as `_AppDomain`.
     /// * `Err(ClrError)` - If casting fails, returns a `ClrError`.
     #[inline(always)]
-    pub fn from_raw(raw: *mut c_void) -> Result<_AppDomain, ClrError> {
+    pub fn from_raw(raw: *mut c_void) -> Result<_AppDomain> {
         let iunknown = unsafe { IUnknown::from_raw(raw as *mut c_void) };
         iunknown.cast::<_AppDomain>().map_err(|_| ClrError::CastingError("_AppDomain"))
+    }
+
+    /// Searches for an assembly by name within the current AppDomain.
+    ///
+    /// # Arguments
+    ///
+    /// * `assembly_name` – A substring to look for in the assembly's full display name.
+    ///
+    /// # Returns
+    ///
+    /// * `Ok(_Assembly)` – If an assembly is found matching the name.
+    /// * `Err(ClrError)` – If no matching assembly is found.
+    pub fn get_assembly(&self, assembly_name: &str) -> Result<_Assembly> {
+        let assemblies = self.assemblies()?;
+        for (name, assembly) in assemblies {
+            if name.contains(assembly_name) {
+                return Ok(assembly);
+            }
+        }
+
+        Err(ClrError::ErrorClr("Assembly Not Found"))
+    }
+
+    /// Retrieves all assemblies currently loaded in the AppDomain.
+    ///
+    /// # Returns
+    ///
+    /// * `Ok(Vec<(String, _Assembly)>)` – A list of loaded assemblies and their display names.
+    /// * `Err(ClrError)` – If any error occurs during retrieval or conversion.
+    pub fn assemblies(&self) -> Result<Vec<(String, _Assembly)>> {
+        let sa_assemblies = self.GetAssemblies()?;
+        if sa_assemblies.is_null() {
+            return Err(ClrError::NullPointerError("GetAssemblies"));
+        }
+
+        let mut assemblies = Vec::new();
+        let mut lbound = 0;
+        let mut ubound = 0;
+        unsafe {
+            SafeArrayGetLBound(sa_assemblies, 1, &mut lbound);
+            SafeArrayGetUBound(sa_assemblies, 1, &mut ubound);
+            
+            for i in lbound..=ubound {
+                let mut p_assembly = null_mut::<_Assembly>();
+                let hr = SafeArrayGetElement(sa_assemblies, &i, &mut p_assembly as *mut _ as *mut _);
+                if hr != 0 || p_assembly.is_null() {
+                    return Err(ClrError::ApiError("SafeArrayGetElement", hr));
+                }
+
+                let _assembly = _Assembly::from_raw(p_assembly as *mut c_void)?;
+                let assembly_name = _assembly.ToString()?;
+                assemblies.push((assembly_name, _assembly));
+            }
+        }
+
+        Ok(assemblies)
     }
 }
 
@@ -94,7 +158,7 @@ impl _AppDomain {
     /// 
     /// * `Ok(_Assembly)` - If successful, returns a `_Assembly` instance.
     /// * `Err(ClrError)` - If loading fails, returns a `ClrError`.
-    pub fn Load_3(&self, rawAssembly: *mut SAFEARRAY) -> Result<_Assembly, ClrError> {
+    pub fn Load_3(&self, rawAssembly: *mut SAFEARRAY) -> Result<_Assembly> {
         let mut result = null_mut();
         let hr = unsafe { (Interface::vtable(self).Load_3)(Interface::as_raw(self), rawAssembly, &mut result) };
         if hr == 0 {
@@ -114,7 +178,7 @@ impl _AppDomain {
     /// 
     /// * `Ok(_Assembly)` - If successful, returns a `_Assembly` instance.
     /// * `Err(ClrError)` - If loading fails, returns a `ClrError`.
-    pub fn Load_2(&self, assemblyString: BSTR) -> Result<_Assembly, ClrError> {
+    pub fn Load_2(&self, assemblyString: BSTR) -> Result<_Assembly> {
         let mut result  = null_mut();
         let hr = unsafe { (Interface::vtable(self).Load_2)(Interface::as_raw(self), assemblyString, &mut result) };
         if hr == 0 {
@@ -130,7 +194,7 @@ impl _AppDomain {
     ///
     /// * `Ok(u32)` - Returns a 32-bit unsigned integer representing the hash code.
     /// * `Err(ClrError)` - If the call fails, returns a `ClrError`.
-    pub fn GetHashCode(&self) -> Result<u32, ClrError> {
+    pub fn GetHashCode(&self) -> Result<u32> {
         let mut result = 0;
         let hr = unsafe { (Interface::vtable(self).GetHashCode)(Interface::as_raw(self), &mut result) };
         if hr == 0 {
@@ -146,13 +210,29 @@ impl _AppDomain {
     ///
     /// * `Ok(_Type)` - On success, returns the `_Type` associated with the app domain.
     /// * `Err(ClrError)` - If the type cannot be retrieved, returns a `ClrError`.
-    pub fn GetType(&self) -> Result<_Type, ClrError> {
+    pub fn GetType(&self) -> Result<_Type> {
         let mut result = null_mut();
         let hr: i32 = unsafe { (Interface::vtable(self).GetType)(Interface::as_raw(self), &mut result) };
         if hr == 0 {
             _Type::from_raw(result as *mut c_void)
         } else {
             Err(ClrError::ApiError("GetType", hr))
+        }
+    }
+
+    /// Retrieves the assemblies currently loaded into the current AppDomain.
+    ///
+    /// # Returns
+    ///
+    /// * `Ok(*mut SAFEARRAY)` – Pointer to a COM SAFEARRAY of `_Assembly` references.
+    /// * `Err(ClrError)` – If the COM call fails or returns an error HRESULT.
+    pub fn GetAssemblies(&self) -> Result<*mut SAFEARRAY> {
+        let mut result = null_mut();
+        let hr: i32 = unsafe { (Interface::vtable(self).GetAssemblies)(Interface::as_raw(self), &mut result) };
+        if hr == 0 {
+            Ok(result)
+        } else {
+            Err(ClrError::ApiError("GetAssemblies", hr))
         }
     }
 }
@@ -316,7 +396,25 @@ pub struct _AppDomainVtbl {
     get_BaseDirectory: *const c_void,
     get_RelativeSearchPath: *const c_void,
     get_ShadowCopyFiles: *const c_void,
-    GetAssemblies: *const c_void,
+
+    /// Implementation of the `GetAssemblies` method.
+    ///
+    /// This method retrieves all assemblies currently loaded into the current application domain.
+    ///
+    /// # Arguments
+    ///
+    /// * `*mut c_void` - Pointer to the COM object implementing the `_AppDomain` interface.
+    /// * `pRetVal` - Pointer to a variable that receives a `SAFEARRAY` of `_Assembly` references.
+    ///
+    /// # Returns
+    ///
+    /// * Returns an HRESULT indicating success or failure.
+    GetAssemblies: unsafe extern "system" fn(
+        *mut c_void,
+        pRetVal: *mut *mut SAFEARRAY
+    ) -> HRESULT,
+
+    /// Placeholder for the methods. Not used directly.
     AppendPrivatePath: *const c_void,
     ClearPrivatePath: *const c_void,
     SetShadowCopyPath: *const c_void,
