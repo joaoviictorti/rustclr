@@ -16,6 +16,7 @@
 - [Usage](#usage)
   - [Running a .NET Assembly with Configured Flags](#running-a-net-assembly-with-configured-flags)
   - [Configuration with RustClrEnv and ClrOutput](#configuration-with-rustclrenv-and-clroutput)
+  - [Running PowerShell Commands](#running-powershell-commands)
 - [Additional Resources](#additional-resources)
 - [CLI](#cli)
   - [Example Command](#example-command)
@@ -74,6 +75,23 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     println!("Captured output: {}", output);
 
+    Ok(())
+}
+```
+
+### Running PowerShell Commands
+
+`rustclr` also provides a high-level interface to execute `PowerShell` commands from Rust using the built-in .NET `System.Management.Automation` namespace.
+
+```rs
+use std::error::Error;
+use rustclr::PowerShell;
+
+fn main() -> Result<(), Box<dyn Error>> {
+    let pwsh = PowerShell::new()?;
+    print!("{}", pwsh.execute("Get-Process | Select-Object -First 3")?);
+    print!("{}", pwsh.execute("whoami")?);
+    
     Ok(())
 }
 ```
