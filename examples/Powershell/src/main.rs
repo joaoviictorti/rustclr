@@ -13,7 +13,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let clr = RustClrEnv::new(None)?;
 
     // Load `mscorlib` and resolve `System.Reflection.Assembly`.
-    let mscorlib = clr.app_domain.load_lib("mscorlib")?;
+    let mscorlib = clr.app_domain.get_assembly("mscorlib")?;
     let reflection_assembly = mscorlib.resolve_type("System.Reflection.Assembly")?;
 
     // Resolve and invoke `LoadWithPartialName` method.

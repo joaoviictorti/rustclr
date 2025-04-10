@@ -12,7 +12,7 @@ This project is a Rust application that uses the CLR (Common Language Runtime) t
 Running the `Get-Process` command.
 
 ```powershell
-cargo r -- "Get-Process"
+cargo r --release -- "Get-Process"
 ```
 
 ## References

@@ -6,7 +6,7 @@ use rustclr::{
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Create and initialize the CLR environment
     let clr = RustClrEnv::new(None)?;
-    let mscorlib = clr.app_domain.load_lib("mscorlib")?;
+    let mscorlib = clr.app_domain.get_assembly("mscorlib")?;
     let console = mscorlib.resolve_type("System.Console")?;
 
     // Set up output redirection
