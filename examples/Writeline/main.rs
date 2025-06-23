@@ -22,7 +22,6 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Restore the original output and capture redirected content
     clr_output.restore()?;
     let output = clr_output.capture()?;
-
     print!("{output}");
 
     Ok(())
