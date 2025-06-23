@@ -133,6 +133,7 @@ impl Variant for i64 {
 }
 
 impl Variant for windows_core::IUnknown {
+    /// Converts an `IUnknown` to an integer `VARIANT`.
     fn to_variant(&self) -> VARIANT {
         let mut variant = unsafe { core::mem::zeroed::<VARIANT>() };
         variant.Anonymous.Anonymous.vt = VT_UNKNOWN;
@@ -140,6 +141,7 @@ impl Variant for windows_core::IUnknown {
         variant
     }
 
+    /// Returns the VARIANT type ID for integers.
     fn var_type() -> u16 {
         VT_UNKNOWN
     }
