@@ -38,12 +38,6 @@ Add `rustclr` to your project by updating your `Cargo.toml`:
 cargo add rustclr
 ```
 
-Or manually add the dependency:
-```toml
-[dependencies]
-rustclr = "<version>"
-```
-
 ## Usage
 
 ### Running a .NET Assembly with Configured Flags
