@@ -1,4 +1,6 @@
-use std::{
+use alloc::{string::String, vec::Vec};
+use obfstr::obfstr as s;
+use core::{
     ffi::c_void, 
     ops::Deref, 
     ptr::{null_mut, null}
@@ -24,10 +26,8 @@ use windows_sys::{
     }
 };
 
-/// This struct represents the COM `_Assembly` interface, a .NET assembly in the CLR environment.
-/// 
-/// `_Assembly` wraps a COM interface pointer (`IUnknown`) and provides methods
-/// for managing types, instances, and metadata within the assembly.
+/// This struct represents the COM `_Assembly` interface, 
+/// a .NET assembly in the CLR environment.
 #[repr(C)]
 #[derive(Debug, Clone)]
 pub struct _Assembly(windows_core::IUnknown);
@@ -70,8 +70,8 @@ impl _Assembly {
         let entrypoint = self.get_EntryPoint()?;
         let str = entrypoint.ToString()?;
         match str.as_str() {
-            str if str.ends_with("Main()") => entrypoint.invoke(None, None),
-            str if str.ends_with("Main(System.String[])") =>  {
+            str if str.ends_with(s!("Main()")) => entrypoint.invoke(None, None),
+            str if str.ends_with(s!("Main(System.String[])")) =>  {
                 if args.is_null() {
                     return Err(ClrError::MissingArguments)
                 }
@@ -169,10 +169,8 @@ impl _Assembly {
                     len += 1;
                 }
     
-                let slice = std::slice::from_raw_parts(result, len);
-                let entrypoint = String::from_utf16_lossy(slice);
-
-                Ok(entrypoint)
+                let slice = core::slice::from_raw_parts(result, len);
+                Ok(String::from_utf16_lossy(slice))
             } else {
                 Err(ClrError::ApiError("ToString", hr))
             }
@@ -258,7 +256,7 @@ impl _Assembly {
     /// * `Ok(VARIANT)` - If successful, returns the created instance as a `VARIANT`.
     /// * `Err(ClrError)` - If creation fails, returns a `ClrError`.
     pub fn CreateInstance(&self, typeName: BSTR) -> Result<VARIANT> {
-        let mut result = unsafe { std::mem::zeroed::<VARIANT>() };
+        let mut result = unsafe { core::mem::zeroed::<VARIANT>() };
         let hr = unsafe { (Interface::vtable(self).CreateInstance)(Interface::as_raw(self), typeName, &mut result) };
         if hr == 0 {
             Ok(result)
@@ -299,10 +297,8 @@ impl _Assembly {
                     len += 1;
                 }
     
-                let slice = std::slice::from_raw_parts(result, len);
-                let entrypoint = String::from_utf16_lossy(slice);
-    
-                Ok(entrypoint)
+                let slice = core::slice::from_raw_parts(result, len);
+                Ok(String::from_utf16_lossy(slice))
             } else {
                 Err(ClrError::ApiError("get_CodeBase", hr))
             }
@@ -325,10 +321,8 @@ impl _Assembly {
                     len += 1;
                 }
     
-                let slice = std::slice::from_raw_parts(result, len);
-                let entrypoint = String::from_utf16_lossy(slice);
-    
-                Ok(entrypoint)
+                let slice = core::slice::from_raw_parts(result, len);
+                Ok(String::from_utf16_lossy(slice))
             } else {
                 Err(ClrError::ApiError("get_EscapedCodeBase", hr))
             }
@@ -391,10 +385,8 @@ impl _Assembly {
                     len += 1;
                 }
     
-                let slice = std::slice::from_raw_parts(result, len);
-                let entrypoint = String::from_utf16_lossy(slice);
-    
-                Ok(entrypoint)
+                let slice = core::slice::from_raw_parts(result, len);
+                Ok(String::from_utf16_lossy(slice))
             } else {
                 Err(ClrError::ApiError("get_FullName", hr))
             }
@@ -417,10 +409,8 @@ impl _Assembly {
                     len += 1;
                 }
     
-                let slice = std::slice::from_raw_parts(result, len);
-                let entrypoint = String::from_utf16_lossy(slice);
-    
-                Ok(entrypoint)
+                let slice = core::slice::from_raw_parts(result, len);
+                Ok(String::from_utf16_lossy(slice))
             } else {
                 Err(ClrError::ApiError("get_Location", hr))
             }
@@ -470,14 +460,14 @@ pub struct _Assembly_Vtbl {
     ///
     /// # Arguments
     /// 
-    /// * `*mut c_void` - Pointer to the COM object implementing the interface.
+    /// * `this` - Pointer to the COM object.
     /// * `pRetVal` - Pointer to a `BSTR` that receives the string result.
     ///
     /// # Returns
     /// 
     /// * Returns an HRESULT indicating success or failure.
     get_ToString: unsafe extern "system" fn(
-        *mut c_void, 
+        this: *mut c_void, 
         pRetVal: *mut BSTR
     ) -> HRESULT,
 
@@ -488,14 +478,14 @@ pub struct _Assembly_Vtbl {
     ///
     /// # Arguments
     /// 
-    /// * `*mut c_void` - Pointer to the COM object.
+    /// * `this` - Pointer to the COM object.
     /// * `pRetVal` - Pointer to a variable that receives the hash code.
     ///
     /// # Returns
     /// 
     /// * Returns an HRESULT indicating success or failure.
     GetHashCode: unsafe extern "system" fn(
-        *mut c_void,
+        this: *mut c_void,
         pRetVal: *mut u32
     ) -> HRESULT,
 
@@ -503,14 +493,14 @@ pub struct _Assembly_Vtbl {
     ///
     /// # Arguments
     ///
-    /// * `*mut c_void` - Pointer to the COM object.
+    /// * `this` - Pointer to the COM object.
     /// * `pRetVal` - Pointer to a variable that receives the `_Type` object.
     ///
     /// # Returns
     ///
     /// * Returns an HRESULT indicating success or failure.
     GetType: unsafe extern "system" fn(
-        *mut c_void,
+        this: *mut c_void,
         pRetVal: *mut *mut _Type
     ) -> HRESULT,
 
@@ -518,14 +508,14 @@ pub struct _Assembly_Vtbl {
     ///
     /// # Arguments
     ///
-    /// * `*mut c_void` - Pointer to the COM object.
+    /// * `this` - Pointer to the COM object.
     /// * `pRetVal` - Pointer to a `BSTR` that receives the codebase string.
     ///
     /// # Returns
     ///
     /// * Returns an HRESULT indicating success or failure.
     get_CodeBase: unsafe extern "system" fn(
-        *mut c_void,
+        this: *mut c_void,
         pRetVal: *mut BSTR
     ) -> HRESULT,
 
@@ -533,14 +523,14 @@ pub struct _Assembly_Vtbl {
     ///
     /// # Arguments
     ///
-    /// * `*mut c_void` - Pointer to the COM object.
+    /// * `this` - Pointer to the COM object.
     /// * `pRetVal` - Pointer to a `BSTR` that receives the escaped codebase string.
     ///
     /// # Returns
     ///
     /// * Returns an HRESULT indicating success or failure.
     get_EscapedCodeBase: unsafe extern "system" fn(
-        *mut c_void,
+        this: *mut c_void,
         pRetVal: *mut BSTR
     ) -> HRESULT,
 
@@ -548,38 +538,38 @@ pub struct _Assembly_Vtbl {
     ///
     /// # Arguments
     ///
-    /// * `*mut c_void` - A pointer to the COM object implementing `_Assembly`.
+    /// * `this` - Pointer to the COM object.
     /// * `pRetVal` - A pointer to receive the `_AssemblyName` instance.
     ///
     /// # Returns
     ///
     /// * Returns an HRESULT indicating success or failure.
     GetName: unsafe extern "system" fn(
-        *mut c_void,
-        pRetVal: *mut *mut c_void // _AssemblyName
+        this: *mut c_void,
+        pRetVal: *mut *mut c_void
     ) -> HRESULT,
 
     /// Retrieves the name of the assembly.
     ///
     /// # Arguments
     ///
-    /// * `*mut c_void` - A pointer to the COM object implementing `_Assembly`.
+    /// * `this` - Pointer to the COM object.
     /// * `pRetVal` - A pointer to receive the `_AssemblyName` instance.
     ///
     /// # Returns
     ///
     /// * Returns an HRESULT indicating success or failure.
     GetName_2: unsafe extern "system" fn(
-        *mut c_void,
+        this: *mut c_void,
         copiedName: VARIANT_BOOL,
-        pRetVal: *mut *mut c_void // _AssemblyName
+        pRetVal: *mut *mut c_void
     ) -> HRESULT,
 
     /// Retrieves the name of the assembly, with an option to specify if a copy of the name is returned.
     ///
     /// # Arguments
     ///
-    /// * `*mut c_void` - A pointer to the COM object implementing `_Assembly`.
+    /// * `this` - Pointer to the COM object..
     /// * `copiedName` - A `VARIANT_BOOL` indicating if a new copy of the name should be created.
     /// * `pRetVal` - A pointer to receive the `_AssemblyName` instance.
     ///
@@ -587,7 +577,7 @@ pub struct _Assembly_Vtbl {
     ///
     /// * Returns an HRESULT indicating success or failure.
     get_FullName: unsafe extern "system" fn(
-        *mut c_void,
+        this: *mut c_void,
         pRetVal: *mut BSTR
     ) -> HRESULT,
 
@@ -595,14 +585,14 @@ pub struct _Assembly_Vtbl {
     ///
     /// # Arguments
     ///
-    /// * `*mut c_void` - Pointer to the COM object.
+    /// * `this` - Pointer to the COM object.
     /// * `pRetVal` - Pointer to a `_MethodInfo` object that receives the entry point.
     ///
     /// # Returns
     ///
     /// * Returns an HRESULT indicating success or failure.
     get_EntryPoint: unsafe extern "system" fn(
-        *mut c_void,
+        this: *mut c_void,
         pRetVal: *mut *mut _MethodInfo
     ) -> HRESULT,
 
@@ -610,7 +600,7 @@ pub struct _Assembly_Vtbl {
     ///
     /// # Arguments
     ///
-    /// * `*mut c_void` - Pointer to the COM object.
+    /// * `this` - Pointer to the COM object.
     /// * `name` - The name of the type as a `BSTR`.
     /// * `pRetVal` - Pointer to the `_Type` object that receives the type.
     ///
@@ -618,7 +608,7 @@ pub struct _Assembly_Vtbl {
     ///
     /// * Returns an HRESULT indicating success or failure.
     GetType_2: unsafe extern "system" fn(
-        *mut c_void,
+        this: *mut c_void,
         name: BSTR,
         pRetVal: *mut *mut _Type
     ) -> HRESULT,
@@ -633,14 +623,14 @@ pub struct _Assembly_Vtbl {
     ///
     /// # Arguments
     ///
-    /// * `*mut c_void` - Pointer to the COM object.
+    /// * `this` - Pointer to the COM object.
     /// * `pRetVal` - Pointer to a `SAFEARRAY` that receives the types.
     ///
     /// # Returns
     ///
     /// * Returns an HRESULT indicating success or failure.
     GetTypes: unsafe extern "system" fn(
-        *mut c_void,
+        this: *mut c_void,
         pRetVal: *mut *mut SAFEARRAY
     ) -> HRESULT,
 
@@ -657,14 +647,14 @@ pub struct _Assembly_Vtbl {
     ///
     /// # Arguments
     ///
-    /// * `*mut c_void` - Pointer to the COM object.
+    /// * `this` - Pointer to the COM object.
     /// * `pRetVal` - Pointer to a `BSTR` that receives the location.
     ///
     /// # Returns
     ///
     /// * Returns an HRESULT indicating success or failure.
     get_Location: unsafe extern "system" fn(
-        *mut c_void,
+        this: *mut c_void,
         pRetVal: *mut BSTR
     ) -> HRESULT,
 
@@ -686,7 +676,7 @@ pub struct _Assembly_Vtbl {
     ///
     /// # Arguments
     ///
-    /// * `*mut c_void` - Pointer to the COM object.
+    /// * `this` - Pointer to the COM object.
     /// * `typeName` - The name of the type as a `BSTR`.
     /// * `pRetVal` - Pointer to a `VARIANT` that receives the created instance.
     ///
@@ -694,7 +684,7 @@ pub struct _Assembly_Vtbl {
     ///
     /// * Returns an HRESULT indicating success or failure.
     CreateInstance: unsafe extern "system" fn(
-        *mut c_void,
+        this: *mut c_void,
         typeName: BSTR,
         pRetVal: *mut VARIANT
     ) -> HRESULT,

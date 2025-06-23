@@ -1,22 +1,19 @@
 use crate::error::ClrError;
 use crate::Result;
 use windows_core::{Interface, GUID};    
-use std::{ffi::c_void , sync::OnceLock};
-use dinvk::{LoadLibraryA, GetProcAddress};
+use core::ffi::c_void;
+use dinvk::{GetProcAddress, LoadLibraryA};
 use windows_sys::core::HRESULT;
 
 /// CLSID (Class ID) constants for various CLR components.
 /// 
 /// These constants are used to identify specific COM classes within the Common Language Runtime (CLR).
 pub const CLSID_CLRMETAHOST: GUID = GUID::from_u128(0x9280188d_0e8e_4867_b30c_7fa83884e8de);
-pub const CLSID_CLRRUNTIMEHOST: GUID = GUID::from_u128(0x90f1a06e_7712_4762_86b5_7a5eba6bdb02);
 pub const CLSID_COR_RUNTIME_HOST: GUID = GUID::from_u128(0xCB2F6723_AB3A_11d2_9C40_00C04FA30A3E);
+pub const CLSID_ICLR_RUNTIME_HOST: GUID = GUID::from_u128(0x90F1A06E_7712_4762_86B5_7A5E_BA6B_DB02);
 
 /// Static cache for the `CLRCreateInstance` function.
-/// 
-/// The `OnceLock` ensures that the function is loaded from `mscoree.dll` only once
-/// and is reused for subsequent calls to create CLR instances.
-static CLR_CREATE_INSTANCE: OnceLock<Option<CLRCreateInstanceFn>> = OnceLock::new();
+static CLR_CREATE_INSTANCE: spin::Once<Option<CLRCreateInstanceType>> = spin::Once::new();
 
 /// Function type for creating instances of the CLR (Common Language Runtime).
 ///
@@ -28,29 +25,44 @@ static CLR_CREATE_INSTANCE: OnceLock<Option<CLRCreateInstanceFn>> = OnceLock::ne
 ///
 /// # Returns
 ///
-/// * Returns an `HRESULT` indicating success or failure in creating the instance.
-type CLRCreateInstanceFn = fn(
+/// * An `HRESULT` indicating success (`S_OK`) or the failure reason.
+type CLRCreateInstanceType = fn(
     clsid: *const windows_core::GUID,
     riid: *const windows_core::GUID,
     ppinterface: *mut *mut c_void,
+) -> HRESULT;
+
+/// Function type for retrieving the current thread's CLR identity.
+///
+/// # Arguments
+///
+/// * `riid` - A pointer to the interface ID (`GUID`) being queried.
+/// * `ppv` - A pointer that receives the interface pointer if successful.
+/// 
+/// # Returns
+///
+/// * An `HRESULT` indicating success (`S_OK`) or the failure reason.
+pub(crate) type CLRIdentityManagerType = fn(
+    riid: *const GUID, 
+    ppv: *mut *mut c_void
 ) -> HRESULT;
 
 /// Attempts to load the `CLRCreateInstance` function from `mscoree.dll`.
 /// 
 /// # Returns
 /// 
-/// * `Some(CLRCreateInstanceFn)` - if the function is found and loaded successfully.
+/// * `Some(CLRCreateInstanceType)` - if the function is found and loaded successfully.
 /// * `None` - if `mscoree.dll` cannot be loaded or if `CLRCreateInstance` is not found.
-fn init_clr_create_instance() -> Option<CLRCreateInstanceFn> {
+fn init_clr_create_instance() -> Option<CLRCreateInstanceType> {
     unsafe {
         // Load 'mscoree.dll' and get the address of 'CLRCreateInstance'
-        let lib = LoadLibraryA("mscoree.dll");
-        if !lib.is_null() {
+        let module = LoadLibraryA(obfstr::obfstr!("mscoree.dll"));
+        if !module.is_null() {
             // Get the address of 'CLRCreateInstance'
-            let addr = GetProcAddress(lib, "CLRCreateInstance", None);
-            
+            let addr = GetProcAddress(module, 2672818687u32, Some(dinvk::hash::murmur3));
+
             // Transmute the address to the function type
-            return Some(core::mem::transmute::<*mut c_void, CLRCreateInstanceFn>(addr));
+            return Some(core::mem::transmute::<*mut c_void, CLRCreateInstanceType>(addr));
         }
 
         None
@@ -72,7 +84,7 @@ where
     T: Interface
 {
     // Load the 'mscoree.dll' library and get the address of the 'CLRCreateInstance' function.
-    let CLRCreateInstance = CLR_CREATE_INSTANCE.get_or_init(init_clr_create_instance);
+    let CLRCreateInstance = CLR_CREATE_INSTANCE.call_once(|| init_clr_create_instance());
 
     if let Some(CLRCreateInstance) = CLRCreateInstance {
         let mut result = core::ptr::null_mut();
@@ -86,6 +98,6 @@ where
             Err(ClrError::ApiError("CLRCreateInstance", hr))
         }
     } else {
-        Err(ClrError::ErrorClr("CLRCreateInstance function not found"))
+        Err(ClrError::GenericError("CLRCreateInstance function not found"))
     }
 }

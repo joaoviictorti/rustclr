@@ -1,20 +1,43 @@
-use std::ptr::null_mut;
-use windows_core::{Interface, PCWSTR};
-use windows_sys::Win32::System::Variant::{VariantClear, VARIANT};
-use crate::Variant;
-use crate::{
-    WinStr, Result, 
-    file::validate_file, 
+use obfstr::obfstr as s;
+use core::{ffi::c_void, ptr::null_mut};
+use windows_core::{IUnknown, Interface, PCWSTR};
+use windows_sys::Win32::{    
+    UI::Shell::SHCreateMemStream,
+    System::{
+        Memory::PAGE_EXECUTE_READWRITE, 
+        Variant::{VariantClear, VARIANT}
+    }, 
+};
+use alloc::{
+    boxed::Box, vec::Vec, vec,
+    string::{String, ToString}, 
+    format
+};
+use dinvk::{
+    data::NT_SUCCESS, 
+    NtCurrentProcess, 
+    NtProtectVirtualMemory
+};
+
+use super::{
+    WinStr, uuid, Result,
     create_safe_array_args,
+    file::{validate_file, read_file}, 
     Invocation, error::ClrError, 
 };
-use crate::com::{
+use super::com::{
     CLRCreateInstance, 
     CLSID_CLRMETAHOST, 
     CLSID_COR_RUNTIME_HOST
 };
-use crate::data::{
-    ICLRMetaHost, ICLRRuntimeInfo, ICorRuntimeHost, _AppDomain, _Assembly
+use super::data::{
+    ICLRMetaHost, ICLRRuntimeInfo, 
+    ICorRuntimeHost, _AppDomain, _Assembly
+};
+use super::{
+    host_control::RustClrControl, Variant,
+    com::{CLRIdentityManagerType, CLSID_ICLR_RUNTIME_HOST}, 
+    data::{ICLRAssemblyIdentityManager, ICLRuntimeHost, IHostControl}, 
 };
 
 /// Represents a Rust interface to the Common Language Runtime (CLR).
@@ -28,6 +51,12 @@ pub struct RustClr<'a> {
 
     /// Flag to indicate if output redirection is enabled.
     redirect_output: bool,
+
+    /// Whether to patch `System.Environment.Exit` to prevent the process from terminating.
+    patch_exit: bool,
+
+    /// The identity name of the assembly being loaded or executed.
+    identity_assembly: String,
 
     /// Name of the application domain to create or use.
     domain_name: Option<String>,
@@ -56,6 +85,8 @@ impl<'a> Default for RustClr<'a> {
             buffer: &[], 
             runtime_version: None,
             redirect_output: false,
+            patch_exit: false,
+            identity_assembly: String::new(),
             domain_name: None,
             args: None, 
             app_domain: None,
@@ -65,20 +96,20 @@ impl<'a> Default for RustClr<'a> {
 }
 
 impl<'a> RustClr<'a> {
-    /// Creates a new `RustClr` instance with the specified assembly buffer.
+    /// Creates a new [`RustClr`] instance with the specified assembly buffer.
     /// 
     /// # Arguments
     /// 
-    /// * `buffer` - A reference to a byte slice representing the .NET assembly.
+    /// * `source` - A value convertible into [`ClrSource`], representing either a file path or a byte buffer.
     /// 
     /// # Returns
     /// 
-    /// * `Ok(Self)` - If the buffer is valid and the `RustClr` instance is created successfully.
+    /// * `Ok(Self)` - If the buffer is valid and the [`RustClr`] instance is created successfully.
     /// * `Err(ClrError)` - If the buffer validation fails (e.g., not a valid .NET assembly).
     /// 
-    /// # Examples
+    /// # Example
     /// 
-    /// ```ignore
+    /// ```rust,ignore
     /// use rustclr::RustClr;
     /// use std::fs;
     ///
@@ -93,19 +124,24 @@ impl<'a> RustClr<'a> {
     ///     Ok(())
     /// }
     /// ```
-    pub fn new(buffer: &'a [u8]) -> Result<Self> {
-        // Checks if it is a valid .NET and EXE file
-        validate_file(buffer)?;
+    pub fn new<T: Into<ClrSource<'a>>>(source: T) -> Result<Self> {
+        let buffer = match source.into() {
+            // Try reading the file
+            ClrSource::File(path) => {
+                Box::leak(read_file(path)?.into_boxed_slice())
+            },
 
-        Ok(Self { 
-            buffer, 
-            redirect_output: false,
-            runtime_version: None,
-            domain_name: None, 
-            args: None, 
-            app_domain: None,
-            cor_runtime_host: None
-        })
+            // Creates the .NET directly from the buffer
+            ClrSource::Buffer(buffer) => buffer,
+        };
+
+        // Checks if it is a valid .NET and EXE file
+        validate_file(&buffer)?;
+
+        // Initializes the default instance and injects the read buffer
+        let mut clr = Self::default();
+        clr.buffer = buffer;
+        Ok(clr)
     }
 
     /// Sets the .NET runtime version to use.
@@ -118,9 +154,9 @@ impl<'a> RustClr<'a> {
     /// 
     /// * Returns the modified `RustClr` instance.
     ///
-    /// # Examples
+    /// # Example
     /// 
-    /// ```ignore
+    /// ```rust,ignore
     /// use rustclr::{RustClr, RuntimeVersion};
     /// use std::fs;
     ///
@@ -151,9 +187,9 @@ impl<'a> RustClr<'a> {
     /// 
     /// * Returns the modified `RustClr` instance.
     /// 
-    /// # Examples
+    /// # Example
     /// 
-    /// ```ignore
+    /// ```rust,ignore
     /// use rustclr::RustClr;
     /// use std::fs;
     ///
@@ -185,7 +221,7 @@ impl<'a> RustClr<'a> {
     /// 
     /// # Examples
     /// 
-    /// ```ignore
+    /// ```rust,ignore
     /// use rustclr::RustClr;
     /// use std::fs;
     ///
@@ -215,9 +251,9 @@ impl<'a> RustClr<'a> {
     ///
     /// * The modified `RustClr` instance with the updated output redirection setting.
     /// 
-    /// # Examples
+    /// # Example
     ///
-    /// ```rust
+    /// ```rust,ignore
     /// use rustclr::RustClr;
     /// use std::fs;
     ///
@@ -226,14 +262,42 @@ impl<'a> RustClr<'a> {
     ///
     ///     // Enable output redirection to capture console output
     ///     let clr = RustClr::new(&buffer)?
-    ///         .with_output_redirection(true);
+    ///         .with_output_redirection();
     ///
     ///     println!("Output redirection enabled.");
     ///     Ok(())
     /// }
     /// ```
-    pub fn with_output_redirection(mut self, redirect: bool) -> Self {
-        self.redirect_output = redirect;
+    pub fn with_output_redirection(mut self) -> Self {
+        self.redirect_output = true;
+        self
+    }
+
+    /// Enables patching of the `System.Environment.Exit` method in `mscorlib`.
+    ///
+    /// # Returns
+    ///
+    /// * The modified `RustClr` instance with the patch setting enabled.
+    ///
+    /// # Example
+    ///
+    /// ```rust,ignore
+    /// use rustclr::RustClr;
+    /// use std::fs;
+    ///
+    /// fn main() -> Result<(), Box<dyn std::error::Error>> {
+    ///     let buffer = fs::read("examples/sample.exe")?;
+    ///
+    ///     // Enable patching of Environment.Exit
+    ///     let clr = RustClr::new(&buffer)?
+    ///         .with_patch_exit();
+    ///
+    ///     println!("Environment.Exit will be patched to prevent termination.");
+    ///     Ok(())
+    /// }
+    /// ```
+    pub fn with_patch_exit(mut self) -> Self {
+        self.patch_exit = true;
         self
     }
 
@@ -250,21 +314,40 @@ impl<'a> RustClr<'a> {
         // Gets information about the specified (or default) runtime version
         let runtime_info = self.get_runtime_info(&meta_host)?;
 
-        // Creates the runtime host
-        let cor_runtime_host = self.get_runtime_host(&runtime_info)?;
+        // Get ICLRAssemblyIdentityManager via GetProcAddress
+        let addr = runtime_info.GetProcAddress(s!("GetCLRIdentityManager"))?;
+        let GetCLRIdentityManager = unsafe { core::mem::transmute::<*mut c_void, CLRIdentityManagerType>(addr) };        
+        let mut ptr = null_mut();
+        GetCLRIdentityManager(&ICLRAssemblyIdentityManager::IID, &mut ptr);
+
+        // Create a stream for the in-memory assembly
+        let iclr_assembly = ICLRAssemblyIdentityManager::from_raw(ptr)?;
+        let stream = unsafe { SHCreateMemStream(self.buffer.as_ptr(), self.buffer.len() as u32) };
+
+        // Get the identity string from the stream
+        self.identity_assembly = iclr_assembly.get_identity_stream(stream, 0)?;
+
+        // Creates the `ICLRuntimeHost`
+        let iclr_runtime_host = self.get_clr_runtime_host(&runtime_info)?;
+
+        // Create and register IHostControl with custom assembly and identity
+        let host_control: IHostControl = RustClrControl::new(self.buffer, &self.identity_assembly).into();
+        iclr_runtime_host.SetHostControl(&host_control)?;
 
         // Checks if the runtime is started
         if runtime_info.IsLoadable().is_ok() && !runtime_info.is_started() {
             // Starts the CLR runtime
-            self.start_runtime(&cor_runtime_host)?;
+            self.start_runtime(&iclr_runtime_host)?;
         }
+        
+        // Creates the `ICorRuntimeHost`
+        let cor_runtime_host = self.get_icor_runtime_host(&runtime_info)?;
 
         // Initializes the specified application domain or the default
         self.init_app_domain(&cor_runtime_host)?;
 
         // Saves the runtime host for future use
-        self.cor_runtime_host = Some(cor_runtime_host);
-
+        self.cor_runtime_host = Some(self.get_icor_runtime_host(&runtime_info)?);
         Ok(())
     }
 
@@ -277,7 +360,7 @@ impl<'a> RustClr<'a> {
     /// 
     /// # Examples
     /// 
-    /// ```ignore
+    /// ```rust,ignore
     /// use rustclr::{RustClr, RuntimeVersion};
     /// use std::fs;
     ///
@@ -306,7 +389,7 @@ impl<'a> RustClr<'a> {
         let domain = self.get_app_domain()?;
 
         // Loads the .NET assembly specified by the buffer
-        let assembly = domain.load_assembly(self.buffer)?;
+        let assembly = domain.load_name(&self.identity_assembly)?;
 
         // Prepares the parameters for the `Main` method
         let parameters = self.args.as_ref().map_or_else(
@@ -314,13 +397,16 @@ impl<'a> RustClr<'a> {
             |args| create_safe_array_args(args.to_vec())
         )?;
 
+        // Loads the mscorlib library
+        let mscorlib = domain.get_assembly(s!("mscorlib"))?;
+
+        // If the exit patch is enabled, perform the patch in System.Environment.Exit
+        if self.patch_exit { self.patch_exit(&mscorlib)?; }
+
         // Redirects output if enabled
         let output = if self.redirect_output {
-            // Loads the mscorlib library for output redirection
-            let mscorlib = domain.get_assembly("mscorlib")?;
-            let mut output_manager = ClrOutput::new(&mscorlib);
-            
             // Redirecting output
+            let mut output_manager = ClrOutput::new(&mscorlib);
             output_manager.redirect()?;
 
             // Invokes the `Main` method of the assembly
@@ -343,6 +429,61 @@ impl<'a> RustClr<'a> {
         Ok(output)
     }
 
+    /// Patches the `System.Environment.Exit` method in `mscorlib` to avoid process termination.
+    /// 
+    /// # Arguments
+    ///
+    /// * `mscorlib` - The `_Assembly` object representing the loaded `mscorlib.dll`.
+    ///
+    /// # Returns
+    ///
+    /// * `Ok(())` - If the patch was applied successfully.
+    /// * `Err(ClrError)` - If any COM error or memory protection error occurs during the process.
+    fn patch_exit(&self, mscorlib: &_Assembly) -> Result<()> {
+        // Resolve System.Environment type and the Exit method
+        let env = mscorlib.resolve_type(s!("System.Environment"))?;
+        let exit = env.method(s!("Exit"))?;
+
+        // Resolve System.Reflection.MethodInfo.MethodHandle property
+        let method_info = mscorlib.resolve_type(s!("System.Reflection.MethodInfo"))?;
+        let method_handle = method_info.property(s!("MethodHandle"))?;
+
+        // Convert the Exit method into a COM IUnknown pointer to pass into MethodHandle
+        let instance = exit
+            .cast::<IUnknown>()
+            .map_err(|_| ClrError::GenericError("Failed to cast to IUnknown"))?;
+
+        // Call MethodHandle.get_Value(instance) to retrieve the RuntimeMethodHandle
+        let method_handle_exit = method_handle.value(Some(instance.to_variant()), None)?;
+
+        // Resolve System.RuntimeMethodHandle.GetFunctionPointer
+        let runtime_method = mscorlib.resolve_type(s!("System.RuntimeMethodHandle"))?;
+        let get_function_pointer = runtime_method.method(s!("GetFunctionPointer"))?;
+
+        // Invoke GetFunctionPointer(handle) to get the native address of Environment.Exit
+        let ptr = get_function_pointer.invoke(Some(method_handle_exit), None)?;
+
+        // Extract pointer from VARIANT
+        let mut addr_exit = unsafe { ptr.Anonymous.Anonymous.Anonymous.byref };
+        let mut old = 0;
+        let mut size = 1;
+        
+        // Change memory protection to RWX for patching
+        if !NT_SUCCESS(NtProtectVirtualMemory(NtCurrentProcess(), &mut addr_exit, &mut size, PAGE_EXECUTE_READWRITE, &mut old)) {
+            return Err(ClrError::GenericError("Failed to change memory protection to RWX"));
+        }
+
+        // Overwrite first byte with RET (0xC3) to effectively no-op the function
+        unsafe { *(ptr.Anonymous.Anonymous.Anonymous.byref as *mut u8) = 0xC3 };
+
+        // Restore original protection
+        if !NT_SUCCESS(NtProtectVirtualMemory(NtCurrentProcess(), &mut addr_exit, &mut size, old, &mut old)) {
+            return Err(ClrError::GenericError("Failed to restore memory protection"));
+        }
+        
+        Ok(())
+    }
+    
     /// Retrieves the current application domain.
     /// 
     /// # Returns
@@ -378,7 +519,6 @@ impl<'a> RustClr<'a> {
         let runtime_version = self.runtime_version.unwrap_or(RuntimeVersion::V4);
         let version_wide = runtime_version.to_vec();
         let version = PCWSTR(version_wide.as_ptr());
-
         meta_host.GetRuntime::<ICLRRuntimeInfo>(version)
             .map_err(|e| ClrError::RuntimeInfoError(format!("{e}")))
     }
@@ -393,8 +533,23 @@ impl<'a> RustClr<'a> {
     /// 
     /// * `Ok(ICorRuntimeHost)` - If the interface is obtained successfully.
     /// * `Err(ClrError)` - If the retrieval fails.
-    fn get_runtime_host(&self, runtime_info: &ICLRRuntimeInfo) -> Result<ICorRuntimeHost> {
+    fn get_icor_runtime_host(&self, runtime_info: &ICLRRuntimeInfo) -> Result<ICorRuntimeHost> {
         runtime_info.GetInterface::<ICorRuntimeHost>(&CLSID_COR_RUNTIME_HOST)
+            .map_err(|e| ClrError::RuntimeHostError(format!("{e}")))
+    }
+
+    /// Gets the runtime host interface from the provided runtime information.
+    /// 
+    /// # Arguments
+    /// 
+    /// * `runtime_info` - Reference to the `ICLRRuntimeInfo` instance.
+    /// 
+    /// # Returns
+    /// 
+    /// * `Ok(ICorRuntimeHost)` - If the interface is obtained successfully.
+    /// * `Err(ClrError)` - If the retrieval fails.
+    fn get_clr_runtime_host(&self, runtime_info: &ICLRRuntimeInfo) -> Result<ICLRuntimeHost> {
+        runtime_info.GetInterface::<ICLRuntimeHost>(&CLSID_ICLR_RUNTIME_HOST)
             .map_err(|e| ClrError::RuntimeHostError(format!("{e}")))
     }
 
@@ -402,14 +557,14 @@ impl<'a> RustClr<'a> {
     /// 
     /// # Arguments
     /// 
-    /// * `cor_runtime_host` - Reference to the `ICorRuntimeHost` instance.
+    /// * `iclr_runtime_host` - Reference to the `ICorRuntimeHost` instance.
     /// 
     /// # Returns
     /// 
     /// * `Ok(())` - If the runtime starts successfully.
     /// * `Err(ClrError)` - If the runtime fails to start.
-    fn start_runtime(&self, cor_runtime_host: &ICorRuntimeHost) -> Result<()> {
-        if cor_runtime_host.Start() != 0 {
+    fn start_runtime(&self, iclr_runtime_host: &ICLRuntimeHost) -> Result<()> {
+        if iclr_runtime_host.Start() != 0 {
             return Err(ClrError::RuntimeStartError);
         }
 
@@ -432,7 +587,7 @@ impl<'a> RustClr<'a> {
             let wide_domain_name = domain_name.encode_utf16().chain(Some(0)).collect::<Vec<u16>>();
             cor_runtime_host.CreateDomain(PCWSTR(wide_domain_name.as_ptr()), null_mut())?
         } else {
-            let uuid = uuid::Uuid::new_v4()
+            let uuid = uuid()
                 .to_string()
                 .encode_utf16()
                 .chain(Some(0))
@@ -443,7 +598,6 @@ impl<'a> RustClr<'a> {
 
         // Saves the created application domain
         self.app_domain = Some(app_domain);
-
         Ok(())
     }
 
@@ -518,16 +672,15 @@ impl<'a> ClrOutput<'a> {
     /// * `Ok(())` - If the redirection is successful.
     /// * `Err(ClrError)` - If an error occurs while attempting to redirect the streams.
     pub fn redirect(&mut self) -> Result<()> {
-        let console = self.mscorlib.resolve_type("System.Console")?;
-        let string_writer = self.mscorlib.create_instance("System.IO.StringWriter")?;
+        let console = self.mscorlib.resolve_type(s!("System.Console"))?;
+        let string_writer = self.mscorlib.create_instance(s!("System.IO.StringWriter"))?;
 
         // Invokes the methods
-        console.invoke("SetOut", None, Some(vec![string_writer]), Invocation::Static)?;
-        console.invoke("SetError", None, Some(vec![string_writer]), Invocation::Static)?;
+        console.invoke(s!("SetOut"), None, Some(vec![string_writer]), Invocation::Static)?;
+        console.invoke(s!("SetError"), None, Some(vec![string_writer]), Invocation::Static)?;
         
         // Saves the StringWriter instance to retrieve the output later
         self.string_writer = Some(string_writer);
-
         Ok(())
     }
 
@@ -538,8 +691,8 @@ impl<'a> ClrOutput<'a> {
     /// * `Ok(())` - If the restoration is successful.
     /// * `Err(ClrError)` - If an error occurs while restoring the streams.
     pub fn restore(&mut self) -> Result<()> {
-        let console = self.mscorlib.resolve_type("System.Console")?;
-        console.method_signature("Void InitializeStdOutError(Boolean)")?
+        let console = self.mscorlib.resolve_type(s!("System.Console"))?;
+        console.method_signature(s!("Void InitializeStdOutError(Boolean)"))?
             .invoke(None, Some(crate::create_safe_args(vec![true.to_variant()])?))?;
 
         Ok(())
@@ -553,11 +706,11 @@ impl<'a> ClrOutput<'a> {
     /// * `Err(ClrError)` - If an error occurs while capturing the output.
     pub fn capture(&self) -> Result<String> {
         // Ensure that the StringWriter instance is available
-        let mut instance = self.string_writer.ok_or(ClrError::ErrorClr("No StringWriter instance found"))?;
+        let mut instance = self.string_writer.ok_or(ClrError::GenericError("No StringWriter instance found"))?;
         
         // Resolve the 'ToString' method on the StringWriter type
-        let string_writer = self.mscorlib.resolve_type("System.IO.StringWriter")?;
-        let to_string = string_writer.method("ToString")?;
+        let string_writer = self.mscorlib.resolve_type(s!("System.IO.StringWriter"))?;
+        let to_string = string_writer.method(s!("ToString"))?;
         
         // Invoke 'ToString' on the StringWriter instance
         let result = to_string.invoke(Some(instance), None)?;
@@ -638,7 +791,7 @@ impl RustClrEnv {
         }
 
         // Initialize AppDomain
-        let uuid = uuid::Uuid::new_v4()
+        let uuid = uuid()
             .to_string()
             .encode_utf16()
             .chain(Some(0))
@@ -666,7 +819,7 @@ impl Drop for RustClrEnv {
                         .map(|i| i.as_raw().cast())
                         .unwrap_or(null_mut()))
         {
-            eprintln!("Failed to unload AppDomain: {:?}", e);
+            dinvk::println!("Failed to unload AppDomain: {:?}", e);
         }
 
         // Attempt to stop the CLR runtime
@@ -708,98 +861,72 @@ impl RuntimeVersion {
     }
 }
 
-/// Provides a persistent interface for executing PowerShell commands
-/// from a .NET runtime hosted inside a Rust application.
-pub struct PowerShell {
-    /// The loaded .NET automation assembly (`System.Management.Automation`),
-    /// used to resolve types like `Runspace`, `Pipeline`, `PSObject`, etc.
-    automation: _Assembly,
+/// Represents the COFF data source, which can be a file or a memory buffer.
+#[derive(Debug, Clone)]
+pub enum ClrSource<'a> {
+    /// COFF file indicated by a string representing the file path.
+    File(&'a str),
 
-    /// CLR environment used to host the .NET runtime.
-    /// This is kept alive to ensure assemblies and types remain valid.
-    _clr: RustClrEnv,
+    /// Memory buffer containing COFF data.
+    Buffer(&'a [u8]),
 }
 
-impl PowerShell {
-    /// Creates a new PowerShell session by initializing the .NET CLR
-    /// and loading the `System.Management.Automation` assembly.
-    ///
-    /// # Returns
-    ///
-    /// A new `PowerShell` instance ready to execute commands.
-    pub fn new() -> Result<Self> {
-        // Initialize .NET runtime (v4.0).
-        let clr = RustClrEnv::new(None)?;
-
-        // Load `mscorlib` and resolve `System.Reflection.Assembly`.
-        let mscorlib = clr.app_domain.get_assembly("mscorlib")?;
-        let reflection_assembly = mscorlib.resolve_type("System.Reflection.Assembly")?;
-
-        // Resolve and invoke `LoadWithPartialName` method.
-        let load_partial_name = reflection_assembly.method_signature("System.Reflection.Assembly LoadWithPartialName(System.String)")?;
-        let param = crate::create_safe_args(vec!["System.Management.Automation".to_variant()])?;
-        let result = load_partial_name.invoke(None, Some(param))?;
-
-        // Convert result to `_Assembly`.
-        let automation = _Assembly::from_raw(unsafe { result.Anonymous.Anonymous.Anonymous.byref })?;
-
-        Ok(Self {
-            automation,
-            _clr: clr,
-        })
-    }
-    /// Executes a PowerShell command and returns its output as a string.
-    ///
-    /// This method creates a new temporary `Runspace` and `Pipeline` for
-    /// each invocation. The result is captured via `PSObject.ToString()`.
+impl<'a> From<&'a str> for ClrSource<'a> {
+    /// Converts a file path (`&'a str`) to a COFF source (`ClrSource::File`).
     ///
     /// # Arguments
     ///
-    /// * `command` - A PowerShell command to be executed.
+    /// * `file` - Path of the COFF file.
     ///
     /// # Returns
     ///
-    /// * Returns the textual output of the PowerShell command.
-    pub fn execute(&self, command: &str) -> Result<String> {
-        // Invoke `CreateRunspace` method.
-        let runspace_factory = self.automation.resolve_type("System.Management.Automation.Runspaces.RunspaceFactory")?;
-        let create_runspace = runspace_factory.method_signature("System.Management.Automation.Runspaces.Runspace CreateRunspace()")?;
-        let runspace = create_runspace.invoke(None, None)?;
+    /// * The input string will be treated as the path of a COFF file.
+    fn from(file: &'a str) -> Self {
+        ClrSource::File(file)
+    }
+}
 
-        // Invoke `CreatePipeline` method.
-        let assembly_runspace = self.automation.resolve_type("System.Management.Automation.Runspaces.Runspace")?;
-        assembly_runspace.invoke("Open", Some(runspace), None, Invocation::Instance)?;
-        let create_pipeline = assembly_runspace.method_signature("System.Management.Automation.Runspaces.Pipeline CreatePipeline()")?;
-        let pipe = create_pipeline.invoke(Some(runspace), None)?;
+impl<'a, const N: usize> From<&'a [u8; N]> for ClrSource<'a> {
+    /// Converts a fixed-size byte array (`&[u8; N]`) to a COFF source (`ClrSource::Buffer`).
+    ///
+    /// # Arguments
+    ///
+    /// * `buffer` - A fixed-size byte array representing the COFF file data.
+    ///
+    /// # Returns
+    ///
+    /// * The input byte array will be treated as a COFF buffer in memory.
+    fn from(buffer: &'a [u8; N]) -> Self {
+        ClrSource::Buffer(buffer)
+    }
+}
 
-        // Invoke `get_Commands` method.
-        let pipeline = self.automation.resolve_type("System.Management.Automation.Runspaces.Pipeline")?;
-        let get_command = pipeline.invoke("get_Commands", Some(pipe), None, Invocation::Instance)?;
+impl<'a> From<&'a [u8]> for ClrSource<'a> {
+    /// Converts a byte slice (`&[u8]`) to a COFF source (`ClrSource::Buffer`).
+    ///
+    /// # Arguments
+    ///
+    /// * `buffer` - A byte slice representing the COFF file data.
+    ///
+    /// # Returns
+    ///
+    /// * The input byte slice will be treated as a COFF buffer in memory.
+    fn from(buffer: &'a [u8]) -> Self {
+        ClrSource::Buffer(buffer)
+    }
+}
 
-        // Invoke `AddScript` method.
-        let command_collection = self.automation.resolve_type("System.Management.Automation.Runspaces.CommandCollection")?;
-        let cmd= vec![format!("{} | Out-String", command).to_variant()];
-        let args = crate::create_safe_args(cmd)?;
-        let add_script = command_collection.method_signature("Void AddScript(System.String)")?;
-        add_script.invoke(Some(get_command), Some(args))?;
-
-        // Invoke `InvokeAsync` method.
-        pipeline.invoke("InvokeAsync", Some(pipe), None, Invocation::Instance)?;
-
-        // Invoke `get_Output` method.
-        let get_output = pipeline.invoke("get_Output", Some(pipe), None, Invocation::Instance)?;
-
-        // Invoke `Read` method.
-        let pipeline_reader = self.automation.resolve_type("System.Management.Automation.Runspaces.PipelineReader`1[System.Management.Automation.PSObject]")?;
-        let read = pipeline_reader.method_signature("System.Management.Automation.PSObject Read()")?;
-        let ps_object_instance = read.invoke(Some(get_output), None)?;
-
-        // Invoke `ToString` method.
-        let ps_object = self.automation.resolve_type("System.Management.Automation.PSObject")?;
-        let to_string = ps_object.method_signature("System.String ToString()")?;
-        let output = to_string.invoke(Some(ps_object_instance), None)?;
-
-        assembly_runspace.invoke("Close", Some(runspace), None, Invocation::Instance)?;
-        Ok(unsafe { output.Anonymous.Anonymous.Anonymous.bstrVal.to_string() })
+impl<'a> From<&'a Vec<u8>> for ClrSource<'a> {
+    /// Converts a byte slice (`&Vec<u8>`) to a COFF source (`ClrSource::Buffer`).
+    ///
+    /// # Arguments
+    ///
+    /// * `buffer` - A byte slice representing the COFF file data.
+    ///
+    /// # Returns
+    ///
+    /// * The input byte slice will be treated as a COFF buffer in memory.
+    fn from(buffer: &'a Vec<u8>) -> Self {
+        ClrSource::Buffer(buffer.as_slice())
     }
 }

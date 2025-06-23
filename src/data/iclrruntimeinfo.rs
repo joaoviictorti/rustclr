@@ -1,9 +1,10 @@
 use crate::error::ClrError;
 use crate::Result;
-use std::{
+use core::{
     ffi::c_void, 
     ops::Deref
 };
+use alloc::ffi::CString;
 use windows_core::{
     Interface, GUID, 
     PCSTR, PCWSTR, 
@@ -14,9 +15,8 @@ use windows_sys::{
     Win32::Foundation::{BOOL, HANDLE, HMODULE}
 };
 
-/// Represents the COM `ICLRRuntimeInfo` interface, which provides 
-/// information and functionalities for managing .NET runtime instances 
-/// within the CLR environment.
+/// This struct represents the COM `ICLRRuntimeInfo` interface, 
+/// a .NET assembly in the CLR environment.
 #[repr(C)]
 #[derive(Clone, Debug)]
 pub struct ICLRRuntimeInfo(windows_core::IUnknown);
@@ -189,7 +189,7 @@ impl ICLRRuntimeInfo {
     /// * `Err(ClrError)` - If loading fails, returns a `ClrError`.
     pub fn LoadLibraryA(&self, pwzDllName: PCWSTR) -> Result<HMODULE> {
         unsafe {
-            let mut result = std::mem::zeroed();
+            let mut result = core::mem::zeroed();
             let hr = (Interface::vtable(self).LoadLibraryA)(Interface::as_raw(self), pwzDllName, &mut result);
             if hr == 0 {
                 Ok(result)
@@ -209,10 +209,11 @@ impl ICLRRuntimeInfo {
     ///
     /// * `Ok(*mut c_void)` - On success, returns a pointer to the procedure.
     /// * `Err(ClrError)` - If retrieval fails, returns a `ClrError`.
-    pub fn GetProcAddress(&self, pszProcName: PCSTR) -> Result<*mut c_void> {
+    pub fn GetProcAddress(&self, pszProcName: &str) -> Result<*mut c_void> {
         unsafe {
-            let mut result = std::mem::zeroed();
-            let hr = (Interface::vtable(self).GetProcAddress)(Interface::as_raw(self), pszProcName, &mut result);
+            let mut result = core::mem::zeroed();
+            let cstr = CString::new(pszProcName).map_err(|_| ClrError::GenericError("Invalid String"))?;
+            let hr = (Interface::vtable(self).GetProcAddress)(Interface::as_raw(self), PCSTR(cstr.as_ptr().cast()), &mut result);
             if hr == 0 {
                 Ok(result)
             } else {
@@ -342,6 +343,7 @@ pub struct ICLRRuntimeInfo_Vtbl {
     ///
     /// # Arguments
     ///
+    /// * `this` - Pointer to the COM object.
     /// * `pwzBuffer` - A pointer to a buffer that receives the version string.
     /// * `pcchBuffer` - A pointer to an unsigned integer that holds the buffer size and 
     ///   receives the length of the version string on return.
@@ -350,7 +352,7 @@ pub struct ICLRRuntimeInfo_Vtbl {
     /// 
     /// * Returns an HRESULT indicating success or failure.
     pub GetVersionString: unsafe extern "system" fn(
-        *mut c_void,
+        this: *mut c_void,
         pwzBuffer: PWSTR,
         pcchBuffer: *mut u32,
     ) -> HRESULT,
@@ -359,6 +361,7 @@ pub struct ICLRRuntimeInfo_Vtbl {
     ///
     /// # Arguments
     ///
+    /// * `this` - Pointer to the COM object.
     /// * `pwzBuffer` - A pointer to a buffer for the directory path.
     /// * `pcchBuffer` - A pointer to an unsigned integer specifying the buffer size.
     ///
@@ -366,7 +369,7 @@ pub struct ICLRRuntimeInfo_Vtbl {
     ///
     /// * `HRESULT` indicating success or failure.
     pub GetRuntimeDirectory: unsafe extern "system" fn(
-        *mut c_void,
+        this: *mut c_void,
         pwzBuffer: PWSTR,
         pcchBuffer: *mut u32,
     ) -> HRESULT,
@@ -375,6 +378,7 @@ pub struct ICLRRuntimeInfo_Vtbl {
     ///
     /// # Arguments
     ///
+    /// * `this` - Pointer to the COM object.
     /// * `hndProcess` - A handle to the process.
     /// * `pbLoaded` - A pointer to a `BOOL` that receives the loaded status.
     ///
@@ -382,7 +386,7 @@ pub struct ICLRRuntimeInfo_Vtbl {
     /// 
     /// * Returns an HRESULT indicating success or failure.
     pub IsLoaded: unsafe extern "system" fn(
-        *mut c_void, 
+        this: *mut c_void, 
         hndProcess: HANDLE, 
         pbLoaded: *mut BOOL
     ) -> HRESULT,
@@ -391,6 +395,7 @@ pub struct ICLRRuntimeInfo_Vtbl {
     ///
     /// # Arguments
     ///
+    /// * `this` - Pointer to the COM object.
     /// * `iResourceID` - The resource ID of the error message.
     /// * `pwzBuffer` - A buffer that receives the error message.
     /// * `pcchBuffer` - Pointer specifying the buffer size.
@@ -400,7 +405,7 @@ pub struct ICLRRuntimeInfo_Vtbl {
     /// 
     /// * Returns an HRESULT indicating success or failure.
     pub LoadErrorString: unsafe extern "system" fn(
-        *mut c_void,
+        this: *mut c_void,
         iResourceID: u32,
         pwzBuffer: PWSTR,
         pcchBuffer: *mut u32,
@@ -411,6 +416,7 @@ pub struct ICLRRuntimeInfo_Vtbl {
     ///
     /// # Arguments
     ///
+    /// * `this` - Pointer to the COM object.
     /// * `pwzDllName` - The name of the DLL to load.
     /// * `phndModule` - Pointer to a handle receiving the loaded module.
     ///
@@ -418,7 +424,7 @@ pub struct ICLRRuntimeInfo_Vtbl {
     /// 
     /// * Returns an HRESULT indicating success or failure..
     pub LoadLibraryA: unsafe extern "system" fn(
-        *mut c_void,
+        this: *mut c_void,
         pwzDllName: PCWSTR,
         phndModule: *mut HMODULE,
     ) -> HRESULT,
@@ -427,6 +433,7 @@ pub struct ICLRRuntimeInfo_Vtbl {
     ///
     /// # Arguments
     ///
+    /// * `this` - Pointer to the COM object.
     /// * `pszProcName` - The name of the procedure.
     /// * `ppProc` - A pointer to a pointer receiving the procedure address.
     ///
@@ -434,7 +441,7 @@ pub struct ICLRRuntimeInfo_Vtbl {
     /// 
     /// * Returns an HRESULT indicating success or failure.
     pub GetProcAddress: unsafe extern "system" fn(
-        *mut c_void,
+        this: *mut c_void,
         pszProcName: PCSTR,
         ppProc: *mut *mut c_void,
     ) -> HRESULT,
@@ -443,6 +450,7 @@ pub struct ICLRRuntimeInfo_Vtbl {
     ///
     /// # Arguments
     ///
+    /// * `this` - Pointer to the COM object.
     /// * `rclsid` - The class identifier for the interface.
     /// * `riid` - The identifier of the interface being requested.
     /// * `ppUnk` - A pointer to a pointer receiving the requested interface.
@@ -451,7 +459,7 @@ pub struct ICLRRuntimeInfo_Vtbl {
     /// 
     /// * Returns an HRESULT indicating success or failure.
     pub GetInterface: unsafe extern "system" fn(
-        *mut c_void,
+        this: *mut c_void,
         rclsid: *const windows_core::GUID,
         riid: *const windows_core::GUID,
         ppUnk: *mut *mut c_void,
@@ -461,13 +469,14 @@ pub struct ICLRRuntimeInfo_Vtbl {
     ///
     /// # Arguments
     ///
+    /// * `this` - Pointer to the COM object.
     /// * `pbLoadable` - A pointer to a `BOOL` receiving the loadable status.
     ///
     /// # Returns
     /// 
     /// * Returns an HRESULT indicating success or failure.
     pub IsLoadable: unsafe extern "system" fn(
-        *mut c_void, 
+        this: *mut c_void, 
         pbLoadable: *mut BOOL
     ) -> HRESULT,
     
@@ -475,6 +484,7 @@ pub struct ICLRRuntimeInfo_Vtbl {
     ///
     /// # Arguments
     ///
+    /// * `this` - Pointer to the COM object.
     /// * `dwStartupFlags` - Flags defining runtime startup behavior.
     /// * `pwzHostConfigFile` - A configuration file path for the runtime.
     ///
@@ -482,7 +492,7 @@ pub struct ICLRRuntimeInfo_Vtbl {
     /// 
     /// * Returns an HRESULT indicating success or failure.
     pub SetDefaultStartupFlags: unsafe extern "system" fn(
-        *mut c_void, 
+        this: *mut c_void, 
         dwStartupFlags: u32, 
         pwzHostConfigFile: PCWSTR
     ) -> HRESULT,
@@ -491,6 +501,7 @@ pub struct ICLRRuntimeInfo_Vtbl {
     ///
     /// # Arguments
     ///
+    /// * `this` - Pointer to the COM object.
     /// * `dwStartupFlags` - Pointer to receive the startup flags.
     /// * `pwzHostConfigFile` - Pointer to receive the configuration file path.
     /// * `pcchHostConfigFile` - Pointer to the size of the buffer for `pwzHostConfigFile`.
@@ -499,7 +510,7 @@ pub struct ICLRRuntimeInfo_Vtbl {
     /// 
     /// * Returns an HRESULT indicating success or failure.
     pub GetDefaultStartupFlags: unsafe extern "system" fn(
-        *mut c_void,
+        this: *mut c_void,
         dwStartupFlags: *mut u32,
         pwzHostConfigFile: windows_core::PCWSTR,
         pcchHostConfigFile: *mut u32,
@@ -507,15 +518,20 @@ pub struct ICLRRuntimeInfo_Vtbl {
     
     /// Binds the runtime as a legacy v2 runtime.
     ///
+    /// # Arguments
+    ///
+    /// * `this` - Pointer to the COM object.
+    /// 
     /// # Returns
     /// 
     /// * Returns an HRESULT indicating success or failure.
-    pub BindAsLegacyV2Runtime: unsafe extern "system" fn(*mut c_void) -> HRESULT,
+    pub BindAsLegacyV2Runtime: unsafe extern "system" fn(this: *mut c_void) -> HRESULT,
     
     /// Checks if the runtime has started and retrieves startup flags.
     ///
     /// # Arguments
     ///
+    /// * `this` - Pointer to the COM object.
     /// * `pbStarted` - A pointer receiving the started status.
     /// * `pdwStartupFlags` - A pointer receiving the startup flags.
     ///
@@ -523,7 +539,7 @@ pub struct ICLRRuntimeInfo_Vtbl {
     /// 
     /// * Returns an HRESULT indicating success or failure.
     pub IsStarted: unsafe extern "system" fn(
-        *mut c_void, 
+        this: *mut c_void, 
         pbStarted: *mut BOOL, 
         pdwStartupFlags: *mut u32
     ) -> HRESULT,

@@ -1,4 +1,10 @@
-use windows_sys::Win32::Foundation::{SysAllocString, SysStringLen};
+use alloc::{string::String, vec::Vec};
+use windows_sys::Win32::{
+    Foundation::{
+        SysAllocString, 
+        SysStringLen,
+    }, 
+};
 
 /// Module related to safearray creation
 mod safearray;
@@ -11,10 +17,6 @@ pub(crate) mod file;
 /// a format commonly used in Windows API. BSTRs are wide strings (UTF-16) 
 /// with specific memory layouts, used for interoperation with COM 
 /// (Component Object Model) and other Windows-based APIs.
-/// 
-/// The trait is implemented for `&str`, `String`, and `*const u16`, each with specific 
-/// behavior in converting to BSTR format. Additionally, the `*const u16` implementation 
-/// provides a `to_string` method for converting the BSTR back to a `String`.
 pub trait WinStr {
     /// Converts a Rust string into a BSTR.
     ///
@@ -102,9 +104,24 @@ impl WinStr for *const u16 {
             return String::new();
         }
 
-        let slice = unsafe { std::slice::from_raw_parts(*self, len as usize) };
+        let slice = unsafe { core::slice::from_raw_parts(*self, len as usize) };
         String::from_utf16_lossy(slice)
     }
+}
+
+/// Generates a uuid used to create the AppDomain
+pub(crate) fn uuid() -> uuid::Uuid {
+    let mut buf = [0u8; 16];
+
+    for i in 0..4 {
+        let ticks = unsafe { core::arch::x86_64::_rdtsc() }; 
+        buf[i * 4 + 0] = (ticks >> 0) as u8;
+        buf[i * 4 + 1] = (ticks >> 8) as u8;
+        buf[i * 4 + 2] = (ticks >> 16) as u8;
+        buf[i * 4 + 3] = (ticks >> 24) as u8;
+    }
+
+    uuid::Uuid::from_bytes(buf)
 }
 
 /// Specifies the invocation type for a method, indicating if it is static or instance-based.

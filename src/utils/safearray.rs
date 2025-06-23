@@ -1,10 +1,12 @@
 use super::WinStr;
 use crate::error::ClrError;
 use crate::Result;
-use std::{
+use core::{
     ffi::c_void, 
     ptr::{copy_nonoverlapping, null_mut}
 };
+use alloc::{string::String, vec::Vec};
+use windows_core::Interface;
 use windows_sys::Win32::{
     Foundation::{
         SysFreeString, VARIANT_FALSE, 
@@ -18,12 +20,12 @@ use windows_sys::Win32::{
             SafeArrayUnaccessData
         }, 
         Variant::{
-            VARIANT, VT_ARRAY, VT_BSTR, VT_BOOL, 
-            VT_I4, VT_UI1, VT_VARIANT,
+            VARIANT, VT_ARRAY, VT_BOOL, VT_BSTR, 
+            VT_I4, VT_I8, VT_UI1, VT_UNKNOWN, 
+            VT_VARIANT
         } 
     }
 };
-
 
 /// Trait to convert various Rust types to Windows COM-compatible `VARIANT` types.
 /// 
@@ -48,7 +50,7 @@ impl Variant for String {
     /// Converts a `String` to a BSTR-based `VARIANT`.
     fn to_variant(&self) -> VARIANT {
         let bstr = self.to_bstr();
-        let mut variant = unsafe { std::mem::zeroed::<VARIANT>() }; 
+        let mut variant = unsafe { core::mem::zeroed::<VARIANT>() }; 
         variant.Anonymous.Anonymous.vt = Self::var_type();
         variant.Anonymous.Anonymous.Anonymous.bstrVal = bstr;
 
@@ -65,7 +67,7 @@ impl Variant for &str {
     /// Converts a `&str` to a BSTR-based `VARIANT`.
     fn to_variant(&self) -> VARIANT {
         let bstr = self.to_bstr();
-        let mut variant = unsafe { std::mem::zeroed::<VARIANT>() }; 
+        let mut variant = unsafe { core::mem::zeroed::<VARIANT>() }; 
         variant.Anonymous.Anonymous.vt = Self::var_type();
         variant.Anonymous.Anonymous.Anonymous.bstrVal = bstr;
 
@@ -81,7 +83,7 @@ impl Variant for &str {
 impl Variant for bool {
     /// Converts a `bool` to a boolean `VARIANT`.
     fn to_variant(&self) -> VARIANT {
-        let mut variant = unsafe { std::mem::zeroed::<VARIANT>() };
+        let mut variant = unsafe { core::mem::zeroed::<VARIANT>() };
         variant.Anonymous.Anonymous.vt = Self::var_type();
         variant.Anonymous.Anonymous.Anonymous.boolVal = if *self {
             VARIANT_TRUE
@@ -101,7 +103,7 @@ impl Variant for bool {
 impl Variant for i32 {
     /// Converts an `i32` to an integer `VARIANT`.
     fn to_variant(&self) -> VARIANT {
-        let mut variant = unsafe { std::mem::zeroed::<VARIANT>() };
+        let mut variant = unsafe { core::mem::zeroed::<VARIANT>() };
         variant.Anonymous.Anonymous.vt = Self::var_type();
         variant.Anonymous.Anonymous.Anonymous.lVal = *self;
 
@@ -111,6 +113,35 @@ impl Variant for i32 {
     /// Returns the VARIANT type ID for integers.
     fn var_type() -> u16 {
         VT_I4
+    }
+}
+
+impl Variant for i64 {
+    /// Converts an `i64` to an integer `VARIANT`.
+    fn to_variant(&self) -> VARIANT {
+        let mut variant = unsafe { core::mem::zeroed::<VARIANT>() };
+        variant.Anonymous.Anonymous.vt = Self::var_type();
+        variant.Anonymous.Anonymous.Anonymous.llVal = *self;
+
+        variant
+    }
+
+    /// Returns the VARIANT type ID for integers.
+    fn var_type() -> u16 {
+        VT_I8
+    }
+}
+
+impl Variant for windows_core::IUnknown {
+    fn to_variant(&self) -> VARIANT {
+        let mut variant = unsafe { core::mem::zeroed::<VARIANT>() };
+        variant.Anonymous.Anonymous.vt = VT_UNKNOWN;
+        variant.Anonymous.Anonymous.Anonymous.punkVal = self.as_raw() as *mut _;
+        variant
+    }
+
+    fn var_type() -> u16 {
+        VT_UNKNOWN
     }
 }
 
@@ -153,7 +184,7 @@ pub fn create_safe_array_args<T: Variant>(args: Vec<T>) -> Result<*mut SAFEARRAY
         }
         
         let args = SafeArrayCreateVector(VT_VARIANT, 0, 1);
-        let mut var_array = std::mem::zeroed::<VARIANT>(); 
+        let mut var_array = core::mem::zeroed::<VARIANT>(); 
         var_array.Anonymous.Anonymous.vt = VT_ARRAY | vartype;
         var_array.Anonymous.Anonymous.Anonymous.parray = psa;
 
