@@ -196,8 +196,8 @@ Alternatively, consult the [GitHub documentation](https://docs.github.com/en/pul
 ## References
 
 - [InlineExecute-Assembly](https://github.com/anthemtotheego/InlineExecute-Assembly)
-- [windows-rs](https://github.com/microsoft/windows-rs)
 - [Being a good CLR host – Modernizing offensive .NET tradecraft](https://www.ibm.com/think/x-force/being-a-good-clr-host-modernizing-offensive-net-tradecraft)
+- [Microsoft - windows-rs](https://github.com/microsoft/windows-rs)
 
 ## License
 
