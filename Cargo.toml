@@ -1,26 +1,29 @@
 [package]
 name = "rustclr"
-version = "0.2.0"
-edition = "2021"
-description = "Host CLR and run .NET binaries using Rust"
+version = "0.3.0"
+edition = "2024"
 license = "MIT"
+readme = "README.md"
+authors = ["João Victor"]
+description = "Host CLR and run .NET binaries using Rust"
 repository = "https://github.com/joaoviictorti/rustclr"
 homepage = "https://github.com/joaoviictorti/rustclr"
-readme = "README.md"
 keywords = ["dotnet", "clr", "windows", "rust", "redteam"]
 categories = ["os", "security", "api-bindings"]
-exclude = [
-    ".gitignore",
-    "cli/",
-    "target/",
-    "tests/",
+include = [
+    "src/**",
+    "Cargo.toml",
+    "README.md",
+    "LICENSE",
 ]
 
 [dependencies]
-dinvk = "0.1.0"
-thiserror = "1.0.65"
-uuid = { version = "1.16.0", features = ["v4"] } 
-windows-core = "0.58.0"
+dinvk = "0.2.6"
+obfstr = "0.4.4"
+thiserror = { version = "2.0.12", default-features = false }
+windows-core = { version = "0.61.2", default-features = false }
+uuid = { version = "1.16.0", default-features = false } 
+spin = { version = "0.10.0", default-features = false }
 
 [dependencies.windows-sys]
 version = "0.59.0"
@@ -28,12 +31,25 @@ features = [
     "Win32_System_Com", 
     "Win32_System_Ole", 
     "Win32_System_Variant",
+    "Win32_System_Memory",
     "Win32_System_LibraryLoader", 
     "Win32_System_SystemServices", 
     "Win32_System_Diagnostics_Debug", 
     "Win32_System_SystemInformation",
+    "Win32_Storage_FileSystem",
+    "Win32_Security",
+    "Win32_System_IO",
+    "Win32_UI_Shell"
 ]
 
 [package.metadata.docs.rs]
 default-target = "x86_64-pc-windows-msvc"
 targets = ["x86_64-pc-windows-gnu", "x86_64-pc-windows-msvc"]
+
+[[example]]
+name = "Powershell"
+path = "examples/Powershell/main.rs"
+
+[[example]]
+name = "WriteLine"
+path = "examples/WriteLine/main.rs"
