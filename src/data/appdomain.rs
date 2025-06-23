@@ -1,4 +1,4 @@
-use std::{
+use core::{
     ffi::c_void, 
     ops::Deref, 
     ptr::null_mut
@@ -9,6 +9,7 @@ use crate::{
     WinStr, error::ClrError,
     Result
 };
+use alloc::{string::String, vec::Vec};
 use windows_core::{IUnknown, Interface, GUID};
 use windows_sys::{
     core::{BSTR, HRESULT},
@@ -22,12 +23,8 @@ use windows_sys::{
     }
 };
 
-/// This struct represents the COM `_AppDomain` interface, which is part of the 
-/// .NET Common Language Runtime (CLR). It is used for interacting with 
-/// application domains in a .NET environment through FFI (Foreign Function Interface).
-/// 
-/// The struct wraps a COM interface pointer (`IUnknown`) and provides methods 
-/// to load assemblies into the current application domain.
+/// This struct represents the COM `_AppDomain` interface, 
+/// a .NET assembly in the CLR environment.
 #[repr(C)]
 #[derive(Debug, Clone)]
 pub struct _AppDomain(windows_core::IUnknown);
@@ -49,7 +46,7 @@ impl _AppDomain {
     ///
     /// * `Ok(_Assembly)` - If successful, returns an `_Assembly` instance.
     /// * `Err(ClrError)` - If loading fails, returns a `ClrError`.
-    pub fn load_assembly(&self, buffer: &[u8]) -> Result<_Assembly> {
+    pub fn load_bytes(&self, buffer: &[u8]) -> Result<_Assembly> {
         let safe_array = create_safe_array_buffer(&buffer)?;
         self.Load_3(safe_array)
     }
@@ -66,7 +63,7 @@ impl _AppDomain {
     ///
     /// * `Ok(_Assembly)` - If successful, returns an `_Assembly` instance.
     /// * `Err(ClrError)` - If loading fails, returns a `ClrError`.
-    pub fn load_lib(&self, name: &str) -> Result<_Assembly> {
+    pub fn load_name(&self, name: &str) -> Result<_Assembly> {
         let lib_name = name.to_bstr();
         self.Load_2(lib_name)
     }
@@ -83,7 +80,7 @@ impl _AppDomain {
     /// * `Err(ClrError)` - If casting fails, returns a `ClrError`.
     #[inline(always)]
     pub fn from_raw(raw: *mut c_void) -> Result<_AppDomain> {
-        let iunknown = unsafe { IUnknown::from_raw(raw as *mut c_void) };
+        let iunknown = unsafe { IUnknown::from_raw(raw) };
         iunknown.cast::<_AppDomain>().map_err(|_| ClrError::CastingError("_AppDomain"))
     }
 
@@ -105,7 +102,7 @@ impl _AppDomain {
             }
         }
 
-        Err(ClrError::ErrorClr("Assembly Not Found"))
+        Err(ClrError::GenericError("Assembly Not Found"))
     }
 
     /// Retrieves all assemblies currently loaded in the AppDomain.
@@ -283,14 +280,14 @@ pub struct _AppDomainVtbl {
     ///
     /// # Arguments
     /// 
-    /// * `*mut c_void` - Pointer to the COM object implementing the interface.
+    /// * `this` - Pointer to the COM object.
     /// * `pRetVal` - Pointer to a variable that receives the hash code.
     ///
     /// # Returns
     /// 
     /// * Returns an HRESULT indicating success or failure.
     GetHashCode: unsafe extern "system" fn(
-        *mut c_void,
+        this: *mut c_void,
         pRetVal: *mut u32
     ) -> HRESULT,
 
@@ -300,14 +297,14 @@ pub struct _AppDomainVtbl {
     ///
     /// # Arguments
     /// 
-    /// * `*mut c_void` - Pointer to the COM object implementing the interface.
+    /// * `this` - Pointer to the COM object.
     /// * `pRetVal` - Pointer to a variable that receives the `_Type` object.
     ///
     /// # Returns
     ///
     /// * Returns an HRESULT indicating success or failure.
     GetType: unsafe extern "system" fn(
-        *mut c_void,
+        this: *mut c_void,
         pRetVal: *mut *mut _Type
     ) -> HRESULT,
 
@@ -352,7 +349,7 @@ pub struct _AppDomainVtbl {
     ///
     /// # Arguments
     ///
-    /// * `*mut c_void` - Pointer to the COM object implementing the interface.
+    /// * `this` - Pointer to the COM object.
     /// * `assemblyString` - The name of the assembly to load, as a `BSTR`.
     /// * `pRetVal` - Pointer to a variable that receives the loaded `_Assembly`.
     ///
@@ -360,7 +357,7 @@ pub struct _AppDomainVtbl {
     /// 
     /// * Returns an HRESULT indicating success or failure.
     Load_2: unsafe extern "system" fn(
-        *mut c_void,
+        this: *mut c_void,
         assemblyString: BSTR,
         pRetVal: *mut *mut _Assembly
     ) -> HRESULT,
@@ -371,7 +368,7 @@ pub struct _AppDomainVtbl {
     ///
     /// # Arguments
     /// 
-    /// * `*mut c_void` - Pointer to the COM object implementing the interface.
+    /// * `this` - Pointer to the COM object.
     /// * `rawAssembly` - Pointer to a `SAFEARRAY` containing the raw assembly data.
     /// * `pRetVal` - Pointer to a variable that receives the loaded `_Assembly`.
     ///
@@ -379,7 +376,7 @@ pub struct _AppDomainVtbl {
     /// 
     /// * Returns an HRESULT indicating success or failure.
     Load_3: unsafe extern "system" fn(
-        *mut c_void,
+        this: *mut c_void,
         rawAssembly: *mut SAFEARRAY,
         pRetVal: *mut *mut _Assembly
     ) -> HRESULT,
@@ -403,14 +400,14 @@ pub struct _AppDomainVtbl {
     ///
     /// # Arguments
     ///
-    /// * `*mut c_void` - Pointer to the COM object implementing the `_AppDomain` interface.
+    /// * `this` - Pointer to the COM object.
     /// * `pRetVal` - Pointer to a variable that receives a `SAFEARRAY` of `_Assembly` references.
     ///
     /// # Returns
     ///
     /// * Returns an HRESULT indicating success or failure.
     GetAssemblies: unsafe extern "system" fn(
-        *mut c_void,
+        this: *mut c_void,
         pRetVal: *mut *mut SAFEARRAY
     ) -> HRESULT,
 

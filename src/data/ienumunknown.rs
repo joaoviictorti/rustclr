@@ -2,13 +2,13 @@ use crate::error::ClrError;
 use crate::Result;
 use windows_sys::core::HRESULT;
 use windows_core::{IUnknown, GUID, Interface};
-use std::{
+use core::{
     ops::Deref, ptr::null_mut, 
     ffi::c_void, mem::transmute
 };
 
-/// Represents the COM `IEnumUnknown` interface, which enumerates interfaces 
-/// of type `IUnknown` in a sequence within the CLR environment.
+/// This struct represents the COM `IEnumUnknown` interface, 
+/// a .NET assembly in the CLR environment.
 #[repr(C)]
 #[derive(Debug, Clone)]
 pub struct IEnumUnknown(windows_core::IUnknown);
@@ -126,6 +126,7 @@ pub struct IEnumUnknown_Vtbl {
     ///
     /// # Arguments
     ///
+    /// * `this` - Pointer to the COM object.
     /// * `celt` - The number of elements to retrieve.
     /// * `rgelt` - Pointer to an array receiving the retrieved interfaces.
     /// * `pceltFetched` - Pointer to the actual number of elements retrieved.
@@ -134,7 +135,7 @@ pub struct IEnumUnknown_Vtbl {
     /// 
     /// * Returns an HRESULT indicating success or failure.
     pub Next: unsafe extern "system" fn(
-        *mut c_void, 
+        this: *mut c_void, 
         celt: u32, 
         rgelt: *mut *mut IUnknown, 
         pceltFetched: *mut u32
@@ -144,34 +145,40 @@ pub struct IEnumUnknown_Vtbl {
     ///
     /// # Arguments
     ///
+    /// * `this` - Pointer to the COM object.
     /// * `celt` - The number of elements to skip.
     ///
     /// # Returns
     /// 
     /// * Returns an HRESULT indicating success or failure.
     pub Skip: unsafe extern "system" fn(
-        *mut c_void, 
+        this: *mut c_void, 
         celt: u32
     ) -> HRESULT,
     
     /// Resets the enumeration sequence to the beginning.
     ///
+    /// # Arguments
+    ///
+    /// * `this` - Pointer to the COM object.
+    /// 
     /// # Returns
     /// 
     /// * Returns an HRESULT indicating success or failure.
-    pub Reset: unsafe extern "system" fn(*mut c_void) -> HRESULT,
+    pub Reset: unsafe extern "system" fn(this: *mut c_void) -> HRESULT,
 
     /// Creates a new enumerator that contains the same state as the current one.
     ///
     /// # Arguments
     ///
+    /// * `this` - Pointer to the COM object.
     /// * `ppenum` - Pointer to the new `IEnumUnknown`.
     ///
     /// # Returns
     /// 
     /// * Returns an HRESULT indicating success or failure.
     pub Clone: unsafe extern "system" fn(
-        *mut c_void, 
+        this: *mut c_void, 
         ppenum: *mut *mut IEnumUnknown
     ) -> HRESULT,
 }

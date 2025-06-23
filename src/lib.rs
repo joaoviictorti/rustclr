@@ -1,23 +1,30 @@
+#![no_std]
 #![doc = include_str!("../README.md")]
 #![allow(non_snake_case, non_camel_case_types)]
 #![allow(clippy::not_unsafe_ptr_arg_deref)]
 
+extern crate alloc;
+
 /// Defines data structures and descriptions for manipulating and interacting with the CLR.
 pub mod data;
-
-/// Contains definitions for COM interoperability, making it easier to call methods and manipulate COM interfaces.
-pub mod com;
 
 /// Manages specific error types used when interacting with the CLR and COM APIs.
 pub mod error;
 
-/// Main CLR module, providing functions and structures for working with the Common Language Runtime.
+/// Implementing the core CLR loading and interaction logic.
 mod clr;
-
-/// Auxiliary functions for common manipulations and conversions needed when interacting with the CLR and COM.
-mod utils;
-
 pub use clr::*;
+
+/// Responsible for executing powershell code using CLR
+mod pwsh;
+pub use pwsh::*;
+
+/// Utilities
+mod utils;
 pub use utils::*;
 
-type Result<T> = core::result::Result<T, error::ClrError>;
+mod com;
+mod host_control;
+
+/// Type alias for `Result` with `ClrError` as the error type.
+pub(crate) type Result<T> = core::result::Result<T, crate::error::ClrError>;
