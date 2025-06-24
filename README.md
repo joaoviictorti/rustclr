@@ -21,7 +21,6 @@
 - [CLI](#cli)
   - [Example Command](#example-command)
   - [CLI Help](#cli-help)
-- [Contributing to rustclr](#contributing-to-rustclr)
 - [References](#references)
 - [License](#license)
 
@@ -181,18 +180,6 @@ Options:
   -h, --help                               Print help
   -V, --version                            Print version
 ```
-
-## Contributing to rustclr
-
-To contribute to **rustclr**, follow these steps:
-
-1. Fork this repository.
-2. Create a branch: `git checkout -b <branch_name>`.
-3. Make your changes and commit them: `git commit -m '<commit_message>'`.
-4. Push your changes to your branch: `git push origin <branch_name>`.
-5. Create a pull request.
-
-Alternatively, consult the [GitHub documentation](https://docs.github.com/en/pull-requests/collaborating-with-pull-requests) on how to create a pull request.
 
 ## References
 
