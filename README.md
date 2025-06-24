@@ -51,7 +51,7 @@ The following flags provide full control over your CLR environment and the execu
 - **`.output`**: Redirects the output from the .NET assembly's console to the Rust environment, capturing all console output.
 - **`.domain("DomainName")`**: Sets a custom AppDomain name, which is useful for isolating different .NET assemblies.
 - **`.args(vec!["arg1", "arg2"])`**: Passes arguments to the .NET application, useful for parameterized entry points in the assembly.
-- **`.exit()`**: This prevents calls to `System.Environment.Exit()` within the .NET assembly from terminating the host process (your Rust program). Instead, control is maintained on the Rust side, and the .run() method returns normally even if the assembly attempts to terminate the process.
+- **`.exit`**: This prevents calls to `System.Environment.Exit()` within the .NET assembly from terminating the host process (your Rust program). Instead, control is maintained on the Rust side, and the .run() method returns normally even if the assembly attempts to terminate the process.
   
 Using `rustclr` to load and execute a .NET assembly, redirect its output and customize the CLR runtime environment.
 
