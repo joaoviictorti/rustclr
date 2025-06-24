@@ -27,11 +27,12 @@
 
 ## Features
 
-- ✅ Support `#[no_std]` projects
-- ✅ Run .NET binaries in memory with full control over runtime configurations
-- ✅ Fine-grained control over the CLR environment and runtime initialization
-- ✅ Configure output redirection to capture .NET program output
-- ✅ Patch `System.Environment.Exit()` to prevent .NET from terminating the Rust host process  
+- ✅ Supports `#[no_std]` environments (with `alloc`).
+- ✅ Compatible with `x64` architecture.
+- ✅ Run .NET binaries in memory with full control over runtime configurations.
+- ✅ Fine-grained control over the CLR environment and runtime initialization.
+- ✅ Configure output redirection to capture .NET program output.
+- ✅ Patch `System.Environment.Exit()` to prevent .NET from terminating the Rust host process.
 
 ## Installation
 
