@@ -1,17 +1,19 @@
 use obfstr::obfstr as s;
 use core::{ffi::c_void, ptr::null_mut};
 use windows_core::{IUnknown, Interface, PCWSTR};
-use windows_sys::Win32::{    
-    UI::Shell::SHCreateMemStream,
-    System::{
-        Memory::PAGE_EXECUTE_READWRITE, 
-        Variant::{VariantClear, VARIANT}
-    }, 
+use windows_sys::{
+    Win32::{
+        System::{
+            Memory::PAGE_EXECUTE_READWRITE, 
+            Variant::{VariantClear, VARIANT}
+        },
+        UI::Shell::SHCreateMemStream 
+    }
 };
 use alloc::{
-    boxed::Box, vec::Vec, vec,
+    boxed::Box, format, 
     string::{String, ToString}, 
-    format
+    vec::Vec, vec
 };
 use dinvk::{
     data::NT_SUCCESS, 
@@ -165,14 +167,14 @@ impl<'a> RustClr<'a> {
     ///
     ///     // Set a specific .NET runtime version
     ///     let clr = RustClr::new(&buffer)?
-    ///         .with_runtime_version(RuntimeVersion::V4);
+    ///         .runtime_version(RuntimeVersion::V4);
     ///
     ///     println!("Runtime version set successfully.");
     /// 
     ///     Ok(())
     /// }
     /// ```
-    pub fn with_runtime_version(mut self, version: RuntimeVersion) -> Self {
+    pub fn runtime_version(mut self, version: RuntimeVersion) -> Self {
         self.runtime_version = Some(version);
         self
     }
@@ -198,13 +200,13 @@ impl<'a> RustClr<'a> {
     ///
     ///     // Set a custom application domain name
     ///     let clr = RustClr::new(&buffer)?
-    ///         .with_domain("CustomDomain");
+    ///         .domain("CustomDomain");
     ///
     ///     println!("Domain set successfully.");
     ///     Ok(())
     /// }
     /// ```
-    pub fn with_domain(mut self, domain_name: &str) -> Self {
+    pub fn domain(mut self, domain_name: &str) -> Self {
         self.domain_name = Some(domain_name.to_string());
         self
     }
@@ -230,13 +232,13 @@ impl<'a> RustClr<'a> {
     ///
     ///     // Pass arguments to the .NET assembly's entry point
     ///     let clr = RustClr::new(&buffer)?
-    ///         .with_args(vec!["arg1", "arg2"]);
+    ///         .args(vec!["arg1", "arg2"]);
     ///
     ///     println!("Arguments set successfully.");
     ///     Ok(())
     /// }
     /// ```
-    pub fn with_args(mut self, args: Vec<&str>) -> Self {
+    pub fn args(mut self, args: Vec<&str>) -> Self {
         self.args = Some(args.iter().map(|&s| s.to_string()).collect());
         self
     }
@@ -262,13 +264,13 @@ impl<'a> RustClr<'a> {
     ///
     ///     // Enable output redirection to capture console output
     ///     let clr = RustClr::new(&buffer)?
-    ///         .with_output_redirection();
+    ///         .output();
     ///
     ///     println!("Output redirection enabled.");
     ///     Ok(())
     /// }
     /// ```
-    pub fn with_output_redirection(mut self) -> Self {
+    pub fn output(mut self) -> Self {
         self.redirect_output = true;
         self
     }
@@ -290,13 +292,13 @@ impl<'a> RustClr<'a> {
     ///
     ///     // Enable patching of Environment.Exit
     ///     let clr = RustClr::new(&buffer)?
-    ///         .with_patch_exit();
+    ///         .exit();
     ///
     ///     println!("Environment.Exit will be patched to prevent termination.");
     ///     Ok(())
     /// }
     /// ```
-    pub fn with_patch_exit(mut self) -> Self {
+    pub fn exit(mut self) -> Self {
         self.patch_exit = true;
         self
     }
@@ -369,10 +371,10 @@ impl<'a> RustClr<'a> {
     ///
     ///     // Create and configure a RustClr instance
     ///     let mut clr = RustClr::new(&buffer)?
-    ///         .with_runtime_version(RuntimeVersion::V4)
-    ///         .with_domain("CustomDomain")
-    ///         .with_args(vec!["arg1", "arg2"])
-    ///         .with_output_redirection(true);
+    ///         .runtime_version(RuntimeVersion::V4)
+    ///         .domain("CustomDomain")
+    ///         .args(vec!["arg1", "arg2"])
+    ///         .output();
     ///
     ///     // Run the .NET assembly and capture the output
     ///     let output = clr.run()?;
