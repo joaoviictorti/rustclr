@@ -18,7 +18,7 @@
 - ✅ Configure output redirection to capture .NET program output.
 - ✅ Patch `System.Environment.Exit()` to prevent .NET from terminating the Rust host process.
 
-## Installation
+## Getting started
 
 Add `rustclr` to your project by updating your `Cargo.toml`:
 ```bash
