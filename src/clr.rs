@@ -20,9 +20,9 @@ use windows_sys::Win32::{
 
 use super::{
     Invocation, Result, WinStr, create_safe_array_args,
+    file::{read_file, validate_file},
     error::ClrError,
     uuid,
-    file::{read_file, validate_file},
 };
 
 use super::{
