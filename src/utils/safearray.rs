@@ -225,7 +225,10 @@ pub fn create_safe_args(args: Vec<VARIANT>) -> Result<*mut SAFEARRAY> {
 /// * `Err(ClrError)` - If the creation or data copying into the `SAFEARRAY` fails.
 pub fn create_safe_array_buffer(data: &[u8]) -> Result<*mut SAFEARRAY> {
     let len: u32 = data.len() as u32;
-    let bounds = SAFEARRAYBOUND { cElements: data.len() as _, lLbound: 0 };
+    let bounds = SAFEARRAYBOUND {
+        cElements: data.len() as _,
+        lLbound: 0,
+    };
 
     unsafe {
         let sa = SafeArrayCreate(VT_UI1, 1, &bounds);

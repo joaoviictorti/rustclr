@@ -8,37 +8,27 @@ use alloc::{
 };
 
 use obfstr::obfstr as s;
-use dinvk::{
-    NtCurrentProcess, 
-    NtProtectVirtualMemory, 
-    data::NT_SUCCESS
-};
+use dinvk::{NtCurrentProcess, NtProtectVirtualMemory, data::NT_SUCCESS};
 use windows_core::{IUnknown, Interface, PCWSTR};
 use windows_sys::Win32::{
+    UI::Shell::SHCreateMemStream,
     System::{
         Memory::PAGE_EXECUTE_READWRITE,
         Variant::{VARIANT, VariantClear},
     },
-    UI::Shell::SHCreateMemStream,
 };
 
 use super::{
     Invocation, Result, WinStr, create_safe_array_args,
     error::ClrError,
-    file::{read_file, validate_file},
     uuid,
+    file::{read_file, validate_file},
 };
-use super::com::{
-    CLRCreateInstance, CLSID_CLRMETAHOST, 
-    CLSID_COR_RUNTIME_HOST
-};
-use super::data::{
-    _AppDomain, _Assembly, 
-    ICLRMetaHost, ICLRRuntimeInfo, 
-    ICorRuntimeHost
-};
+
 use super::{
     Variant,
+    com::*,
+    data::*,
     host_control::RustClrControl,
     com::{CLRIdentityManagerType, CLSID_ICLR_RUNTIME_HOST},
     data::{ICLRAssemblyIdentityManager, ICLRuntimeHost, IHostControl},
@@ -674,7 +664,10 @@ impl<'a> ClrOutput<'a> {
     ///
     /// * A new instance of `ClrOutput`.
     pub fn new(mscorlib: &'a _Assembly) -> Self {
-        Self { string_writer: None, mscorlib }
+        Self {
+            string_writer: None,
+            mscorlib,
+        }
     }
 
     /// Redirects standard output and error streams to a `StringWriter`.
@@ -820,7 +813,13 @@ impl RustClrEnv {
             .map_err(|_| ClrError::NoDomainAvailable)?;
 
         // Return the initialized instance
-        Ok(Self { runtime_version: runtime_version.unwrap_or(RuntimeVersion::V4), meta_host, runtime_info, cor_runtime_host, app_domain })
+        Ok(Self {
+            runtime_version: runtime_version.unwrap_or(RuntimeVersion::V4),
+            meta_host,
+            runtime_info,
+            cor_runtime_host,
+            app_domain,
+        })
     }
 }
 
