@@ -1,6 +1,6 @@
-use crate::data::IHostAssemblyStore;
 use core::{ffi::c_void, ops::Deref, ptr::null_mut};
 use windows_core::{GUID, Interface};
+use crate::data::IHostAssemblyStore;
 
 /// Represents the COM `IHostAssemblyManager` interface.
 #[repr(C)]
@@ -22,8 +22,8 @@ impl IHostAssemblyManager_Vtbl {
     /// This binds the trait implementation to the raw function pointers expected by COM.
     pub const fn new<Identity: IHostAssemblyManager_Impl, const OFFSET: isize>() -> Self {
         unsafe extern "system" fn GetNonHostStoreAssemblies<Identity: IHostAssemblyManager_Impl, const OFFSET: isize>(
-            this: *mut c_void, 
-            ppreferencelist: *mut *mut c_void
+            this: *mut c_void,
+            ppreferencelist: *mut *mut c_void,
         ) -> windows_core::HRESULT {
             unsafe {
                 let this: &Identity = &*((this as *const *const ()).offset(OFFSET) as *const Identity);
@@ -36,10 +36,10 @@ impl IHostAssemblyManager_Vtbl {
                 }
             }
         }
-        
+
         unsafe extern "system" fn GetAssemblyStore<Identity: IHostAssemblyManager_Impl, const OFFSET: isize>(
-            this: *mut c_void, 
-            ppassemblystore: *mut *mut c_void
+            this: *mut c_void,
+            ppassemblystore: *mut *mut c_void,
         ) -> windows_core::HRESULT {
             unsafe {
                 let this: &Identity = &*((this as *const *const ()).offset(OFFSET) as *const Identity);
@@ -60,7 +60,7 @@ impl IHostAssemblyManager_Vtbl {
             GetAssemblyStore: GetAssemblyStore::<Identity, OFFSET>,
         }
     }
-    
+
     /// Checks if the given IID matches the `IHostAssemblyManager` interface.
     pub fn matches(iid: &windows_core::GUID) -> bool {
         iid == &<IHostAssemblyManager as windows_core::Interface>::IID
@@ -74,8 +74,8 @@ unsafe impl Interface for IHostAssemblyManager {
 
     /// The interface identifier (IID) for the `IHostAssemblyManager` COM interface.
     ///
-    /// This GUID is used to identify the `IHostAssemblyManager` interface when calling 
-    /// COM methods like `QueryInterface`. It is defined based on the standard 
+    /// This GUID is used to identify the `IHostAssemblyManager` interface when calling
+    /// COM methods like `QueryInterface`. It is defined based on the standard
     /// .NET CLR IID for the `IHostAssemblyManager` interface.
     const IID: GUID = GUID::from_u128(0x613dabd7_62b2_493e_9e65_c1e32a1e0c5e);
 }
@@ -85,8 +85,8 @@ impl Deref for IHostAssemblyManager {
 
     /// The interface identifier (IID) for the `IHostAssemblyManager` COM interface.
     ///
-    /// This GUID is used to identify the `IHostAssemblyManager` interface when calling 
-    /// COM methods like `QueryInterface`. It is defined based on the standard 
+    /// This GUID is used to identify the `IHostAssemblyManager` interface when calling
+    /// COM methods like `QueryInterface`. It is defined based on the standard
     /// .NET CLR IID for the `IHostAssemblyManager` interface.
     fn deref(&self) -> &Self::Target {
         unsafe { core::mem::transmute(self) }
@@ -96,7 +96,7 @@ impl Deref for IHostAssemblyManager {
 #[repr(C)]
 pub struct IHostAssemblyManager_Vtbl {
     /// Base vtable inherited from the `IUnknown` interface.
-    /// 
+    ///
     /// This field contains the basic methods for reference management,
     /// like `AddRef`, `Release`, and `QueryInterface`.
     pub base__: windows_core::IUnknown_Vtbl,
@@ -111,10 +111,7 @@ pub struct IHostAssemblyManager_Vtbl {
     /// # Returns
     ///
     /// * HRESULT indicating success or failure.
-    pub GetNonHostStoreAssemblies: unsafe extern "system" fn(
-        this: *mut c_void,
-        ppreferencelist: *mut *mut c_void,
-    ) -> windows_core::HRESULT,
+    pub GetNonHostStoreAssemblies: unsafe extern "system" fn(this: *mut c_void, ppreferencelist: *mut *mut c_void) -> windows_core::HRESULT,
 
     /// Retrieves the `IHostAssemblyStore` associated with the host.
     ///
@@ -126,8 +123,5 @@ pub struct IHostAssemblyManager_Vtbl {
     /// # Returns
     ///
     /// * HRESULT indicating success or failure.
-    pub GetAssemblyStore: unsafe extern "system" fn(
-        this: *mut c_void,
-        ppassemblystore: *mut *mut c_void,
-    ) -> windows_core::HRESULT,
+    pub GetAssemblyStore: unsafe extern "system" fn(this: *mut c_void, ppassemblystore: *mut *mut c_void) -> windows_core::HRESULT,
 }

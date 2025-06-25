@@ -1,7 +1,7 @@
-use crate::{Invocation, Result, Variant, WinStr};
 use alloc::{format, string::String, vec};
 use obfstr::obfstr as s;
-use crate::{data::_Assembly, RustClrEnv};
+use crate::{Invocation, Result, Variant, WinStr};
+use crate::{RustClrEnv, data::_Assembly};
 
 /// Provides a persistent interface for executing PowerShell commands
 /// from a .NET runtime hosted inside a Rust application.
@@ -23,6 +23,7 @@ impl PowerShell {
     /// # Returns
     ///
     /// A new `PowerShell` instance ready to execute commands.
+    #[rustfmt::skip]
     pub fn new() -> Result<Self> {
         // Initialize .NET runtime (v4.0).
         let clr = RustClrEnv::new(None)?;
@@ -40,7 +41,7 @@ impl PowerShell {
         let automation = _Assembly::from_raw(unsafe { result.Anonymous.Anonymous.Anonymous.byref })?;
         Ok(Self { automation, clr })
     }
-    
+
     /// Executes a PowerShell command and returns its output as a string.
     ///
     /// This method creates a new temporary `Runspace` and `Pipeline` for
@@ -53,6 +54,7 @@ impl PowerShell {
     /// # Returns
     ///
     /// * Returns the textual output of the PowerShell command.
+    #[rustfmt::skip]
     pub fn execute(&self, command: &str) -> Result<String> {
         // Invoke `CreateRunspace` method.
         let runspace_factory = self.automation.resolve_type(s!("System.Management.Automation.Runspaces.RunspaceFactory"))?;
@@ -71,7 +73,7 @@ impl PowerShell {
 
         // Invoke `AddScript` method.
         let command_collection = self.automation.resolve_type(s!("System.Management.Automation.Runspaces.CommandCollection"))?;
-        let cmd= vec![format!("{} | {}", command, s!("Out-String")).to_variant()];
+        let cmd = vec![format!("{} | {}", command, s!("Out-String")).to_variant()];
         let args = crate::create_safe_args(cmd)?;
         let add_script = command_collection.method_signature(s!("Void AddScript(System.String)"))?;
         add_script.invoke(Some(get_command), Some(args))?;
@@ -93,6 +95,13 @@ impl PowerShell {
         let output = to_string.invoke(Some(ps_object_instance), None)?;
 
         assembly_runspace.invoke(s!("Close"), Some(runspace), None, Invocation::Instance)?;
-        Ok(unsafe { output.Anonymous.Anonymous.Anonymous.bstrVal.to_string() })
+        Ok(unsafe {
+            output
+                .Anonymous
+                .Anonymous
+                .Anonymous
+                .bstrVal
+                .to_string()
+        })
     }
 }

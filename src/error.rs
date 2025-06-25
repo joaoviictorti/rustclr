@@ -1,14 +1,15 @@
 use alloc::string::String;
+
 use thiserror::Error;
 
-/// Represents errors that can occur when interacting with the .NET runtime 
+/// Represents errors that can occur when interacting with the .NET runtime
 /// or while handling .NET-related operations within an unmanaged application.
 #[derive(Debug, Error)]
 pub enum ClrError {
     /// Raised when a .NET file cannot be read correctly.
     ///
     /// # Arguments
-    /// 
+    ///
     /// * `{0}` - A message describing the file read error.
     #[error("The file could not be read: {0}")]
     FileReadError(String),
@@ -117,7 +118,7 @@ pub enum ClrError {
     /// Raised when the type of a VARIANT is unsupported by the current context.
     #[error("Type of VARIANT not supported")]
     VariantUnsupported,
-    
+
     /// Represents a generic error specific to the CLR.
     ///
     /// # Arguments

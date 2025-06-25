@@ -1,10 +1,12 @@
 use alloc::{string::String, vec};
 use core::{ffi::c_void, ops::Deref};
-use crate::{error::ClrError, Result};
-use windows_core::{IUnknown, Interface, GUID, PWSTR};
+
+use windows_core::{GUID, IUnknown, Interface, PWSTR};
 use windows_sys::core::HRESULT;
 
-/// This struct represents the COM `ICLRAssemblyIdentityManager` interface, 
+use crate::{Result, error::ClrError};
+
+/// This struct represents the COM `ICLRAssemblyIdentityManager` interface,
 /// a .NET assembly in the CLR environment.
 #[repr(C)]
 #[derive(Debug, Clone)]
@@ -26,7 +28,7 @@ impl ICLRAssemblyIdentityManager {
     /// * `Ok(String)` - The string representation of the assembly's identity.
     /// * `Err(ClrError)` - If the operation fails or returns an error HRESULT.
     pub fn get_identity_stream(&self, pstream: *mut c_void, dwFlags: u32) -> Result<String> {
-        let mut buffer  = vec![0; 2048];
+        let mut buffer = vec![0; 2048];
         let mut size = buffer.len() as u32;
 
         self.GetBindingIdentityFromStream(pstream, dwFlags, PWSTR(buffer.as_mut_ptr()), &mut size)?;
@@ -46,7 +48,8 @@ impl ICLRAssemblyIdentityManager {
     #[inline(always)]
     pub fn from_raw(raw: *mut c_void) -> Result<ICLRAssemblyIdentityManager> {
         let iunknown = unsafe { IUnknown::from_raw(raw) };
-        iunknown.cast::<ICLRAssemblyIdentityManager>()
+        iunknown
+            .cast::<ICLRAssemblyIdentityManager>()
             .map_err(|_| ClrError::CastingError("ICLRAssemblyIdentityManager"))
     }
 }
@@ -68,22 +71,9 @@ impl ICLRAssemblyIdentityManager {
     ///
     /// * `Ok(())` - If the operation succeeds.
     /// * `Err(ClrError)` - On failure.
-    pub fn GetBindingIdentityFromStream(
-        &self, 
-        pstream: *mut c_void, 
-        dwFlags: u32, 
-        pwzBuffer: PWSTR, 
-        pcchbuffersize: *mut u32
-    ) -> Result<()> {
-        let hr = unsafe { 
-            (Interface::vtable(self).GetBindingIdentityFromStream)(
-                Interface::as_raw(self), 
-                pstream, 
-                dwFlags, 
-                pwzBuffer, 
-                pcchbuffersize
-            ) 
-        };
+    pub fn GetBindingIdentityFromStream(&self, pstream: *mut c_void, dwFlags: u32, pwzBuffer: PWSTR, pcchbuffersize: *mut u32) -> Result<()> {
+        let hr =
+            unsafe { (Interface::vtable(self).GetBindingIdentityFromStream)(Interface::as_raw(self), pstream, dwFlags, pwzBuffer, pcchbuffersize) };
         if hr == 0 {
             Ok(())
         } else {
@@ -97,8 +87,8 @@ unsafe impl Interface for ICLRAssemblyIdentityManager {
 
     /// The interface identifier (IID) for the `ICLRAssemblyIdentityManager` COM interface.
     ///
-    /// This GUID is used to identify the `ICLRAssemblyIdentityManager` interface when calling 
-    /// COM methods like `QueryInterface`. It is defined based on the standard 
+    /// This GUID is used to identify the `ICLRAssemblyIdentityManager` interface when calling
+    /// COM methods like `QueryInterface`. It is defined based on the standard
     /// .NET CLR IID for the `ICLRAssemblyIdentityManager` interface.
     const IID: GUID = GUID::from_u128(0x15f0a9da_3ff6_4393_9da9_fdfd284e6972);
 }
@@ -108,8 +98,8 @@ impl Deref for ICLRAssemblyIdentityManager {
 
     /// Provides a reference to the underlying `IUnknown` interface.
     ///
-    /// This implementation allows `ICLRAssemblyIdentityManager` to be used as an `IUnknown` 
-    /// pointer, enabling access to basic COM methods like `AddRef`, `Release`, 
+    /// This implementation allows `ICLRAssemblyIdentityManager` to be used as an `IUnknown`
+    /// pointer, enabling access to basic COM methods like `AddRef`, `Release`,
     /// and `QueryInterface`.
     fn deref(&self) -> &Self::Target {
         unsafe { core::mem::transmute(self) }
@@ -119,7 +109,7 @@ impl Deref for ICLRAssemblyIdentityManager {
 #[repr(C)]
 pub struct ICLRAssemblyIdentityManager_Vtbl {
     /// Base vtable inherited from the `IUnknown` interface.
-    /// 
+    ///
     /// This field contains the basic methods for reference management,
     /// like `AddRef`, `Release`, and `QueryInterface`.
     base__: windows_core::IUnknown_Vtbl,
@@ -141,13 +131,8 @@ pub struct ICLRAssemblyIdentityManager_Vtbl {
     /// # Returns
     ///
     /// * HRESULT indicating success or failure.
-    pub GetBindingIdentityFromStream: unsafe extern "system" fn(
-        this: *mut c_void,
-        pstream: *mut c_void,
-        dwFlags: u32,
-        pwzBuffer: PWSTR,
-        pcchbuffersize: *mut u32,
-    ) -> HRESULT,
+    pub GetBindingIdentityFromStream:
+        unsafe extern "system" fn(this: *mut c_void, pstream: *mut c_void, dwFlags: u32, pwzBuffer: PWSTR, pcchbuffersize: *mut u32) -> HRESULT,
 
     /// Placeholder for the method. Not used directly.
     pub GetReferencedAssembliesFromFile: *const c_void,

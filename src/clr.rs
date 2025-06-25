@@ -1,50 +1,52 @@
-use obfstr::obfstr as s;
 use core::{ffi::c_void, ptr::null_mut};
-use windows_core::{IUnknown, Interface, PCWSTR};
-use windows_sys::{
-    Win32::{
-        System::{
-            Memory::PAGE_EXECUTE_READWRITE, 
-            Variant::{VariantClear, VARIANT}
-        },
-        UI::Shell::SHCreateMemStream 
-    }
-};
 use alloc::{
-    boxed::Box, format, 
-    string::{String, ToString}, 
-    vec::Vec, vec
+    boxed::Box,
+    format,
+    string::{String, ToString},
+    vec,
+    vec::Vec,
 };
+
+use obfstr::obfstr as s;
 use dinvk::{
-    data::NT_SUCCESS, 
     NtCurrentProcess, 
-    NtProtectVirtualMemory
+    NtProtectVirtualMemory, 
+    data::NT_SUCCESS
+};
+use windows_core::{IUnknown, Interface, PCWSTR};
+use windows_sys::Win32::{
+    System::{
+        Memory::PAGE_EXECUTE_READWRITE,
+        Variant::{VARIANT, VariantClear},
+    },
+    UI::Shell::SHCreateMemStream,
 };
 
 use super::{
-    WinStr, uuid, Result,
-    create_safe_array_args,
-    file::{validate_file, read_file}, 
-    Invocation, error::ClrError, 
+    Invocation, Result, WinStr, create_safe_array_args,
+    error::ClrError,
+    file::{read_file, validate_file},
+    uuid,
 };
 use super::com::{
-    CLRCreateInstance, 
-    CLSID_CLRMETAHOST, 
+    CLRCreateInstance, CLSID_CLRMETAHOST, 
     CLSID_COR_RUNTIME_HOST
 };
 use super::data::{
+    _AppDomain, _Assembly, 
     ICLRMetaHost, ICLRRuntimeInfo, 
-    ICorRuntimeHost, _AppDomain, _Assembly
+    ICorRuntimeHost
 };
 use super::{
-    host_control::RustClrControl, Variant,
-    com::{CLRIdentityManagerType, CLSID_ICLR_RUNTIME_HOST}, 
-    data::{ICLRAssemblyIdentityManager, ICLRuntimeHost, IHostControl}, 
+    Variant,
+    host_control::RustClrControl,
+    com::{CLRIdentityManagerType, CLSID_ICLR_RUNTIME_HOST},
+    data::{ICLRAssemblyIdentityManager, ICLRuntimeHost, IHostControl},
 };
 
 /// Represents a Rust interface to the Common Language Runtime (CLR).
-/// 
-/// This structure allows loading and executing .NET assemblies with specific runtime versions, 
+///
+/// This structure allows loading and executing .NET assemblies with specific runtime versions,
 /// application domains, and arguments.
 #[derive(Debug, Clone)]
 pub struct RustClr<'a> {
@@ -76,41 +78,41 @@ pub struct RustClr<'a> {
     cor_runtime_host: Option<ICorRuntimeHost>,
 }
 
-impl<'a> Default for RustClr<'a> {
+impl Default for RustClr<'_> {
     /// Provides a default-initialized `RustClr`.
     ///
     /// # Returns
     ///
     /// * A default-initialized `RustClr`.
     fn default() -> Self {
-        Self { 
-            buffer: &[], 
+        Self {
+            buffer: &[],
             runtime_version: None,
             redirect_output: false,
             patch_exit: false,
             identity_assembly: String::new(),
             domain_name: None,
-            args: None, 
+            args: None,
             app_domain: None,
-            cor_runtime_host: None
+            cor_runtime_host: None,
         }
     }
 }
 
 impl<'a> RustClr<'a> {
     /// Creates a new [`RustClr`] instance with the specified assembly buffer.
-    /// 
+    ///
     /// # Arguments
-    /// 
+    ///
     /// * `source` - A value convertible into [`ClrSource`], representing either a file path or a byte buffer.
-    /// 
+    ///
     /// # Returns
-    /// 
+    ///
     /// * `Ok(Self)` - If the buffer is valid and the [`RustClr`] instance is created successfully.
     /// * `Err(ClrError)` - If the buffer validation fails (e.g., not a valid .NET assembly).
-    /// 
+    ///
     /// # Example
-    /// 
+    ///
     /// ```rust,ignore
     /// use rustclr::RustClr;
     /// use std::fs;
@@ -122,23 +124,21 @@ impl<'a> RustClr<'a> {
     ///     // Create a new RustClr instance
     ///     let clr = RustClr::new(&buffer)?;
     ///     println!("RustClr instance created successfully.");
-    /// 
+    ///
     ///     Ok(())
     /// }
     /// ```
     pub fn new<T: Into<ClrSource<'a>>>(source: T) -> Result<Self> {
         let buffer = match source.into() {
             // Try reading the file
-            ClrSource::File(path) => {
-                Box::leak(read_file(path)?.into_boxed_slice())
-            },
+            ClrSource::File(path) => Box::leak(read_file(path)?.into_boxed_slice()),
 
             // Creates the .NET directly from the buffer
             ClrSource::Buffer(buffer) => buffer,
         };
 
         // Checks if it is a valid .NET and EXE file
-        validate_file(&buffer)?;
+        validate_file(buffer)?;
 
         // Initializes the default instance and injects the read buffer
         let mut clr = Self::default();
@@ -147,17 +147,17 @@ impl<'a> RustClr<'a> {
     }
 
     /// Sets the .NET runtime version to use.
-    /// 
+    ///
     /// # Arguments
-    /// 
+    ///
     /// * `version` - The `RuntimeVersion` enum representing the .NET version.
-    /// 
+    ///
     /// # Returns
-    /// 
+    ///
     /// * Returns the modified `RustClr` instance.
     ///
     /// # Example
-    /// 
+    ///
     /// ```rust,ignore
     /// use rustclr::{RustClr, RuntimeVersion};
     /// use std::fs;
@@ -170,7 +170,7 @@ impl<'a> RustClr<'a> {
     ///         .runtime_version(RuntimeVersion::V4);
     ///
     ///     println!("Runtime version set successfully.");
-    /// 
+    ///
     ///     Ok(())
     /// }
     /// ```
@@ -180,17 +180,17 @@ impl<'a> RustClr<'a> {
     }
 
     /// Sets the application domain name to use.
-    /// 
+    ///
     /// # Arguments
-    /// 
+    ///
     /// * `domain_name` - A string representing the name of the application domain.
-    /// 
+    ///
     /// # Returns
-    /// 
+    ///
     /// * Returns the modified `RustClr` instance.
-    /// 
+    ///
     /// # Example
-    /// 
+    ///
     /// ```rust,ignore
     /// use rustclr::RustClr;
     /// use std::fs;
@@ -212,17 +212,17 @@ impl<'a> RustClr<'a> {
     }
 
     /// Sets the arguments to pass to the .NET assembly's entry point.
-    /// 
+    ///
     /// # Arguments
-    /// 
+    ///
     /// * `args` - A vector of strings representing the arguments.
-    /// 
+    ///
     /// # Returns
-    /// 
+    ///
     /// * Returns the modified `RustClr` instance.
-    /// 
+    ///
     /// # Examples
-    /// 
+    ///
     /// ```rust,ignore
     /// use rustclr::RustClr;
     /// use std::fs;
@@ -252,7 +252,7 @@ impl<'a> RustClr<'a> {
     /// # Returns
     ///
     /// * The modified `RustClr` instance with the updated output redirection setting.
-    /// 
+    ///
     /// # Example
     ///
     /// ```rust,ignore
@@ -304,9 +304,9 @@ impl<'a> RustClr<'a> {
     }
 
     /// Prepares the CLR environment by initializing the runtime and application domain.
-    /// 
+    ///
     /// # Returns
-    /// 
+    ///
     /// * `Ok(())` - If the environment is successfully prepared.
     /// * `Err(ClrError)` - If any error occurs during the preparation process.
     fn prepare(&mut self) -> Result<()> {
@@ -318,7 +318,7 @@ impl<'a> RustClr<'a> {
 
         // Get ICLRAssemblyIdentityManager via GetProcAddress
         let addr = runtime_info.GetProcAddress(s!("GetCLRIdentityManager"))?;
-        let GetCLRIdentityManager = unsafe { core::mem::transmute::<*mut c_void, CLRIdentityManagerType>(addr) };        
+        let GetCLRIdentityManager = unsafe { core::mem::transmute::<*mut c_void, CLRIdentityManagerType>(addr) };
         let mut ptr = null_mut();
         GetCLRIdentityManager(&ICLRAssemblyIdentityManager::IID, &mut ptr);
 
@@ -341,7 +341,7 @@ impl<'a> RustClr<'a> {
             // Starts the CLR runtime
             self.start_runtime(&iclr_runtime_host)?;
         }
-        
+
         // Creates the `ICorRuntimeHost`
         let cor_runtime_host = self.get_icor_runtime_host(&runtime_info)?;
 
@@ -354,14 +354,14 @@ impl<'a> RustClr<'a> {
     }
 
     /// Runs the .NET assembly by loading it into the application domain and invoking its entry point.
-    /// 
+    ///
     /// # Returns
-    /// 
+    ///
     /// * `Ok(String)` - The output from the .NET assembly if executed successfully.
     /// * `Err(ClrError)` - If an error occurs during execution.
-    /// 
+    ///
     /// # Examples
-    /// 
+    ///
     /// ```rust,ignore
     /// use rustclr::{RustClr, RuntimeVersion};
     /// use std::fs;
@@ -379,7 +379,7 @@ impl<'a> RustClr<'a> {
     ///     // Run the .NET assembly and capture the output
     ///     let output = clr.run()?;
     ///     println!("Output: {}", output);
-    /// 
+    ///
     ///     Ok(())
     /// }
     /// ```
@@ -394,16 +394,18 @@ impl<'a> RustClr<'a> {
         let assembly = domain.load_name(&self.identity_assembly)?;
 
         // Prepares the parameters for the `Main` method
-        let parameters = self.args.as_ref().map_or_else(
-            || Ok(null_mut()),
-            |args| create_safe_array_args(args.to_vec())
-        )?;
+        let parameters = self
+            .args
+            .as_ref()
+            .map_or_else(|| Ok(null_mut()), |args| create_safe_array_args(args.to_vec()))?;
 
         // Loads the mscorlib library
         let mscorlib = domain.get_assembly(s!("mscorlib"))?;
 
         // If the exit patch is enabled, perform the patch in System.Environment.Exit
-        if self.patch_exit { self.patch_exit(&mscorlib)?; }
+        if self.patch_exit {
+            self.patch_exit(&mscorlib)?;
+        }
 
         // Redirects output if enabled
         let output = if self.redirect_output {
@@ -432,7 +434,7 @@ impl<'a> RustClr<'a> {
     }
 
     /// Patches the `System.Environment.Exit` method in `mscorlib` to avoid process termination.
-    /// 
+    ///
     /// # Arguments
     ///
     /// * `mscorlib` - The `_Assembly` object representing the loaded `mscorlib.dll`.
@@ -469,9 +471,15 @@ impl<'a> RustClr<'a> {
         let mut addr_exit = unsafe { ptr.Anonymous.Anonymous.Anonymous.byref };
         let mut old = 0;
         let mut size = 1;
-        
+
         // Change memory protection to RWX for patching
-        if !NT_SUCCESS(NtProtectVirtualMemory(NtCurrentProcess(), &mut addr_exit, &mut size, PAGE_EXECUTE_READWRITE, &mut old)) {
+        if !NT_SUCCESS(NtProtectVirtualMemory(
+            NtCurrentProcess(),
+            &mut addr_exit,
+            &mut size,
+            PAGE_EXECUTE_READWRITE,
+            &mut old,
+        )) {
             return Err(ClrError::GenericError("Failed to change memory protection to RWX"));
         }
 
@@ -482,14 +490,14 @@ impl<'a> RustClr<'a> {
         if !NT_SUCCESS(NtProtectVirtualMemory(NtCurrentProcess(), &mut addr_exit, &mut size, old, &mut old)) {
             return Err(ClrError::GenericError("Failed to restore memory protection"));
         }
-        
+
         Ok(())
     }
-    
+
     /// Retrieves the current application domain.
-    /// 
+    ///
     /// # Returns
-    /// 
+    ///
     /// * `Ok(_AppDomain)` - If the application domain is available.
     /// * `Err(ClrError)` - If no application domain is available.
     fn get_app_domain(&mut self) -> Result<_AppDomain> {
@@ -497,72 +505,74 @@ impl<'a> RustClr<'a> {
     }
 
     /// Creates an instance of `ICLRMetaHost`.
-    /// 
+    ///
     /// # Returns
-    /// 
+    ///
     /// * `Ok(ICLRMetaHost)` - If the instance is created successfully.
     /// * `Err(ClrError)` - If the instance creation fails.
     fn create_meta_host(&self) -> Result<ICLRMetaHost> {
-        CLRCreateInstance::<ICLRMetaHost>(&CLSID_CLRMETAHOST)
-            .map_err(|e| ClrError::MetaHostCreationError(format!("{e}")))
+        CLRCreateInstance::<ICLRMetaHost>(&CLSID_CLRMETAHOST).map_err(|e| ClrError::MetaHostCreationError(format!("{e}")))
     }
 
     /// Retrieves runtime information based on the selected .NET version.
-    /// 
+    ///
     /// # Arguments
-    /// 
+    ///
     /// * `meta_host` - Reference to the `ICLRMetaHost` instance.
-    /// 
+    ///
     /// # Returns
-    /// 
+    ///
     /// * `Ok(ICLRRuntimeInfo)` - If runtime information is retrieved successfully.
     /// * `Err(ClrError)` - If the retrieval fails.
     fn get_runtime_info(&self, meta_host: &ICLRMetaHost) -> Result<ICLRRuntimeInfo> {
         let runtime_version = self.runtime_version.unwrap_or(RuntimeVersion::V4);
         let version_wide = runtime_version.to_vec();
         let version = PCWSTR(version_wide.as_ptr());
-        meta_host.GetRuntime::<ICLRRuntimeInfo>(version)
+        meta_host
+            .GetRuntime::<ICLRRuntimeInfo>(version)
             .map_err(|e| ClrError::RuntimeInfoError(format!("{e}")))
     }
 
     /// Gets the runtime host interface from the provided runtime information.
-    /// 
+    ///
     /// # Arguments
-    /// 
+    ///
     /// * `runtime_info` - Reference to the `ICLRRuntimeInfo` instance.
-    /// 
+    ///
     /// # Returns
-    /// 
+    ///
     /// * `Ok(ICorRuntimeHost)` - If the interface is obtained successfully.
     /// * `Err(ClrError)` - If the retrieval fails.
     fn get_icor_runtime_host(&self, runtime_info: &ICLRRuntimeInfo) -> Result<ICorRuntimeHost> {
-        runtime_info.GetInterface::<ICorRuntimeHost>(&CLSID_COR_RUNTIME_HOST)
+        runtime_info
+            .GetInterface::<ICorRuntimeHost>(&CLSID_COR_RUNTIME_HOST)
             .map_err(|e| ClrError::RuntimeHostError(format!("{e}")))
     }
 
     /// Gets the runtime host interface from the provided runtime information.
-    /// 
+    ///
     /// # Arguments
-    /// 
+    ///
     /// * `runtime_info` - Reference to the `ICLRRuntimeInfo` instance.
-    /// 
+    ///
     /// # Returns
-    /// 
+    ///
     /// * `Ok(ICorRuntimeHost)` - If the interface is obtained successfully.
     /// * `Err(ClrError)` - If the retrieval fails.
     fn get_clr_runtime_host(&self, runtime_info: &ICLRRuntimeInfo) -> Result<ICLRuntimeHost> {
-        runtime_info.GetInterface::<ICLRuntimeHost>(&CLSID_ICLR_RUNTIME_HOST)
+        runtime_info
+            .GetInterface::<ICLRuntimeHost>(&CLSID_ICLR_RUNTIME_HOST)
             .map_err(|e| ClrError::RuntimeHostError(format!("{e}")))
     }
 
     /// Starts the CLR runtime using the provided runtime host.
-    /// 
+    ///
     /// # Arguments
-    /// 
+    ///
     /// * `iclr_runtime_host` - Reference to the `ICorRuntimeHost` instance.
-    /// 
+    ///
     /// # Returns
-    /// 
+    ///
     /// * `Ok(())` - If the runtime starts successfully.
     /// * `Err(ClrError)` - If the runtime fails to start.
     fn start_runtime(&self, iclr_runtime_host: &ICLRuntimeHost) -> Result<()> {
@@ -574,19 +584,23 @@ impl<'a> RustClr<'a> {
     }
 
     /// Initializes the application domain with the specified name or uses the default domain.
-    /// 
+    ///
     /// # Arguments
-    /// 
+    ///
     /// * `cor_runtime_host` - Reference to the `ICorRuntimeHost` instance.
-    /// 
+    ///
     /// # Returns
-    /// 
+    ///
     /// * `Ok(())` - If the application domain is successfully initialized.
     /// * `Err(ClrError)` - If the initialization fails.
     fn init_app_domain(&mut self, cor_runtime_host: &ICorRuntimeHost) -> Result<()> {
         // Creates the application domain based on the specified name or uses the default domain
         let app_domain = if let Some(domain_name) = &self.domain_name {
-            let wide_domain_name = domain_name.encode_utf16().chain(Some(0)).collect::<Vec<u16>>();
+            let wide_domain_name = domain_name
+                .encode_utf16()
+                .chain(Some(0))
+                .collect::<Vec<u16>>();
+
             cor_runtime_host.CreateDomain(PCWSTR(wide_domain_name.as_ptr()), null_mut())?
         } else {
             let uuid = uuid()
@@ -594,7 +608,7 @@ impl<'a> RustClr<'a> {
                 .encode_utf16()
                 .chain(Some(0))
                 .collect::<Vec<u16>>();
-            
+
             cor_runtime_host.CreateDomain(PCWSTR(uuid.as_ptr()), null_mut())?
         };
 
@@ -612,23 +626,22 @@ impl<'a> RustClr<'a> {
     /// * `Ok(())` - If the AppDomain is unloaded or not present.
     /// * `Err(ClrError)` - If unloading the domain fails.
     fn unload_domain(&self) -> Result<()> {
-        if let (Some(cor_runtime_host), Some(app_domain)) = (
-            &self.cor_runtime_host,
-            &self.app_domain,
-        ) {
+        if let (Some(cor_runtime_host), Some(app_domain)) = (&self.cor_runtime_host, &self.app_domain) {
             // Attempt to unload the AppDomain, log error if it fails
-            cor_runtime_host.UnloadDomain(app_domain.cast::<windows_core::IUnknown>()
-                .map(|i| i.as_raw().cast())
-                .unwrap_or(null_mut())
+            cor_runtime_host.UnloadDomain(
+                app_domain
+                    .cast::<windows_core::IUnknown>()
+                    .map(|i| i.as_raw().cast())
+                    .unwrap_or(null_mut()),
             )?
         }
-        
+
         Ok(())
     }
 }
 
 /// Implements the `Drop` trait to release memory when `RustClr` goes out of scope.
-impl<'a> Drop for RustClr<'a> {
+impl Drop for RustClr<'_> {
     fn drop(&mut self) {
         if let Some(cor_runtime_host) = &self.cor_runtime_host {
             // Attempt to stop the CLR runtime
@@ -661,10 +674,7 @@ impl<'a> ClrOutput<'a> {
     ///
     /// * A new instance of `ClrOutput`.
     pub fn new(mscorlib: &'a _Assembly) -> Self {
-        Self {
-            string_writer: None,
-            mscorlib
-        }
+        Self { string_writer: None, mscorlib }
     }
 
     /// Redirects standard output and error streams to a `StringWriter`.
@@ -675,12 +685,14 @@ impl<'a> ClrOutput<'a> {
     /// * `Err(ClrError)` - If an error occurs while attempting to redirect the streams.
     pub fn redirect(&mut self) -> Result<()> {
         let console = self.mscorlib.resolve_type(s!("System.Console"))?;
-        let string_writer = self.mscorlib.create_instance(s!("System.IO.StringWriter"))?;
+        let string_writer = self
+            .mscorlib
+            .create_instance(s!("System.IO.StringWriter"))?;
 
         // Invokes the methods
         console.invoke(s!("SetOut"), None, Some(vec![string_writer]), Invocation::Static)?;
         console.invoke(s!("SetError"), None, Some(vec![string_writer]), Invocation::Static)?;
-        
+
         // Saves the StringWriter instance to retrieve the output later
         self.string_writer = Some(string_writer);
         Ok(())
@@ -694,7 +706,8 @@ impl<'a> ClrOutput<'a> {
     /// * `Err(ClrError)` - If an error occurs while restoring the streams.
     pub fn restore(&mut self) -> Result<()> {
         let console = self.mscorlib.resolve_type(s!("System.Console"))?;
-        console.method_signature(s!("Void InitializeStdOutError(Boolean)"))?
+        console
+            .method_signature(s!("Void InitializeStdOutError(Boolean)"))?
             .invoke(None, Some(crate::create_safe_args(vec![true.to_variant()])?))?;
 
         Ok(())
@@ -708,15 +721,17 @@ impl<'a> ClrOutput<'a> {
     /// * `Err(ClrError)` - If an error occurs while capturing the output.
     pub fn capture(&self) -> Result<String> {
         // Ensure that the StringWriter instance is available
-        let mut instance = self.string_writer.ok_or(ClrError::GenericError("No StringWriter instance found"))?;
-        
+        let mut instance = self
+            .string_writer
+            .ok_or(ClrError::GenericError("No StringWriter instance found"))?;
+
         // Resolve the 'ToString' method on the StringWriter type
         let string_writer = self.mscorlib.resolve_type(s!("System.IO.StringWriter"))?;
         let to_string = string_writer.method(s!("ToString"))?;
-        
+
         // Invoke 'ToString' on the StringWriter instance
         let result = to_string.invoke(Some(instance), None)?;
-        
+
         // Extract the BSTR from the result
         let bstr = unsafe { result.Anonymous.Anonymous.Anonymous.bstrVal };
 
@@ -774,20 +789,21 @@ impl RustClrEnv {
     /// ```
     pub fn new(runtime_version: Option<RuntimeVersion>) -> Result<Self> {
         // Initialize MetaHost
-        let meta_host = CLRCreateInstance::<ICLRMetaHost>(&CLSID_CLRMETAHOST)
-            .map_err(|e| ClrError::MetaHostCreationError(format!("{e}")))?;
+        let meta_host = CLRCreateInstance::<ICLRMetaHost>(&CLSID_CLRMETAHOST).map_err(|e| ClrError::MetaHostCreationError(format!("{e}")))?;
 
         // Initialize RuntimeInfo
         let version_str = runtime_version.unwrap_or(RuntimeVersion::V4).to_vec();
         let version = PCWSTR(version_str.as_ptr());
 
-        let runtime_info = meta_host.GetRuntime::<ICLRRuntimeInfo>(version)
+        let runtime_info = meta_host
+            .GetRuntime::<ICLRRuntimeInfo>(version)
             .map_err(|e| ClrError::RuntimeInfoError(format!("{e}")))?;
 
         // Initialize CorRuntimeHost
-        let cor_runtime_host = runtime_info.GetInterface::<ICorRuntimeHost>(&CLSID_COR_RUNTIME_HOST)
+        let cor_runtime_host = runtime_info
+            .GetInterface::<ICorRuntimeHost>(&CLSID_COR_RUNTIME_HOST)
             .map_err(|e| ClrError::RuntimeHostError(format!("{e}")))?;
-        
+
         if cor_runtime_host.Start() != 0 {
             return Err(ClrError::RuntimeStartError);
         }
@@ -799,17 +815,12 @@ impl RustClrEnv {
             .chain(Some(0))
             .collect::<Vec<u16>>();
 
-        let app_domain = cor_runtime_host.CreateDomain(PCWSTR(uuid.as_ptr()), null_mut())
+        let app_domain = cor_runtime_host
+            .CreateDomain(PCWSTR(uuid.as_ptr()), null_mut())
             .map_err(|_| ClrError::NoDomainAvailable)?;
 
         // Return the initialized instance
-        Ok(Self {
-            runtime_version: runtime_version.unwrap_or(RuntimeVersion::V4),
-            meta_host,
-            runtime_info,
-            cor_runtime_host,
-            app_domain,
-        })
+        Ok(Self { runtime_version: runtime_version.unwrap_or(RuntimeVersion::V4), meta_host, runtime_info, cor_runtime_host, app_domain })
     }
 }
 
@@ -817,10 +828,11 @@ impl Drop for RustClrEnv {
     fn drop(&mut self) {
         // Attempt to unload the AppDomain, log error if it fails
         if let Err(e) = self.cor_runtime_host.UnloadDomain(
-            self.app_domain.cast::<windows_core::IUnknown>()
-                        .map(|i| i.as_raw().cast())
-                        .unwrap_or(null_mut()))
-        {
+            self.app_domain
+                .cast::<windows_core::IUnknown>()
+                .map(|i| i.as_raw().cast())
+                .unwrap_or(null_mut()),
+        ) {
             dinvk::println!("Failed to unload AppDomain: {:?}", e);
         }
 
@@ -834,10 +846,10 @@ impl Drop for RustClrEnv {
 pub enum RuntimeVersion {
     /// .NET Framework 2.0, identified by version `v2.0.50727`.
     V2,
-    
+
     /// .NET Framework 3.0, identified by version `v3.0`.
     V3,
-    
+
     /// .NET Framework 4.0, identified by version `v4.0.30319`.
     V4,
 
@@ -859,7 +871,10 @@ impl RuntimeVersion {
             RuntimeVersion::UNKNOWN => "UNKNOWN",
         };
 
-        runtime_version.encode_utf16().chain(Some(0)).collect::<Vec<u16>>()
+        runtime_version
+            .encode_utf16()
+            .chain(Some(0))
+            .collect::<Vec<u16>>()
     }
 }
 

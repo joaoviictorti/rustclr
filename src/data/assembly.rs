@@ -1,32 +1,28 @@
 use alloc::{string::String, vec::Vec};
-use obfstr::obfstr as s;
 use core::{
-    ffi::c_void, 
-    ops::Deref, 
-    ptr::{null_mut, null}
+    ffi::c_void,
+    ops::Deref,
+    ptr::{null, null_mut},
 };
-use {
-    super::{_MethodInfo, _Type},
-    crate::{error::ClrError, WinStr, Result},
-};
-use windows_core::{IUnknown, Interface, GUID};
+
+use obfstr::obfstr as s;
+use windows_core::{GUID, IUnknown, Interface};
 use windows_sys::{
     core::{BSTR, HRESULT},
     Win32::{
-        Foundation::VARIANT_BOOL, 
+        Foundation::VARIANT_BOOL,
         System::{
-            Com::SAFEARRAY, 
             Variant::VARIANT,
-            Ole::{
-                SafeArrayGetElement, 
-                SafeArrayGetLBound, 
-                SafeArrayGetUBound
-            }
-        }
-    }
+            Com::SAFEARRAY,
+            Ole::{SafeArrayGetElement, SafeArrayGetLBound, SafeArrayGetUBound},
+        },
+    },
 };
 
-/// This struct represents the COM `_Assembly` interface, 
+use super::{_MethodInfo, _Type};
+use crate::{Result, WinStr, error::ClrError};
+
+/// This struct represents the COM `_Assembly` interface,
 /// a .NET assembly in the CLR environment.
 #[repr(C)]
 #[derive(Debug, Clone)]
@@ -71,14 +67,14 @@ impl _Assembly {
         let str = entrypoint.ToString()?;
         match str.as_str() {
             str if str.ends_with(s!("Main()")) => entrypoint.invoke(None, None),
-            str if str.ends_with(s!("Main(System.String[])")) =>  {
+            str if str.ends_with(s!("Main(System.String[])")) => {
                 if args.is_null() {
-                    return Err(ClrError::MissingArguments)
+                    return Err(ClrError::MissingArguments);
                 }
 
                 entrypoint.invoke(None, Some(args))
             }
-            _ => Err(ClrError::MethodNotFound)
+            _ => Err(ClrError::MethodNotFound),
         }
     }
 
@@ -115,7 +111,7 @@ impl _Assembly {
         unsafe {
             SafeArrayGetLBound(sa_types, 1, &mut lbound);
             SafeArrayGetUBound(sa_types, 1, &mut ubound);
-            
+
             for i in lbound..=ubound {
                 let mut p_type = null_mut::<_Type>();
                 let hr = SafeArrayGetElement(sa_types, &i, &mut p_type as *mut _ as *mut _);
@@ -145,7 +141,9 @@ impl _Assembly {
     #[inline(always)]
     pub fn from_raw(raw: *mut c_void) -> Result<_Assembly> {
         let iunknown = unsafe { IUnknown::from_raw(raw) };
-        iunknown.cast::<_Assembly>().map_err(|_| ClrError::CastingError("_Assembly"))
+        iunknown
+            .cast::<_Assembly>()
+            .map_err(|_| ClrError::CastingError("_Assembly"))
     }
 }
 
@@ -161,14 +159,14 @@ impl _Assembly {
     /// * `Err(ClrError)` - On failure, returns a `ClrError`.
     pub fn ToString(&self) -> Result<String> {
         unsafe {
-            let mut result= null::<u16>();
+            let mut result = null::<u16>();
             let hr = (Interface::vtable(self).get_ToString)(Interface::as_raw(self), &mut result);
             if hr == 0 {
                 let mut len = 0;
                 while *result.add(len) != 0 {
                     len += 1;
                 }
-    
+
                 let slice = core::slice::from_raw_parts(result, len);
                 Ok(String::from_utf16_lossy(slice))
             } else {
@@ -221,7 +219,7 @@ impl _Assembly {
     /// * `Err(ClrError)` - If retrieval fails, returns a `ClrError`.
     pub fn GetType_2(&self, name: BSTR) -> Result<_Type> {
         let mut result = null_mut();
-        let hr: i32 = unsafe { (Interface::vtable(self).GetType_2)(Interface::as_raw(self), name, &mut result) };
+        let hr = unsafe { (Interface::vtable(self).GetType_2)(Interface::as_raw(self), name, &mut result) };
         if hr == 0 {
             _Type::from_raw(result as *mut c_void)
         } else {
@@ -296,7 +294,7 @@ impl _Assembly {
                 while *result.add(len) != 0 {
                     len += 1;
                 }
-    
+
                 let slice = core::slice::from_raw_parts(result, len);
                 Ok(String::from_utf16_lossy(slice))
             } else {
@@ -320,7 +318,7 @@ impl _Assembly {
                 while *result.add(len) != 0 {
                     len += 1;
                 }
-    
+
                 let slice = core::slice::from_raw_parts(result, len);
                 Ok(String::from_utf16_lossy(slice))
             } else {
@@ -384,7 +382,7 @@ impl _Assembly {
                 while *result.add(len) != 0 {
                     len += 1;
                 }
-    
+
                 let slice = core::slice::from_raw_parts(result, len);
                 Ok(String::from_utf16_lossy(slice))
             } else {
@@ -408,7 +406,7 @@ impl _Assembly {
                 while *result.add(len) != 0 {
                     len += 1;
                 }
-    
+
                 let slice = core::slice::from_raw_parts(result, len);
                 Ok(String::from_utf16_lossy(slice))
             } else {
@@ -423,8 +421,8 @@ unsafe impl Interface for _Assembly {
 
     /// The interface identifier (IID) for the `_Assembly` COM interface.
     ///
-    /// This GUID is used to identify the `_Assembly` interface when calling 
-    /// COM methods like `QueryInterface`. It is defined based on the standard 
+    /// This GUID is used to identify the `_Assembly` interface when calling
+    /// COM methods like `QueryInterface`. It is defined based on the standard
     /// .NET CLR IID for the `_Assembly` interface.
     const IID: GUID = GUID::from_u128(0x17156360_2f1a_384a_bc52_fde93c215c5b);
 }
@@ -434,8 +432,8 @@ impl Deref for _Assembly {
 
     /// Provides a reference to the underlying `IUnknown` interface.
     ///
-    /// This implementation allows `_Assembly` to be used as an `IUnknown` 
-    /// pointer, enabling access to basic COM methods like `AddRef`, `Release`, 
+    /// This implementation allows `_Assembly` to be used as an `IUnknown`
+    /// pointer, enabling access to basic COM methods like `AddRef`, `Release`,
     /// and `QueryInterface`.
     fn deref(&self) -> &Self::Target {
         unsafe { core::mem::transmute(self) }
@@ -445,7 +443,7 @@ impl Deref for _Assembly {
 #[repr(C)]
 pub struct _Assembly_Vtbl {
     /// Base vtable inherited from the `IUnknown` interface.
-    /// 
+    ///
     /// This field contains the basic methods for reference management,
     /// like `AddRef`, `Release`, and `QueryInterface`.
     base__: windows_core::IUnknown_Vtbl,
@@ -459,17 +457,14 @@ pub struct _Assembly_Vtbl {
     /// Retrieves the string representation of the assembly.
     ///
     /// # Arguments
-    /// 
+    ///
     /// * `this` - Pointer to the COM object.
     /// * `pRetVal` - Pointer to a `BSTR` that receives the string result.
     ///
     /// # Returns
-    /// 
+    ///
     /// * Returns an HRESULT indicating success or failure.
-    get_ToString: unsafe extern "system" fn(
-        this: *mut c_void, 
-        pRetVal: *mut BSTR
-    ) -> HRESULT,
+    get_ToString: unsafe extern "system" fn(this: *mut c_void, pRetVal: *mut BSTR) -> HRESULT,
 
     /// Placeholder for the method. Not used directly.
     Equals: *const c_void,
@@ -477,17 +472,14 @@ pub struct _Assembly_Vtbl {
     /// Retrieves the hash code of the assembly.
     ///
     /// # Arguments
-    /// 
+    ///
     /// * `this` - Pointer to the COM object.
     /// * `pRetVal` - Pointer to a variable that receives the hash code.
     ///
     /// # Returns
-    /// 
+    ///
     /// * Returns an HRESULT indicating success or failure.
-    GetHashCode: unsafe extern "system" fn(
-        this: *mut c_void,
-        pRetVal: *mut u32
-    ) -> HRESULT,
+    GetHashCode: unsafe extern "system" fn(this: *mut c_void, pRetVal: *mut u32) -> HRESULT,
 
     /// Retrieves the type of the assembly.
     ///
@@ -499,10 +491,7 @@ pub struct _Assembly_Vtbl {
     /// # Returns
     ///
     /// * Returns an HRESULT indicating success or failure.
-    GetType: unsafe extern "system" fn(
-        this: *mut c_void,
-        pRetVal: *mut *mut _Type
-    ) -> HRESULT,
+    GetType: unsafe extern "system" fn(this: *mut c_void, pRetVal: *mut *mut _Type) -> HRESULT,
 
     /// Retrieves the codebase of the assembly.
     ///
@@ -514,10 +503,7 @@ pub struct _Assembly_Vtbl {
     /// # Returns
     ///
     /// * Returns an HRESULT indicating success or failure.
-    get_CodeBase: unsafe extern "system" fn(
-        this: *mut c_void,
-        pRetVal: *mut BSTR
-    ) -> HRESULT,
+    get_CodeBase: unsafe extern "system" fn(this: *mut c_void, pRetVal: *mut BSTR) -> HRESULT,
 
     /// Retrieves the escaped codebase of the assembly.
     ///
@@ -529,10 +515,7 @@ pub struct _Assembly_Vtbl {
     /// # Returns
     ///
     /// * Returns an HRESULT indicating success or failure.
-    get_EscapedCodeBase: unsafe extern "system" fn(
-        this: *mut c_void,
-        pRetVal: *mut BSTR
-    ) -> HRESULT,
+    get_EscapedCodeBase: unsafe extern "system" fn(this: *mut c_void, pRetVal: *mut BSTR) -> HRESULT,
 
     /// Retrieves the name of the assembly.
     ///
@@ -544,10 +527,7 @@ pub struct _Assembly_Vtbl {
     /// # Returns
     ///
     /// * Returns an HRESULT indicating success or failure.
-    GetName: unsafe extern "system" fn(
-        this: *mut c_void,
-        pRetVal: *mut *mut c_void
-    ) -> HRESULT,
+    GetName: unsafe extern "system" fn(this: *mut c_void, pRetVal: *mut *mut c_void) -> HRESULT,
 
     /// Retrieves the name of the assembly.
     ///
@@ -559,11 +539,7 @@ pub struct _Assembly_Vtbl {
     /// # Returns
     ///
     /// * Returns an HRESULT indicating success or failure.
-    GetName_2: unsafe extern "system" fn(
-        this: *mut c_void,
-        copiedName: VARIANT_BOOL,
-        pRetVal: *mut *mut c_void
-    ) -> HRESULT,
+    GetName_2: unsafe extern "system" fn(this: *mut c_void, copiedName: VARIANT_BOOL, pRetVal: *mut *mut c_void) -> HRESULT,
 
     /// Retrieves the name of the assembly, with an option to specify if a copy of the name is returned.
     ///
@@ -576,10 +552,7 @@ pub struct _Assembly_Vtbl {
     /// # Returns
     ///
     /// * Returns an HRESULT indicating success or failure.
-    get_FullName: unsafe extern "system" fn(
-        this: *mut c_void,
-        pRetVal: *mut BSTR
-    ) -> HRESULT,
+    get_FullName: unsafe extern "system" fn(this: *mut c_void, pRetVal: *mut BSTR) -> HRESULT,
 
     /// Retrieves the entry point method of the assembly.
     ///
@@ -591,10 +564,7 @@ pub struct _Assembly_Vtbl {
     /// # Returns
     ///
     /// * Returns an HRESULT indicating success or failure.
-    get_EntryPoint: unsafe extern "system" fn(
-        this: *mut c_void,
-        pRetVal: *mut *mut _MethodInfo
-    ) -> HRESULT,
+    get_EntryPoint: unsafe extern "system" fn(this: *mut c_void, pRetVal: *mut *mut _MethodInfo) -> HRESULT,
 
     /// Retrieves a type by its name from the assembly.
     ///
@@ -607,13 +577,9 @@ pub struct _Assembly_Vtbl {
     /// # Returns
     ///
     /// * Returns an HRESULT indicating success or failure.
-    GetType_2: unsafe extern "system" fn(
-        this: *mut c_void,
-        name: BSTR,
-        pRetVal: *mut *mut _Type
-    ) -> HRESULT,
+    GetType_2: unsafe extern "system" fn(this: *mut c_void, name: BSTR, pRetVal: *mut *mut _Type) -> HRESULT,
 
-    ///Placeholder for the method. Not used directly.
+    /// Placeholder for the method. Not used directly.
     GetType_3: *const c_void,
 
     /// Placeholder for the method. Not used directly.
@@ -629,10 +595,7 @@ pub struct _Assembly_Vtbl {
     /// # Returns
     ///
     /// * Returns an HRESULT indicating success or failure.
-    GetTypes: unsafe extern "system" fn(
-        this: *mut c_void,
-        pRetVal: *mut *mut SAFEARRAY
-    ) -> HRESULT,
+    GetTypes: unsafe extern "system" fn(this: *mut c_void, pRetVal: *mut *mut SAFEARRAY) -> HRESULT,
 
     /// Placeholder for the methods. Not used directly.
     GetManifestResourceStream: *const c_void,
@@ -653,10 +616,7 @@ pub struct _Assembly_Vtbl {
     /// # Returns
     ///
     /// * Returns an HRESULT indicating success or failure.
-    get_Location: unsafe extern "system" fn(
-        this: *mut c_void,
-        pRetVal: *mut BSTR
-    ) -> HRESULT,
+    get_Location: unsafe extern "system" fn(this: *mut c_void, pRetVal: *mut BSTR) -> HRESULT,
 
     /// Placeholder for the methods. Not used directly.
     get_Evidence: *const c_void,
@@ -683,11 +643,7 @@ pub struct _Assembly_Vtbl {
     /// # Returns
     ///
     /// * Returns an HRESULT indicating success or failure.
-    CreateInstance: unsafe extern "system" fn(
-        this: *mut c_void,
-        typeName: BSTR,
-        pRetVal: *mut VARIANT
-    ) -> HRESULT,
+    CreateInstance: unsafe extern "system" fn(this: *mut c_void, typeName: BSTR, pRetVal: *mut VARIANT) -> HRESULT,
 
     /// Placeholder for the methods. Not used directly.
     CreateInstance_2: *const c_void,
@@ -698,5 +654,5 @@ pub struct _Assembly_Vtbl {
     GetModules_2: *const c_void,
     GetModule: *const c_void,
     GetReferencedAssemblies: *const c_void,
-    get_GlobalAssemblyCache: *const c_void
-}   
+    get_GlobalAssemblyCache: *const c_void,
+}

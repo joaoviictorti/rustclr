@@ -1,23 +1,24 @@
-use core::{
-    ffi::c_void, 
-    ops::Deref, 
-    ptr::{null, null_mut}
-}; 
-use {
-    super::_Type, crate::Result,
-    crate::error::ClrError, 
-};
 use alloc::string::String;
-use windows_core::{IUnknown, Interface, GUID};
-use windows_sys::{
-    core::{BSTR, HRESULT}, 
-    Win32::System::{
-        Com::SAFEARRAY,
-        Variant::{VariantClear, VARIANT}
-    }
+use core::{
+    ffi::c_void,
+    ops::Deref,
+    ptr::{null, null_mut},
 };
 
-/// This struct represents the COM `_MethodInfo` interface, 
+use windows_core::{GUID, IUnknown, Interface};
+use windows_sys::{
+    core::{BSTR, HRESULT},
+    Win32::System::{
+        Com::SAFEARRAY,
+        Variant::{VARIANT, VariantClear},
+    },
+};
+
+use super::_Type;
+use crate::Result;
+use crate::error::ClrError;
+
+/// This struct represents the COM `_MethodInfo` interface,
 /// a .NET assembly in the CLR environment.
 #[repr(C)]
 #[derive(Debug, Clone)]
@@ -30,7 +31,7 @@ impl _MethodInfo {
     /// Invokes the method represented by this `_MethodInfo` instance.
     ///
     /// # Arguments
-    /// 
+    ///
     /// * `obj` - An optional `VARIANT` representing the target object for instance methods.
     /// * `parameters` - An optional pointer to a `SAFEARRAY` containing the parameters for the method.
     ///
@@ -56,7 +57,9 @@ impl _MethodInfo {
     #[inline(always)]
     pub fn from_raw(raw: *mut c_void) -> Result<_MethodInfo> {
         let iunknown = unsafe { IUnknown::from_raw(raw) };
-        iunknown.cast::<_MethodInfo>().map_err(|_| ClrError::CastingError("_MethodInfo"))
+        iunknown
+            .cast::<_MethodInfo>()
+            .map_err(|_| ClrError::CastingError("_MethodInfo"))
     }
 }
 
@@ -79,7 +82,7 @@ impl _MethodInfo {
                 while *result.add(len) != 0 {
                     len += 1;
                 }
-    
+
                 let slice = core::slice::from_raw_parts(result, len);
                 Ok(String::from_utf16_lossy(slice))
             } else {
@@ -103,7 +106,7 @@ impl _MethodInfo {
                 while *result.add(len) != 0 {
                     len += 1;
                 }
-    
+
                 let slice = core::slice::from_raw_parts(result, len);
                 Ok(String::from_utf16_lossy(slice))
             } else {
@@ -115,7 +118,7 @@ impl _MethodInfo {
     /// Internal invocation method for the method, used by `invoke`.
     ///
     /// # Arguments
-    /// 
+    ///
     /// * `obj` - A `VARIANT` representing the target instance or null for static methods.
     /// * `parameters` - A pointer to a `SAFEARRAY` containing the parameters for the method.
     ///
@@ -170,7 +173,7 @@ impl _MethodInfo {
 
     /// Calls the `GetBaseDefinition` method from the vtable of the `_MethodInfo` interface.
     ///
-    /// This method retrieves the base definition of the current method, 
+    /// This method retrieves the base definition of the current method,
     /// which represents the original declaration of the method in the inheritance chain.
     ///
     /// # Returns
@@ -209,8 +212,8 @@ unsafe impl Interface for _MethodInfo {
 
     /// The interface identifier (IID) for the `_MethodInfo` COM interface.
     ///
-    /// This GUID is used to identify the `_MethodInfo` interface when calling 
-    /// COM methods like `QueryInterface`. It is defined based on the standard 
+    /// This GUID is used to identify the `_MethodInfo` interface when calling
+    /// COM methods like `QueryInterface`. It is defined based on the standard
     /// .NET CLR IID for the `_MethodInfo` interface.
     const IID: GUID = GUID::from_u128(0xffcc1b5d_ecb8_38dd_9b01_3dc8abc2aa5f);
 }
@@ -220,8 +223,8 @@ impl Deref for _MethodInfo {
 
     /// Provides a reference to the underlying `IUnknown` interface.
     ///
-    /// This implementation allows `_MethodInfo` to be used as an `IUnknown` 
-    /// pointer, enabling access to basic COM methods like `AddRef`, `Release`, 
+    /// This implementation allows `_MethodInfo` to be used as an `IUnknown`
+    /// pointer, enabling access to basic COM methods like `AddRef`, `Release`,
     /// and `QueryInterface`.
     fn deref(&self) -> &Self::Target {
         unsafe { core::mem::transmute(self) }
@@ -231,11 +234,11 @@ impl Deref for _MethodInfo {
 #[repr(C)]
 pub struct _MethodInfo_Vtbl {
     /// Base vtable inherited from the `IUnknown` interface.
-    /// 
+    ///
     /// This field contains the basic methods for reference management,
     /// like `AddRef`, `Release`, and `QueryInterface`.
     pub base__: windows_core::IUnknown_Vtbl,
-    
+
     /// Placeholder for the methods .Not used directly.
     GetTypeInfoCount: *const c_void,
     GetTypeInfo: *const c_void,
@@ -245,17 +248,14 @@ pub struct _MethodInfo_Vtbl {
     /// Retrieves the string representation of the Method.
     ///
     /// # Arguments
-    /// 
+    ///
     /// * `this` - Pointer to the COM object.
     /// * `pRetVal` - Pointer to a `BSTR` that receives the string result.
     ///
     /// # Returns
-    /// 
+    ///
     /// * Returns an HRESULT indicating success or failure.
-    get_ToString: unsafe extern "system" fn(
-        this: *mut c_void,
-        pRetVal: *mut BSTR
-    ) -> HRESULT,
+    get_ToString: unsafe extern "system" fn(this: *mut c_void, pRetVal: *mut BSTR) -> HRESULT,
 
     /// Placeholder for the method. Not used directly.
     Equals: *const c_void,
@@ -268,12 +268,9 @@ pub struct _MethodInfo_Vtbl {
     /// * `pRetVal` - Pointer to a `u32` that receives the hash code.
     ///
     /// # Returns
-    /// 
+    ///
     /// * Returns an HRESULT indicating success or failure.
-    GetHashCode: unsafe extern "system" fn(
-        this: *mut c_void,
-        pRetVal: *mut u32
-    ) -> HRESULT,
+    GetHashCode: unsafe extern "system" fn(this: *mut c_void, pRetVal: *mut u32) -> HRESULT,
 
     /// Retrieves the type information associated with the method.
     ///
@@ -283,12 +280,9 @@ pub struct _MethodInfo_Vtbl {
     /// * `pRetVal` - Pointer to `_Type` where the type information is stored.
     ///
     /// # Returns
-    /// 
+    ///
     /// * Returns an HRESULT indicating success or failure.
-    GetType: unsafe extern "system" fn(
-        this: *mut c_void,
-        pRetVal: *mut *mut _Type
-    ) -> HRESULT,
+    GetType: unsafe extern "system" fn(this: *mut c_void, pRetVal: *mut *mut _Type) -> HRESULT,
 
     /// Placeholder for the method. Not used directly.
     get_MemberType: *const c_void,
@@ -301,12 +295,9 @@ pub struct _MethodInfo_Vtbl {
     /// * `pRetVal` - Pointer to a `BSTR` that receives the method's name.
     ///
     /// # Returns
-    /// 
+    ///
     /// * Returns an HRESULT indicating success or failure.
-    get_name: unsafe extern "system" fn(
-        this: *mut c_void,
-        pRetVal: *mut BSTR
-    ) -> HRESULT,
+    get_name: unsafe extern "system" fn(this: *mut c_void, pRetVal: *mut BSTR) -> HRESULT,
 
     /// Placeholder for the methods. Not used directly.
     get_DeclaringType: *const c_void,
@@ -323,12 +314,9 @@ pub struct _MethodInfo_Vtbl {
     /// - `pRetVal` - Pointer to a `SAFEARRAY` that receives the parameters.
     ///
     /// # Returns
-    /// 
+    ///
     /// * Returns an HRESULT indicating success or failure.
-    GetParameters: unsafe extern "system" fn(
-        this: *mut c_void,
-        pRetVal: *mut *mut SAFEARRAY
-    ) -> HRESULT,
+    GetParameters: unsafe extern "system" fn(this: *mut c_void, pRetVal: *mut *mut SAFEARRAY) -> HRESULT,
 
     /// Placeholder for the methods. Not used directly.
     GetMethodImplementationFlags: *const c_void,
@@ -360,14 +348,9 @@ pub struct _MethodInfo_Vtbl {
     /// * `pRetVal` - Pointer to a `VARIANT` that will hold the result of the invocation.
     ///
     /// # Returns
-    /// 
+    ///
     /// * Returns an HRESULT indicating success or failure.
-    Invoke_3: unsafe extern "system" fn(
-        this: *mut c_void,
-        obj: VARIANT,
-        parameters: *mut SAFEARRAY,
-        pRetVal: *mut VARIANT
-    ) -> HRESULT,
+    Invoke_3: unsafe extern "system" fn(this: *mut c_void, obj: VARIANT, parameters: *mut SAFEARRAY, pRetVal: *mut VARIANT) -> HRESULT,
 
     /// Placeholder for the methods. Not used directly.
     get_returnType: *const c_void,
@@ -381,10 +364,7 @@ pub struct _MethodInfo_Vtbl {
     /// * `pRetVal` - Pointer to `_MethodInfo` that will hold the base definition.
     ///
     /// # Returns
-    /// 
+    ///
     /// * Returns an HRESULT indicating success or failure.
-    GetBaseDefinition: unsafe extern "system" fn(
-        this: *mut c_void,
-        pRetVal: *mut *mut _MethodInfo
-    ) -> HRESULT,
+    GetBaseDefinition: unsafe extern "system" fn(this: *mut c_void, pRetVal: *mut *mut _MethodInfo) -> HRESULT,
 }
