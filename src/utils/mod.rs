@@ -1,21 +1,17 @@
 use alloc::{string::String, vec::Vec};
-use windows_sys::Win32::{
-    Foundation::{
-        SysAllocString, 
-        SysStringLen,
-    }, 
-};
+
+use windows_sys::Win32::Foundation::{SysAllocString, SysStringLen};
 
 /// Module related to safearray creation
 mod safearray;
 pub use safearray::*;
- 
+
 /// Module used to validate that the file corresponds to what is expected
 pub(crate) mod file;
 
 /// The `WinStr` trait provides methods for working with BSTRs (Binary String),
-/// a format commonly used in Windows API. BSTRs are wide strings (UTF-16) 
-/// with specific memory layouts, used for interoperation with COM 
+/// a format commonly used in Windows API. BSTRs are wide strings (UTF-16)
+/// with specific memory layouts, used for interoperation with COM
 /// (Component Object Model) and other Windows-based APIs.
 pub trait WinStr {
     /// Converts a Rust string into a BSTR.
@@ -40,7 +36,7 @@ pub trait WinStr {
     fn to_bstr(&self) -> *const u16;
 
     /// Converts a BSTR (pointer `*const u16`) back to a Rust `String`.
-    /// 
+    ///
     /// # Returns
     ///
     /// * `String` - A `String` containing the text from the BSTR if the trait
@@ -114,8 +110,8 @@ pub(crate) fn uuid() -> uuid::Uuid {
     let mut buf = [0u8; 16];
 
     for i in 0..4 {
-        let ticks = unsafe { core::arch::x86_64::_rdtsc() }; 
-        buf[i * 4 + 0] = (ticks >> 0) as u8;
+        let ticks = unsafe { core::arch::x86_64::_rdtsc() };
+        buf[i * 4] = ticks as u8;
         buf[i * 4 + 1] = (ticks >> 8) as u8;
         buf[i * 4 + 2] = (ticks >> 16) as u8;
         buf[i * 4 + 3] = (ticks >> 24) as u8;

@@ -1,9 +1,11 @@
-use windows_core::*;
-use crate::data::*;
-use obfstr::obfstr as s;
 use alloc::string::{String, ToString};
-use windows_sys::Win32::UI::Shell::SHCreateMemStream;
 use core::{ffi::c_void, ptr::null_mut};
+
+use windows_core::*;
+use obfstr::obfstr as s;
+use windows_sys::Win32::UI::Shell::SHCreateMemStream;
+
+use crate::data::*;
 
 /// Implements `IHostControl`. Exposes a custom `IHostAssemblyManager` to the CLR.
 #[implement(IHostControl)]
@@ -16,17 +18,15 @@ impl RustClrControl {
     /// Creates a new `RustClrControl` with the target assembly and buffer.
     ///
     /// # Arguments
-    /// 
+    ///
     /// * `buffer` - raw .NET assembly bytes
     /// * `assembly` - full identity of the target assembly
     ///
     /// # Returns
-    /// 
+    ///
     /// * `Self` - initialized `RustClrControl`
     pub fn new(buffer: &[u8], assembly: &str) -> Self {
-        Self {
-            manager: RustClrManager::new(buffer, assembly.to_string()).into(),
-        }
+        Self { manager: RustClrManager::new(buffer, assembly.to_string()).into() }
     }
 }
 
@@ -34,17 +34,17 @@ impl IHostControl_Impl for RustClrControl_Impl {
     /// Returns `IHostAssemblyManager` when requested.
     ///
     /// # Arguments
-    /// 
+    ///
     /// * `riid` - requested interface IID
     /// * `ppobject` - out pointer
     ///
     /// # Returns
-    /// 
+    ///
     /// * `Ok(())` - if IID matches `IHostAssemblyManager`
     /// * `Err(E_NOINTERFACE)` - otherwise
     fn GetHostManager(&self, riid: *const GUID, ppobject: *mut *mut c_void) -> Result<()> {
         unsafe {
-            if *riid  == IHostAssemblyManager::IID {
+            if *riid == IHostAssemblyManager::IID {
                 *ppobject = self.manager.as_raw();
                 return Ok(());
             }
@@ -58,7 +58,7 @@ impl IHostControl_Impl for RustClrControl_Impl {
             // IHostSecurityManager
             *ppobject = null_mut();
             Err(Error::new(HRESULT(0x80004002u32 as i32), s!("E_NOINTERFACE")))
-        } 
+        }
     }
 
     /// Not implemented.
@@ -78,17 +78,15 @@ impl RustClrManager {
     /// Creates a new `RustClrManager`.
     ///
     /// # Arguments
-    /// 
+    ///
     /// * `buffer` - .NET assembly bytes
     /// * `assembly` - target identity string
     ///
     /// # Returns
-    /// 
+    ///
     /// * `Self` - initialized manager
     pub fn new(buffer: &[u8], assembly: String) -> Self {
-        Self {
-            store: RustClrStore::new(buffer, assembly).into(),
-        }
+        Self { store: RustClrStore::new(buffer, assembly).into() }
     }
 }
 
@@ -101,7 +99,7 @@ impl IHostAssemblyManager_Impl for RustClrManager_Impl {
     /// Returns the custom `IHostAssemblyStore`.
     ///
     /// # Returns
-    /// 
+    ///
     /// * `Ok(store)` - reference to internal store
     fn GetAssemblyStore(&self) -> Result<IHostAssemblyStore> {
         Ok(self.store.clone())
@@ -118,16 +116,16 @@ pub struct RustClrStore<'a> {
     assembly: String,
 }
 
-impl<'a> RustClrStore <'a> {
+impl<'a> RustClrStore<'a> {
     /// Creates a new `RustClrStore`.
     ///
     /// # Arguments
-    /// 
+    ///
     /// * `buffer` - .NET assembly in bytes
     /// * `assembly` - identity name
     ///
     /// # Returns
-    /// 
+    ///
     /// * `Self`
     pub fn new(buffer: &'a [u8], assembly: String) -> Self {
         Self { buffer, assembly }
@@ -138,25 +136,26 @@ impl IHostAssemblyStore_Impl for RustClrStore_Impl<'_> {
     /// Returns the in-memory assembly if identity matches.
     ///
     /// # Arguments
-    /// 
+    ///
     /// * `pbindinfo` - binding info (post-policy identity must match)
     /// * `passemblyid` - returned ID (set to 500)
     /// * `pcontext` - always set to 0
     /// * `ppstmassemblyimage` - returned SHCreateMemStream
     ///
     /// # Returns
-    /// 
+    ///
     /// * `Ok(())` - if identity matches
     /// * `Err(0x80070002)` - if unknown
     fn ProvideAssembly(
-        &self, 
+        &self,
         pbindinfo: *const AssemblyBindInfo,
-        passemblyid: *mut u64, 
-        pcontext: *mut u64, 
-        ppstmassemblyimage: *mut *mut c_void, 
-        _ppstmpdb: *mut *mut c_void
+        passemblyid: *mut u64,
+        pcontext: *mut u64,
+        ppstmassemblyimage: *mut *mut c_void,
+        _ppstmpdb: *mut *mut c_void,
     ) -> Result<()> {
         let identity = unsafe { (*pbindinfo).lpPostPolicyIdentity.to_string() }?;
+
         if self.assembly == identity {
             let stream = unsafe { SHCreateMemStream(self.buffer.as_ptr(), self.buffer.len() as u32) };
             unsafe { *passemblyid = 800 };
@@ -164,17 +163,17 @@ impl IHostAssemblyStore_Impl for RustClrStore_Impl<'_> {
             unsafe { *ppstmassemblyimage = stream };
             return Ok(());
         }
-        
+
         Err(Error::new(HRESULT(0x80070002u32 as i32), s!("Assembly not recognized")))
     }
 
     /// Not implemented.
     fn ProvideModule(
-        &self, 
+        &self,
         _pbindinfo: *const ModuleBindInfo,
-        _pdwmoduleid: *mut u32, 
-        _ppstmmoduleimage: *mut *mut c_void, 
-        _ppstmpdb: *mut *mut c_void
+        _pdwmoduleid: *mut u32,
+        _ppstmmoduleimage: *mut *mut c_void,
+        _ppstmpdb: *mut *mut c_void,
     ) -> Result<()> {
         Err(Error::new(HRESULT(0x80070002u32 as i32), s!("Module not recognized")))
     }

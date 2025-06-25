@@ -1,29 +1,19 @@
-use core::{
-    ffi::c_void, 
-    ops::Deref, 
-    ptr::null_mut
-};
-use super::{_Type, _Assembly};
-use crate::{
-    create_safe_array_buffer,
-    WinStr, error::ClrError,
-    Result
-};
+use core::{ffi::c_void, ops::Deref, ptr::null_mut};
 use alloc::{string::String, vec::Vec};
-use windows_core::{IUnknown, Interface, GUID};
+
+use windows_core::{GUID, IUnknown, Interface};
 use windows_sys::{
     core::{BSTR, HRESULT},
     Win32::System::{
-        Com::SAFEARRAY, 
-        Ole::{
-            SafeArrayGetElement, 
-            SafeArrayGetLBound, 
-            SafeArrayGetUBound
-        }
-    }
+        Com::SAFEARRAY,
+        Ole::{SafeArrayGetElement, SafeArrayGetLBound, SafeArrayGetUBound},
+    },
 };
 
-/// This struct represents the COM `_AppDomain` interface, 
+use super::{_Assembly, _Type};
+use crate::{Result, WinStr, create_safe_array_buffer, error::ClrError};
+
+/// This struct represents the COM `_AppDomain` interface,
 /// a .NET assembly in the CLR environment.
 #[repr(C)]
 #[derive(Debug, Clone)]
@@ -35,7 +25,7 @@ pub struct _AppDomain(windows_core::IUnknown);
 impl _AppDomain {
     /// Loads an assembly into the current application domain from a byte slice.
     ///
-    /// This method creates a `SAFEARRAY` from the given byte buffer and loads it using 
+    /// This method creates a `SAFEARRAY` from the given byte buffer and loads it using
     /// the `Load_3` method.
     ///
     /// # Arguments
@@ -47,7 +37,7 @@ impl _AppDomain {
     /// * `Ok(_Assembly)` - If successful, returns an `_Assembly` instance.
     /// * `Err(ClrError)` - If loading fails, returns a `ClrError`.
     pub fn load_bytes(&self, buffer: &[u8]) -> Result<_Assembly> {
-        let safe_array = create_safe_array_buffer(&buffer)?;
+        let safe_array = create_safe_array_buffer(buffer)?;
         self.Load_3(safe_array)
     }
 
@@ -81,7 +71,9 @@ impl _AppDomain {
     #[inline(always)]
     pub fn from_raw(raw: *mut c_void) -> Result<_AppDomain> {
         let iunknown = unsafe { IUnknown::from_raw(raw) };
-        iunknown.cast::<_AppDomain>().map_err(|_| ClrError::CastingError("_AppDomain"))
+        iunknown
+            .cast::<_AppDomain>()
+            .map_err(|_| ClrError::CastingError("_AppDomain"))
     }
 
     /// Searches for an assembly by name within the current AppDomain.
@@ -123,7 +115,7 @@ impl _AppDomain {
         unsafe {
             SafeArrayGetLBound(sa_assemblies, 1, &mut lbound);
             SafeArrayGetUBound(sa_assemblies, 1, &mut ubound);
-            
+
             for i in lbound..=ubound {
                 let mut p_assembly = null_mut::<_Assembly>();
                 let hr = SafeArrayGetElement(sa_assemblies, &i, &mut p_assembly as *mut _ as *mut _);
@@ -148,11 +140,11 @@ impl _AppDomain {
     /// Calls the `Load_3` method from the vtable of the `_AppDomain` interface.
     ///
     /// # Arguments
-    /// 
+    ///
     /// * `rawAssembly` - The raw assembly data as a `SAFEARRAY` pointer.
-    /// 
+    ///
     /// # Returns
-    /// 
+    ///
     /// * `Ok(_Assembly)` - If successful, returns a `_Assembly` instance.
     /// * `Err(ClrError)` - If loading fails, returns a `ClrError`.
     pub fn Load_3(&self, rawAssembly: *mut SAFEARRAY) -> Result<_Assembly> {
@@ -168,15 +160,15 @@ impl _AppDomain {
     /// Calls the `Load_2` method from the vtable of the `_AppDomain` interface.
     ///
     /// # Arguments
-    /// 
+    ///
     /// * `rawAssembly` - The raw assembly data as a `SAFEARRAY` pointer.
-    /// 
+    ///
     /// # Returns
-    /// 
+    ///
     /// * `Ok(_Assembly)` - If successful, returns a `_Assembly` instance.
     /// * `Err(ClrError)` - If loading fails, returns a `ClrError`.
     pub fn Load_2(&self, assemblyString: BSTR) -> Result<_Assembly> {
-        let mut result  = null_mut();
+        let mut result = null_mut();
         let hr = unsafe { (Interface::vtable(self).Load_2)(Interface::as_raw(self), assemblyString, &mut result) };
         if hr == 0 {
             _Assembly::from_raw(result as *mut c_void)
@@ -184,7 +176,7 @@ impl _AppDomain {
             Err(ClrError::ApiError("Load_2", hr))
         }
     }
-    
+
     /// Calls the `GetHashCode` method from the vtable of the `_AppDomain` interface.
     ///
     /// # Returns
@@ -200,7 +192,7 @@ impl _AppDomain {
             Err(ClrError::ApiError("GetHashCode", hr))
         }
     }
-    
+
     /// Retrieves the primary type associated with the current app domain.
     ///
     /// # Returns
@@ -239,8 +231,8 @@ unsafe impl Interface for _AppDomain {
 
     /// The interface identifier (IID) for the `_AppDomain` COM interface.
     ///
-    /// This GUID is used to identify the `_AppDomain` interface when calling 
-    /// COM methods like `QueryInterface`. It is defined based on the standard 
+    /// This GUID is used to identify the `_AppDomain` interface when calling
+    /// COM methods like `QueryInterface`. It is defined based on the standard
     /// .NET CLR IID for the `_AppDomain` interface.
     const IID: GUID = GUID::from_u128(0x05F696DC_2B29_3663_AD8B_C4389CF2A713);
 }
@@ -250,8 +242,8 @@ impl Deref for _AppDomain {
 
     /// Provides a reference to the underlying `IUnknown` interface.
     ///
-    /// This implementation allows `_AppDomain` to be used as an `IUnknown` 
-    /// pointer, enabling access to basic COM methods like `AddRef`, `Release`, 
+    /// This implementation allows `_AppDomain` to be used as an `IUnknown`
+    /// pointer, enabling access to basic COM methods like `AddRef`, `Release`,
     /// and `QueryInterface`.
     fn deref(&self) -> &Self::Target {
         unsafe { core::mem::transmute(self) }
@@ -261,7 +253,7 @@ impl Deref for _AppDomain {
 #[repr(C)]
 pub struct _AppDomainVtbl {
     /// Base vtable inherited from the `IUnknown` interface.
-    /// 
+    ///
     /// This field contains the basic methods for reference management,
     /// like `AddRef`, `Release`, and `QueryInterface`.
     pub base__: windows_core::IUnknown_Vtbl,
@@ -279,34 +271,28 @@ pub struct _AppDomainVtbl {
     /// This method returns the hash code of the current application domain.
     ///
     /// # Arguments
-    /// 
+    ///
     /// * `this` - Pointer to the COM object.
     /// * `pRetVal` - Pointer to a variable that receives the hash code.
     ///
     /// # Returns
-    /// 
+    ///
     /// * Returns an HRESULT indicating success or failure.
-    GetHashCode: unsafe extern "system" fn(
-        this: *mut c_void,
-        pRetVal: *mut u32
-    ) -> HRESULT,
+    GetHashCode: unsafe extern "system" fn(this: *mut c_void, pRetVal: *mut u32) -> HRESULT,
 
     /// Implementation of the `GetType` method.
     ///
     /// This method retrieves the type of the current application domain.
     ///
     /// # Arguments
-    /// 
+    ///
     /// * `this` - Pointer to the COM object.
     /// * `pRetVal` - Pointer to a variable that receives the `_Type` object.
     ///
     /// # Returns
     ///
     /// * Returns an HRESULT indicating success or failure.
-    GetType: unsafe extern "system" fn(
-        this: *mut c_void,
-        pRetVal: *mut *mut _Type
-    ) -> HRESULT,
+    GetType: unsafe extern "system" fn(this: *mut c_void, pRetVal: *mut *mut _Type) -> HRESULT,
 
     /// Placeholder for the methods. Not used directly.
     InitializeLifetimeService: *const c_void,
@@ -354,33 +340,25 @@ pub struct _AppDomainVtbl {
     /// * `pRetVal` - Pointer to a variable that receives the loaded `_Assembly`.
     ///
     /// # Returns
-    /// 
+    ///
     /// * Returns an HRESULT indicating success or failure.
-    Load_2: unsafe extern "system" fn(
-        this: *mut c_void,
-        assemblyString: BSTR,
-        pRetVal: *mut *mut _Assembly
-    ) -> HRESULT,
+    Load_2: unsafe extern "system" fn(this: *mut c_void, assemblyString: BSTR, pRetVal: *mut *mut _Assembly) -> HRESULT,
 
     /// Implementation of the `Load_3` method.
     ///
     /// This method loads an assembly into the current application domain from raw byte data.
     ///
     /// # Arguments
-    /// 
+    ///
     /// * `this` - Pointer to the COM object.
     /// * `rawAssembly` - Pointer to a `SAFEARRAY` containing the raw assembly data.
     /// * `pRetVal` - Pointer to a variable that receives the loaded `_Assembly`.
     ///
     /// # Returns
-    /// 
+    ///
     /// * Returns an HRESULT indicating success or failure.
-    Load_3: unsafe extern "system" fn(
-        this: *mut c_void,
-        rawAssembly: *mut SAFEARRAY,
-        pRetVal: *mut *mut _Assembly
-    ) -> HRESULT,
-    
+    Load_3: unsafe extern "system" fn(this: *mut c_void, rawAssembly: *mut SAFEARRAY, pRetVal: *mut *mut _Assembly) -> HRESULT,
+
     /// Placeholder for the methods. Not used directly.
     Load_4: *const c_void,
     Load_5: *const c_void,
@@ -406,10 +384,7 @@ pub struct _AppDomainVtbl {
     /// # Returns
     ///
     /// * Returns an HRESULT indicating success or failure.
-    GetAssemblies: unsafe extern "system" fn(
-        this: *mut c_void,
-        pRetVal: *mut *mut SAFEARRAY
-    ) -> HRESULT,
+    GetAssemblies: unsafe extern "system" fn(this: *mut c_void, pRetVal: *mut *mut SAFEARRAY) -> HRESULT,
 
     /// Placeholder for the methods. Not used directly.
     AppendPrivatePath: *const c_void,
@@ -423,5 +398,5 @@ pub struct _AppDomainVtbl {
     SetThreadPrincipal: *const c_void,
     SetPrincipalPolicy: *const c_void,
     DoCallBack: *const c_void,
-    get_DynamicDirectory: *const c_void
+    get_DynamicDirectory: *const c_void,
 }

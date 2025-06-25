@@ -1,18 +1,16 @@
 use core::ptr::null_mut;
-use alloc::{ffi::CString, vec::Vec, vec};
-use crate::{error::ClrError, Result};
+use alloc::{ffi::CString, vec, vec::Vec};
+
 use dinvk::{data::IMAGE_NT_HEADERS, parse::PE};
 use windows_sys::Win32::System::Diagnostics::Debug::{
-    IMAGE_DIRECTORY_ENTRY_COM_DESCRIPTOR, IMAGE_FILE_DLL,
-    IMAGE_FILE_EXECUTABLE_IMAGE, IMAGE_SUBSYSTEM_NATIVE,
+    IMAGE_DIRECTORY_ENTRY_COM_DESCRIPTOR, IMAGE_FILE_DLL, IMAGE_FILE_EXECUTABLE_IMAGE, IMAGE_SUBSYSTEM_NATIVE,
 };
 use windows_sys::Win32::{
-    Foundation::{GENERIC_READ, INVALID_HANDLE_VALUE}, 
-    Storage::FileSystem::{
-        CreateFileA, GetFileSize, ReadFile, FILE_ATTRIBUTE_NORMAL, 
-        FILE_SHARE_READ, INVALID_FILE_SIZE, OPEN_EXISTING
-    }
+    Foundation::{GENERIC_READ, INVALID_HANDLE_VALUE},
+    Storage::FileSystem::{CreateFileA, FILE_ATTRIBUTE_NORMAL, FILE_SHARE_READ, GetFileSize, INVALID_FILE_SIZE, OPEN_EXISTING, ReadFile},
 };
+
+use crate::{Result, error::ClrError};
 
 /// Checks if the PE headers indicate a valid Windows executable (not DLL, not Native subsystem).
 ///
@@ -35,8 +33,7 @@ fn is_valid_executable(nt_header: *const IMAGE_NT_HEADERS) -> bool {
 /// `nt_header` must be a valid pointer to an `IMAGE_NT_HEADERS` struct.
 fn is_dotnet(nt_header: *const IMAGE_NT_HEADERS) -> bool {
     unsafe {
-        let com_dir = (*nt_header).OptionalHeader.DataDirectory
-            [IMAGE_DIRECTORY_ENTRY_COM_DESCRIPTOR as usize];
+        let com_dir = (*nt_header).OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_COM_DESCRIPTOR as usize];
         com_dir.VirtualAddress != 0 && com_dir.Size != 0
     }
 }
@@ -76,7 +73,7 @@ pub(crate) fn validate_file(buffer: &[u8]) -> Result<()> {
 /// `ClrError::GenericError` if any step fails.
 pub fn read_file(name: &str) -> Result<Vec<u8>> {
     let file_name = CString::new(name).map_err(|_| ClrError::GenericError("Invalid cstring"))?;
-    let h_file = unsafe { 
+    let h_file = unsafe {
         CreateFileA(
             file_name.as_ptr().cast(),
             GENERIC_READ,
@@ -84,7 +81,7 @@ pub fn read_file(name: &str) -> Result<Vec<u8>> {
             null_mut(),
             OPEN_EXISTING,
             FILE_ATTRIBUTE_NORMAL,
-            null_mut()
+            null_mut(),
         )
     };
 

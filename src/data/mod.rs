@@ -3,20 +3,20 @@
 //! This library provides bindings for interacting with the .NET CLR, including the ability to
 //! enumerate runtimes, manage AppDomains, manipulate assemblies and access type information.
 
-mod assembly;
 mod appdomain;
+mod assembly;
+mod assembly_identity;
+mod assembly_manager;
+mod assembly_store;
 mod iclrmetahost;
+mod iclrruntimehost;
 mod iclrruntimeinfo;
 mod icorruntimehost;
 mod ienumunknown;
-mod methodinfo;
-mod itype;
-mod assembly_identity;
-mod iclrruntimehost;
 mod ihostcontrol;
-mod assembly_manager;
-mod assembly_store;
 mod ipropertyinfo;
+mod itype;
+mod methodinfo;
 
 pub use itype::*;
 pub use assembly::*;

@@ -1,7 +1,4 @@
-use rustclr::{
-    RustClrEnv, ClrOutput, 
-    Invocation, Variant,
-};
+use rustclr::{ClrOutput, Invocation, RustClrEnv, Variant};
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Create and initialize the CLR environment

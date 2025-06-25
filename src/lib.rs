@@ -2,6 +2,10 @@
 #![doc = include_str!("../README.md")]
 #![allow(non_snake_case, non_camel_case_types)]
 #![allow(clippy::not_unsafe_ptr_arg_deref)]
+#![allow(clippy::missing_transmute_annotations)]
+#![allow(clippy::mixed_case_hex_literals)]
+#![allow(clippy::unusual_byte_groupings)]
+#![allow(clippy::useless_transmute)]
 
 extern crate alloc;
 

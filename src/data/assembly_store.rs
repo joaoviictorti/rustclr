@@ -1,7 +1,7 @@
+use core::{ffi::c_void, mem::transmute_copy, ops::Deref};
 use windows_core::{GUID, Interface};
-use core::{ffi::c_void, ops::Deref, mem::transmute_copy};
 
-/// This struct represents the COM `IHostAssemblyStore` interface, 
+/// This struct represents the COM `IHostAssemblyStore` interface,
 /// a .NET assembly in the CLR environment.
 #[repr(C)]
 #[derive(Clone, Debug)]
@@ -12,35 +12,35 @@ pub trait IHostAssemblyStore_Impl: windows_core::IUnknownImpl {
     /// Provides an assembly image in response to a bind request.
     ///
     /// # Arguments
-    /// 
+    ///
     /// * `pbindinfo` - Binding information for the assembly.
     /// * `passemblyid` - Output assembly identifier.
     /// * `pcontext` - Output context handle.
     /// * `ppstmassemblyimage` - Output pointer to the in-memory assembly image.
     /// * `ppstmpdb` - Output pointer to the PDB (debug symbols).
     fn ProvideAssembly(
-        &self, 
-        pbindinfo: *const AssemblyBindInfo, 
-        passemblyid: *mut u64, 
-        pcontext: *mut u64, 
-        ppstmassemblyimage: *mut *mut c_void, 
-        ppstmpdb: *mut *mut c_void
+        &self,
+        pbindinfo: *const AssemblyBindInfo,
+        passemblyid: *mut u64,
+        pcontext: *mut u64,
+        ppstmassemblyimage: *mut *mut c_void,
+        ppstmpdb: *mut *mut c_void,
     ) -> windows_core::Result<()>;
-    
+
     /// Provides a module image in response to a bind request.
     ///
     /// # Arguments
-    /// 
+    ///
     /// * `pbindinfo` - Binding information for the module.
     /// * `pdwmoduleid` - Output module identifier.
     /// * `ppstmmoduleimage` - Output pointer to the in-memory module image.
     /// * `ppstmpdb` - Output pointer to the PDB (debug symbols).
     fn ProvideModule(
-        &self, 
-        pbindinfo: *const ModuleBindInfo, 
-        pdwmoduleid: *mut u32, 
-        ppstmmoduleimage: *mut *mut c_void, 
-        ppstmpdb: *mut *mut c_void
+        &self,
+        pbindinfo: *const ModuleBindInfo,
+        pdwmoduleid: *mut u32,
+        ppstmmoduleimage: *mut *mut c_void,
+        ppstmpdb: *mut *mut c_void,
     ) -> windows_core::Result<()>;
 }
 
@@ -50,42 +50,44 @@ impl IHostAssemblyStore_Vtbl {
     /// This table contains function pointers for each method exposed by the interface.
     pub const fn new<Identity: IHostAssemblyStore_Impl, const OFFSET: isize>() -> Self {
         unsafe extern "system" fn ProvideAssembly<Identity: IHostAssemblyStore_Impl, const OFFSET: isize>(
-            this: *mut c_void, 
-            pbindinfo: *const AssemblyBindInfo, 
-            passemblyid: *mut u64, 
-            pcontext: *mut u64, 
-            ppstmassemblyimage: *mut *mut c_void, 
-            ppstmpdb: *mut *mut c_void
+            this: *mut c_void,
+            pbindinfo: *const AssemblyBindInfo,
+            passemblyid: *mut u64,
+            pcontext: *mut u64,
+            ppstmassemblyimage: *mut *mut c_void,
+            ppstmpdb: *mut *mut c_void,
         ) -> windows_core::HRESULT {
             unsafe {
                 let this: &Identity = &*((this as *const *const ()).offset(OFFSET) as *const Identity);
                 IHostAssemblyStore_Impl::ProvideAssembly(
-                    this, 
-                    transmute_copy(&pbindinfo), 
-                    transmute_copy(&passemblyid), 
-                    transmute_copy(&pcontext), 
-                    transmute_copy(&ppstmassemblyimage), 
-                    transmute_copy(&ppstmpdb)
-                ).into()
+                    this,
+                    transmute_copy(&pbindinfo),
+                    transmute_copy(&passemblyid),
+                    transmute_copy(&pcontext),
+                    transmute_copy(&ppstmassemblyimage),
+                    transmute_copy(&ppstmpdb),
+                )
+                .into()
             }
         }
 
         unsafe extern "system" fn ProvideModule<Identity: IHostAssemblyStore_Impl, const OFFSET: isize>(
-            this: *mut c_void, 
-            pbindinfo: *const ModuleBindInfo, 
-            pdwmoduleid: *mut u32, 
-            ppstmmoduleimage: *mut *mut c_void, 
-            ppstmpdb: *mut *mut c_void
+            this: *mut c_void,
+            pbindinfo: *const ModuleBindInfo,
+            pdwmoduleid: *mut u32,
+            ppstmmoduleimage: *mut *mut c_void,
+            ppstmpdb: *mut *mut c_void,
         ) -> windows_core::HRESULT {
             unsafe {
                 let this: &Identity = &*((this as *const *const ()).offset(OFFSET) as *const Identity);
                 IHostAssemblyStore_Impl::ProvideModule(
-                    this, 
-                    transmute_copy(&pbindinfo), 
-                    transmute_copy(&pdwmoduleid), 
-                    transmute_copy(&ppstmmoduleimage), 
-                    transmute_copy(&ppstmpdb)
-                ).into()
+                    this,
+                    transmute_copy(&pbindinfo),
+                    transmute_copy(&pdwmoduleid),
+                    transmute_copy(&ppstmmoduleimage),
+                    transmute_copy(&ppstmpdb),
+                )
+                .into()
             }
         }
 
@@ -140,8 +142,8 @@ unsafe impl Interface for IHostAssemblyStore {
 
     /// The interface identifier (IID) for the `IHostAssemblyStore` COM interface.
     ///
-    /// This GUID is used to identify the `IHostAssemblyStore` interface when calling 
-    /// COM methods like `QueryInterface`. It is defined based on the standard 
+    /// This GUID is used to identify the `IHostAssemblyStore` interface when calling
+    /// COM methods like `QueryInterface`. It is defined based on the standard
     /// .NET CLR IID for the `IHostAssemblyStore` interface.
     const IID: GUID = GUID::from_u128(0x613dabd7_62b2_493e_9e65_c1e32a1e0c5e);
 }
@@ -151,8 +153,8 @@ impl Deref for IHostAssemblyStore {
 
     /// The interface identifier (IID) for the `IHostAssemblyStore` COM interface.
     ///
-    /// This GUID is used to identify the `IHostAssemblyStore` interface when calling 
-    /// COM methods like `QueryInterface`. It is defined based on the standard 
+    /// This GUID is used to identify the `IHostAssemblyStore` interface when calling
+    /// COM methods like `QueryInterface`. It is defined based on the standard
     /// .NET CLR IID for the `IHostAssemblyStore` interface.
     fn deref(&self) -> &Self::Target {
         unsafe { core::mem::transmute(self) }
