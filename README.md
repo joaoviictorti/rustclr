@@ -9,21 +9,6 @@
 
 `rustclr` is a powerful library for hosting the Common Language Runtime (CLR) and executing .NET binaries directly with Rust, among other operations.
 
-## Table of Contents
-
-- [Features](#features)
-- [Installation](#installation)
-- [Usage](#usage)
-  - [Running a .NET Assembly with Configured Flags](#running-a-net-assembly-with-configured-flags)
-  - [Configuration with RustClrEnv and ClrOutput](#configuration-with-rustclrenv-and-clroutput)
-  - [Running PowerShell Commands](#running-powershell-commands)
-- [Additional Resources](#additional-resources)
-- [CLI](#cli)
-  - [Example Command](#example-command)
-  - [CLI Help](#cli-help)
-- [References](#references)
-- [License](#license)
-
 ## Features
 
 - ✅ Supports `#[no_std]` environments (with `alloc`).
@@ -33,7 +18,7 @@
 - ✅ Configure output redirection to capture .NET program output.
 - ✅ Patch `System.Environment.Exit()` to prevent .NET from terminating the Rust host process.
 
-## Installation
+## Getting started
 
 Add `rustclr` to your project by updating your `Cargo.toml`:
 ```bash
