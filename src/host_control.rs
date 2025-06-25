@@ -26,7 +26,9 @@ impl RustClrControl {
     ///
     /// * `Self` - initialized `RustClrControl`
     pub fn new(buffer: &[u8], assembly: &str) -> Self {
-        Self { manager: RustClrManager::new(buffer, assembly.to_string()).into() }
+        Self {
+            manager: RustClrManager::new(buffer, assembly.to_string()).into(),
+        }
     }
 }
 
@@ -86,7 +88,9 @@ impl RustClrManager {
     ///
     /// * `Self` - initialized manager
     pub fn new(buffer: &[u8], assembly: String) -> Self {
-        Self { store: RustClrStore::new(buffer, assembly).into() }
+        Self {
+            store: RustClrStore::new(buffer, assembly).into(),
+        }
     }
 }
 
