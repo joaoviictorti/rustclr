@@ -19,7 +19,11 @@ pub trait IHostControl_Impl: windows_core::IUnknownImpl {
     /// # Returns
     ///
     /// * Returns `Ok(())` on success or an error if the manager could not be provided.
-    fn GetHostManager(&self, riid: *const GUID, ppobject: *mut *mut c_void) -> windows_core::Result<()>;
+    fn GetHostManager(
+        &self,
+        riid: *const GUID,
+        ppobject: *mut *mut c_void,
+    ) -> windows_core::Result<()>;
 
     /// Notifies the host that the CLR has created an `AppDomainManager` for a new AppDomain.
     ///
@@ -43,24 +47,37 @@ impl IHostControl_Vtbl {
     ///
     /// This table contains function pointers for each method exposed by the interface.
     pub const fn new<Identity: IHostControl_Impl, const OFFSET: isize>() -> Self {
-        unsafe extern "system" fn GetHostManager<Identity: IHostControl_Impl, const OFFSET: isize>(
+        unsafe extern "system" fn GetHostManager<
+            Identity: IHostControl_Impl,
+            const OFFSET: isize,
+        >(
             this: *mut c_void,
             riid: *const GUID,
             ppobject: *mut *mut c_void,
         ) -> windows_core::HRESULT {
             unsafe {
-                let this: &Identity = &*((this as *const *const ()).offset(OFFSET) as *const Identity);
-                IHostControl_Impl::GetHostManager(this, core::mem::transmute_copy(&riid), core::mem::transmute_copy(&ppobject)).into()
+                let this: &Identity =
+                    &*((this as *const *const ()).offset(OFFSET) as *const Identity);
+                IHostControl_Impl::GetHostManager(
+                    this,
+                    core::mem::transmute_copy(&riid),
+                    core::mem::transmute_copy(&ppobject),
+                )
+                .into()
             }
         }
 
-        unsafe extern "system" fn SetAppDomainManager<Identity: IHostControl_Impl, const OFFSET: isize>(
+        unsafe extern "system" fn SetAppDomainManager<
+            Identity: IHostControl_Impl,
+            const OFFSET: isize,
+        >(
             this: *mut c_void,
             dwappdomainid: u32,
             punkappdomainmanager: *mut c_void,
         ) -> windows_core::HRESULT {
             unsafe {
-                let this: &Identity = &*((this as *const *const ()).offset(OFFSET) as *const Identity);
+                let this: &Identity =
+                    &*((this as *const *const ()).offset(OFFSET) as *const Identity);
                 IHostControl_Impl::SetAppDomainManager(
                     this,
                     core::mem::transmute_copy(&dwappdomainid),
@@ -128,7 +145,11 @@ pub struct IHostControl_Vtbl {
     /// # Returns
     ///
     /// * Returns an HRESULT indicating success or failure of the operation.
-    pub GetHostManager: unsafe extern "system" fn(this: *mut c_void, riid: *const GUID, ppobject: *mut *mut c_void) -> windows_core::HRESULT,
+    pub GetHostManager: unsafe extern "system" fn(
+        this: *mut c_void,
+        riid: *const GUID,
+        ppobject: *mut *mut c_void,
+    ) -> windows_core::HRESULT,
 
     /// Sets the `AppDomainManager` for a specific application domain.
     ///
@@ -141,6 +162,9 @@ pub struct IHostControl_Vtbl {
     /// # Returns
     ///
     /// * Returns an HRESULT indicating success or failure of the operation.
-    pub SetAppDomainManager:
-        unsafe extern "system" fn(this: *mut c_void, dwappdomainid: u32, punkappdomainmanager: *mut c_void) -> windows_core::HRESULT,
+    pub SetAppDomainManager: unsafe extern "system" fn(
+        this: *mut c_void,
+        dwappdomainid: u32,
+        punkappdomainmanager: *mut c_void,
+    ) -> windows_core::HRESULT,
 }

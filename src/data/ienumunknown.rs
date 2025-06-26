@@ -1,10 +1,15 @@
-use core::{ffi::c_void, mem::transmute, ops::Deref, ptr::null_mut};
+use core::{
+    ffi::c_void, 
+    mem::transmute, 
+    ops::Deref, 
+    ptr::null_mut
+};
 
-use windows_sys::core::HRESULT;
 use windows_core::{GUID, IUnknown, Interface};
+use windows_sys::core::HRESULT;
 
-use crate::error::ClrError;
 use crate::Result;
+use crate::error::ClrError;
 
 /// This struct represents the COM `IEnumUnknown` interface,
 /// a .NET assembly in the CLR environment.
@@ -27,7 +32,11 @@ impl IEnumUnknown {
     ///
     /// * Returns an HRESULT indicating success or failure.
     #[inline]
-    pub fn Next(&self, rgelt: &mut [Option<windows_core::IUnknown>], pceltfetched: Option<*mut u32>) -> HRESULT {
+    pub fn Next(
+        &self,
+        rgelt: &mut [Option<windows_core::IUnknown>],
+        pceltfetched: Option<*mut u32>,
+    ) -> HRESULT {
         unsafe {
             (Interface::vtable(self).Next)(
                 Interface::as_raw(self),
@@ -133,7 +142,12 @@ pub struct IEnumUnknown_Vtbl {
     /// # Returns
     ///
     /// * Returns an HRESULT indicating success or failure.
-    pub Next: unsafe extern "system" fn(this: *mut c_void, celt: u32, rgelt: *mut *mut IUnknown, pceltFetched: *mut u32) -> HRESULT,
+    pub Next: unsafe extern "system" fn(
+        this: *mut c_void,
+        celt: u32,
+        rgelt: *mut *mut IUnknown,
+        pceltFetched: *mut u32,
+    ) -> HRESULT,
 
     /// Skips the specified number of elements in the enumeration sequence.
     ///
@@ -168,5 +182,8 @@ pub struct IEnumUnknown_Vtbl {
     /// # Returns
     ///
     /// * Returns an HRESULT indicating success or failure.
-    pub Clone: unsafe extern "system" fn(this: *mut c_void, ppenum: *mut *mut IEnumUnknown) -> HRESULT,
+    pub Clone: unsafe extern "system" fn(
+        this: *mut c_void, 
+        ppenum: *mut *mut IEnumUnknown
+    ) -> HRESULT,
 }

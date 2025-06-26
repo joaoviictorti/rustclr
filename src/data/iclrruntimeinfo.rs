@@ -1,5 +1,5 @@
-use core::{ffi::c_void, ops::Deref};
 use alloc::ffi::CString;
+use core::{ffi::c_void, ops::Deref};
 
 use windows_core::{GUID, Interface, PCSTR, PCWSTR, PWSTR};
 use windows_sys::{
@@ -7,8 +7,8 @@ use windows_sys::{
     core::HRESULT,
 };
 
-use crate::error::ClrError;
 use crate::Result;
+use crate::error::ClrError;
 
 /// This struct represents the COM `ICLRRuntimeInfo` interface,
 /// a .NET assembly in the CLR environment.
@@ -72,7 +72,12 @@ impl ICLRRuntimeInfo {
     {
         unsafe {
             let mut result = core::ptr::null_mut();
-            let hr = (Interface::vtable(self).GetInterface)(Interface::as_raw(self), rclsid, &T::IID, &mut result);
+            let hr = (Interface::vtable(self).GetInterface)(
+                Interface::as_raw(self),
+                rclsid,
+                &T::IID,
+                &mut result,
+            );
             if hr == 0 {
                 Ok(core::mem::transmute_copy(&result))
             } else {
@@ -95,7 +100,11 @@ impl ICLRRuntimeInfo {
     /// * `Err(ClrError)` - If retrieval fails, returns a `ClrError`.
     pub fn GetVersionString(&self, pwzbuffer: PWSTR, pcchbuffer: *mut u32) -> Result<()> {
         unsafe {
-            let hr = (Interface::vtable(self).GetVersionString)(Interface::as_raw(self), pwzbuffer, pcchbuffer);
+            let hr = (Interface::vtable(self).GetVersionString)(
+                Interface::as_raw(self),
+                pwzbuffer,
+                pcchbuffer,
+            );
             if hr == 0 {
                 Ok(())
             } else {
@@ -117,7 +126,11 @@ impl ICLRRuntimeInfo {
     /// * `Err(ClrError)` - If retrieval fails, returns a `ClrError`.
     pub fn GetRuntimeDirectory(&self, pwzbuffer: PWSTR, pcchbuffer: *mut u32) -> Result<()> {
         unsafe {
-            let hr = (Interface::vtable(self).GetRuntimeDirectory)(Interface::as_raw(self), pwzbuffer, pcchbuffer);
+            let hr = (Interface::vtable(self).GetRuntimeDirectory)(
+                Interface::as_raw(self),
+                pwzbuffer,
+                pcchbuffer,
+            );
             if hr == 0 {
                 Ok(())
             } else {
@@ -139,7 +152,11 @@ impl ICLRRuntimeInfo {
     pub fn IsLoaded(&self, hndProcess: HANDLE) -> Result<BOOL> {
         unsafe {
             let mut pbLoaded = 0;
-            let hr = (Interface::vtable(self).IsLoaded)(Interface::as_raw(self), hndProcess, &mut pbLoaded);
+            let hr = (Interface::vtable(self).IsLoaded)(
+                Interface::as_raw(self),
+                hndProcess,
+                &mut pbLoaded,
+            );
             if hr == 0 {
                 Ok(pbLoaded)
             } else {
@@ -161,9 +178,21 @@ impl ICLRRuntimeInfo {
     ///
     /// * `Ok(())` - On success, the error string is written to `pwzBuffer`.
     /// * `Err(ClrError)` - If retrieval fails, returns a `ClrError`.
-    pub fn LoadErrorString(&self, iResourceID: u32, pwzBuffer: PWSTR, pcchBuffer: *mut u32, iLocaleID: i32) -> Result<()> {
+    pub fn LoadErrorString(
+        &self,
+        iResourceID: u32,
+        pwzBuffer: PWSTR,
+        pcchBuffer: *mut u32,
+        iLocaleID: i32,
+    ) -> Result<()> {
         unsafe {
-            let hr = (Interface::vtable(self).LoadErrorString)(Interface::as_raw(self), iResourceID, pwzBuffer, pcchBuffer, iLocaleID);
+            let hr = (Interface::vtable(self).LoadErrorString)(
+                Interface::as_raw(self),
+                iResourceID,
+                pwzBuffer,
+                pcchBuffer,
+                iLocaleID,
+            );
             if hr == 0 {
                 Ok(())
             } else {
@@ -185,7 +214,11 @@ impl ICLRRuntimeInfo {
     pub fn LoadLibraryA(&self, pwzDllName: PCWSTR) -> Result<HMODULE> {
         unsafe {
             let mut result = core::mem::zeroed();
-            let hr = (Interface::vtable(self).LoadLibraryA)(Interface::as_raw(self), pwzDllName, &mut result);
+            let hr = (Interface::vtable(self).LoadLibraryA)(
+                Interface::as_raw(self),
+                pwzDllName,
+                &mut result,
+            );
             if hr == 0 {
                 Ok(result)
             } else {
@@ -207,8 +240,13 @@ impl ICLRRuntimeInfo {
     pub fn GetProcAddress(&self, pszProcName: &str) -> Result<*mut c_void> {
         unsafe {
             let mut result = core::mem::zeroed();
-            let cstr = CString::new(pszProcName).map_err(|_| ClrError::GenericError("Invalid String"))?;
-            let hr = (Interface::vtable(self).GetProcAddress)(Interface::as_raw(self), PCSTR(cstr.as_ptr().cast()), &mut result);
+            let cstr =
+                CString::new(pszProcName).map_err(|_| ClrError::GenericError("Invalid String"))?;
+            let hr = (Interface::vtable(self).GetProcAddress)(
+                Interface::as_raw(self),
+                PCSTR(cstr.as_ptr().cast()),
+                &mut result,
+            );
             if hr == 0 {
                 Ok(result)
             } else {
@@ -228,9 +266,17 @@ impl ICLRRuntimeInfo {
     ///
     /// * `Ok(())` - On success.
     /// * `Err(ClrError)` - If the operation fails, returns a `ClrError`.
-    pub fn SetDefaultStartupFlags(&self, dwstartupflags: u32, pwzhostconfigfile: PCWSTR) -> Result<()> {
+    pub fn SetDefaultStartupFlags(
+        &self,
+        dwstartupflags: u32,
+        pwzhostconfigfile: PCWSTR,
+    ) -> Result<()> {
         unsafe {
-            let hr = (Interface::vtable(self).SetDefaultStartupFlags)(Interface::as_raw(self), dwstartupflags, pwzhostconfigfile);
+            let hr = (Interface::vtable(self).SetDefaultStartupFlags)(
+                Interface::as_raw(self),
+                dwstartupflags,
+                pwzhostconfigfile,
+            );
             if hr == 0 {
                 Ok(())
             } else {
@@ -251,7 +297,12 @@ impl ICLRRuntimeInfo {
     ///
     /// * `Ok(())` - On success, the startup flags and file path are written to the respective parameters.
     /// * `Err(ClrError)` - If retrieval fails, returns a `ClrError`.
-    pub fn GetDefaultStartupFlags(&self, pdwstartupflags: *mut u32, pwzhostconfigfile: PWSTR, pcchhostconfigfile: *mut u32) -> Result<()> {
+    pub fn GetDefaultStartupFlags(
+        &self,
+        pdwstartupflags: *mut u32,
+        pwzhostconfigfile: PWSTR,
+        pcchhostconfigfile: *mut u32,
+    ) -> Result<()> {
         unsafe {
             let hr = (Interface::vtable(self).GetDefaultStartupFlags)(
                 Interface::as_raw(self),
@@ -297,7 +348,11 @@ impl ICLRRuntimeInfo {
     /// * `Err(ClrError)` - If the operation fails, returns a `ClrError`.
     pub fn IsStarted(&self, pbstarted: *mut BOOL, pdwstartupflags: *mut u32) -> Result<()> {
         unsafe {
-            let hr = (Interface::vtable(self).IsStarted)(Interface::as_raw(self), pbstarted, pdwstartupflags);
+            let hr = (Interface::vtable(self).IsStarted)(
+                Interface::as_raw(self),
+                pbstarted,
+                pdwstartupflags,
+            );
             if hr == 0 {
                 Ok(())
             } else {
@@ -351,7 +406,11 @@ pub struct ICLRRuntimeInfo_Vtbl {
     /// # Returns
     ///
     /// * Returns an HRESULT indicating success or failure.
-    pub GetVersionString: unsafe extern "system" fn(this: *mut c_void, pwzBuffer: PWSTR, pcchBuffer: *mut u32) -> HRESULT,
+    pub GetVersionString: unsafe extern "system" fn(
+        this: *mut c_void,
+        pwzBuffer: PWSTR,
+        pcchBuffer: *mut u32,
+    ) -> HRESULT,
 
     /// Retrieves the runtime directory path.
     ///
@@ -364,7 +423,11 @@ pub struct ICLRRuntimeInfo_Vtbl {
     /// # Returns
     ///
     /// * `HRESULT` indicating success or failure.
-    pub GetRuntimeDirectory: unsafe extern "system" fn(this: *mut c_void, pwzBuffer: PWSTR, pcchBuffer: *mut u32) -> HRESULT,
+    pub GetRuntimeDirectory: unsafe extern "system" fn(
+        this: *mut c_void,
+        pwzBuffer: PWSTR,
+        pcchBuffer: *mut u32,
+    ) -> HRESULT,
 
     /// Checks if the runtime is loaded in a specified process.
     ///
@@ -377,7 +440,11 @@ pub struct ICLRRuntimeInfo_Vtbl {
     /// # Returns
     ///
     /// * Returns an HRESULT indicating success or failure.
-    pub IsLoaded: unsafe extern "system" fn(this: *mut c_void, hndProcess: HANDLE, pbLoaded: *mut BOOL) -> HRESULT,
+    pub IsLoaded: unsafe extern "system" fn(
+        this: *mut c_void,
+        hndProcess: HANDLE,
+        pbLoaded: *mut BOOL,
+    ) -> HRESULT,
 
     /// Loads a specified error message string.
     ///
@@ -392,8 +459,13 @@ pub struct ICLRRuntimeInfo_Vtbl {
     /// # Returns
     ///
     /// * Returns an HRESULT indicating success or failure.
-    pub LoadErrorString:
-        unsafe extern "system" fn(this: *mut c_void, iResourceID: u32, pwzBuffer: PWSTR, pcchBuffer: *mut u32, iLocaleID: i32) -> HRESULT,
+    pub LoadErrorString: unsafe extern "system" fn(
+        this: *mut c_void,
+        iResourceID: u32,
+        pwzBuffer: PWSTR,
+        pcchBuffer: *mut u32,
+        iLocaleID: i32,
+    ) -> HRESULT,
 
     /// Loads a specified DLL library.
     ///
@@ -406,7 +478,11 @@ pub struct ICLRRuntimeInfo_Vtbl {
     /// # Returns
     ///
     /// * Returns an HRESULT indicating success or failure..
-    pub LoadLibraryA: unsafe extern "system" fn(this: *mut c_void, pwzDllName: PCWSTR, phndModule: *mut HMODULE) -> HRESULT,
+    pub LoadLibraryA: unsafe extern "system" fn(
+        this: *mut c_void,
+        pwzDllName: PCWSTR,
+        phndModule: *mut HMODULE,
+    ) -> HRESULT,
 
     /// Retrieves a pointer to a specified procedure within a loaded module.
     ///
@@ -419,7 +495,11 @@ pub struct ICLRRuntimeInfo_Vtbl {
     /// # Returns
     ///
     /// * Returns an HRESULT indicating success or failure.
-    pub GetProcAddress: unsafe extern "system" fn(this: *mut c_void, pszProcName: PCSTR, ppProc: *mut *mut c_void) -> HRESULT,
+    pub GetProcAddress: unsafe extern "system" fn(
+        this: *mut c_void,
+        pszProcName: PCSTR,
+        ppProc: *mut *mut c_void,
+    ) -> HRESULT,
 
     /// Retrieves a specified interface from the runtime.
     ///
@@ -463,7 +543,11 @@ pub struct ICLRRuntimeInfo_Vtbl {
     /// # Returns
     ///
     /// * Returns an HRESULT indicating success or failure.
-    pub SetDefaultStartupFlags: unsafe extern "system" fn(this: *mut c_void, dwStartupFlags: u32, pwzHostConfigFile: PCWSTR) -> HRESULT,
+    pub SetDefaultStartupFlags: unsafe extern "system" fn(
+        this: *mut c_void,
+        dwStartupFlags: u32,
+        pwzHostConfigFile: PCWSTR,
+    ) -> HRESULT,
 
     /// Retrieves the default startup flags for the runtime.
     ///
@@ -506,5 +590,9 @@ pub struct ICLRRuntimeInfo_Vtbl {
     /// # Returns
     ///
     /// * Returns an HRESULT indicating success or failure.
-    pub IsStarted: unsafe extern "system" fn(this: *mut c_void, pbStarted: *mut BOOL, pdwStartupFlags: *mut u32) -> HRESULT,
+    pub IsStarted: unsafe extern "system" fn(
+        this: *mut c_void,
+        pbStarted: *mut BOOL,
+        pdwStartupFlags: *mut u32,
+    ) -> HRESULT,
 }

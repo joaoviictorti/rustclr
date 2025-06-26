@@ -1,13 +1,17 @@
-use core::ptr::null_mut;
 use alloc::{ffi::CString, vec, vec::Vec};
+use core::ptr::null_mut;
 
 use dinvk::{data::IMAGE_NT_HEADERS, parse::PE};
 use windows_sys::Win32::System::Diagnostics::Debug::{
-    IMAGE_DIRECTORY_ENTRY_COM_DESCRIPTOR, IMAGE_FILE_DLL, IMAGE_FILE_EXECUTABLE_IMAGE, IMAGE_SUBSYSTEM_NATIVE,
+    IMAGE_DIRECTORY_ENTRY_COM_DESCRIPTOR, IMAGE_FILE_DLL, 
+    IMAGE_FILE_EXECUTABLE_IMAGE, IMAGE_SUBSYSTEM_NATIVE,
 };
 use windows_sys::Win32::{
     Foundation::{GENERIC_READ, INVALID_HANDLE_VALUE},
-    Storage::FileSystem::{CreateFileA, FILE_ATTRIBUTE_NORMAL, FILE_SHARE_READ, GetFileSize, INVALID_FILE_SIZE, OPEN_EXISTING, ReadFile},
+    Storage::FileSystem::{
+        CreateFileA, FILE_ATTRIBUTE_NORMAL, FILE_SHARE_READ, 
+        GetFileSize, INVALID_FILE_SIZE, OPEN_EXISTING, ReadFile,
+    },
 };
 
 use crate::{Result, error::ClrError};
@@ -33,7 +37,8 @@ fn is_valid_executable(nt_header: *const IMAGE_NT_HEADERS) -> bool {
 /// `nt_header` must be a valid pointer to an `IMAGE_NT_HEADERS` struct.
 fn is_dotnet(nt_header: *const IMAGE_NT_HEADERS) -> bool {
     unsafe {
-        let com_dir = (*nt_header).OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_COM_DESCRIPTOR as usize];
+        let com_dir = (*nt_header).OptionalHeader.DataDirectory
+            [IMAGE_DIRECTORY_ENTRY_COM_DESCRIPTOR as usize];
         com_dir.VirtualAddress != 0 && com_dir.Size != 0
     }
 }
@@ -97,7 +102,13 @@ pub fn read_file(name: &str) -> Result<Vec<u8>> {
     let mut out = vec![0; size as usize];
     let mut bytes = 0;
     unsafe {
-        ReadFile(h_file, out.as_mut_ptr(), out.len() as u32, &mut bytes, null_mut());
+        ReadFile(
+            h_file,
+            out.as_mut_ptr(),
+            out.len() as u32,
+            &mut bytes,
+            null_mut(),
+        );
     }
 
     Ok(out)

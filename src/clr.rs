@@ -8,30 +8,27 @@ use alloc::{
 };
 
 use obfstr::obfstr as s;
-use dinvk::{NtCurrentProcess, NtProtectVirtualMemory, data::NT_SUCCESS};
+use dinvk::{
+    NtCurrentProcess, 
+    NtProtectVirtualMemory, 
+    data::NT_SUCCESS
+};
 use windows_core::{IUnknown, Interface, PCWSTR};
 use windows_sys::Win32::{
-    UI::Shell::SHCreateMemStream,
     System::{
         Memory::PAGE_EXECUTE_READWRITE,
         Variant::{VARIANT, VariantClear},
     },
+    UI::Shell::SHCreateMemStream,
 };
 
+use super::{com::*, data::*};
 use super::{
-    Invocation, Result, WinStr, create_safe_array_args,
+    Invocation, Result, Variant,
+    WinStr, create_safe_array_args,
+    error::ClrError, uuid,
     file::{read_file, validate_file},
-    error::ClrError,
-    uuid,
-};
-
-use super::{
-    Variant,
-    com::*,
-    data::*,
-    host_control::RustClrControl,
-    com::{CLRIdentityManagerType, CLSID_ICLR_RUNTIME_HOST},
-    data::{ICLRAssemblyIdentityManager, ICLRuntimeHost, IHostControl},
+    host_control::RustClrControl
 };
 
 /// Represents a Rust interface to the Common Language Runtime (CLR).
@@ -384,10 +381,10 @@ impl<'a> RustClr<'a> {
         let assembly = domain.load_name(&self.identity_assembly)?;
 
         // Prepares the parameters for the `Main` method
-        let parameters = self
-            .args
-            .as_ref()
-            .map_or_else(|| Ok(null_mut()), |args| create_safe_array_args(args.to_vec()))?;
+        let parameters = self.args.as_ref().map_or_else(
+            || Ok(null_mut()),
+            |args| create_safe_array_args(args.to_vec()),
+        )?;
 
         // Loads the mscorlib library
         let mscorlib = domain.get_assembly(s!("mscorlib"))?;
@@ -470,15 +467,25 @@ impl<'a> RustClr<'a> {
             PAGE_EXECUTE_READWRITE,
             &mut old,
         )) {
-            return Err(ClrError::GenericError("Failed to change memory protection to RWX"));
+            return Err(ClrError::GenericError(
+                "Failed to change memory protection to RWX",
+            ));
         }
 
         // Overwrite first byte with RET (0xC3) to effectively no-op the function
         unsafe { *(ptr.Anonymous.Anonymous.Anonymous.byref as *mut u8) = 0xC3 };
 
         // Restore original protection
-        if !NT_SUCCESS(NtProtectVirtualMemory(NtCurrentProcess(), &mut addr_exit, &mut size, old, &mut old)) {
-            return Err(ClrError::GenericError("Failed to restore memory protection"));
+        if !NT_SUCCESS(NtProtectVirtualMemory(
+            NtCurrentProcess(),
+            &mut addr_exit,
+            &mut size,
+            old,
+            &mut old,
+        )) {
+            return Err(ClrError::GenericError(
+                "Failed to restore memory protection",
+            ));
         }
 
         Ok(())
@@ -501,7 +508,8 @@ impl<'a> RustClr<'a> {
     /// * `Ok(ICLRMetaHost)` - If the instance is created successfully.
     /// * `Err(ClrError)` - If the instance creation fails.
     fn create_meta_host(&self) -> Result<ICLRMetaHost> {
-        CLRCreateInstance::<ICLRMetaHost>(&CLSID_CLRMETAHOST).map_err(|e| ClrError::MetaHostCreationError(format!("{e}")))
+        CLRCreateInstance::<ICLRMetaHost>(&CLSID_CLRMETAHOST)
+            .map_err(|e| ClrError::MetaHostCreationError(format!("{e}")))
     }
 
     /// Retrieves runtime information based on the selected .NET version.
@@ -616,7 +624,9 @@ impl<'a> RustClr<'a> {
     /// * `Ok(())` - If the AppDomain is unloaded or not present.
     /// * `Err(ClrError)` - If unloading the domain fails.
     fn unload_domain(&self) -> Result<()> {
-        if let (Some(cor_runtime_host), Some(app_domain)) = (&self.cor_runtime_host, &self.app_domain) {
+        if let (Some(cor_runtime_host), Some(app_domain)) =
+            (&self.cor_runtime_host, &self.app_domain)
+        {
             // Attempt to unload the AppDomain, log error if it fails
             cor_runtime_host.UnloadDomain(
                 app_domain
@@ -683,8 +693,19 @@ impl<'a> ClrOutput<'a> {
             .create_instance(s!("System.IO.StringWriter"))?;
 
         // Invokes the methods
-        console.invoke(s!("SetOut"), None, Some(vec![string_writer]), Invocation::Static)?;
-        console.invoke(s!("SetError"), None, Some(vec![string_writer]), Invocation::Static)?;
+        console.invoke(
+            s!("SetOut"),
+            None,
+            Some(vec![string_writer]),
+            Invocation::Static,
+        )?;
+        
+        console.invoke(
+            s!("SetError"),
+            None,
+            Some(vec![string_writer]),
+            Invocation::Static,
+        )?;
 
         // Saves the StringWriter instance to retrieve the output later
         self.string_writer = Some(string_writer);
@@ -701,7 +722,10 @@ impl<'a> ClrOutput<'a> {
         let console = self.mscorlib.resolve_type(s!("System.Console"))?;
         console
             .method_signature(s!("Void InitializeStdOutError(Boolean)"))?
-            .invoke(None, Some(crate::create_safe_args(vec![true.to_variant()])?))?;
+            .invoke(
+                None,
+                Some(crate::create_safe_args(vec![true.to_variant()])?),
+            )?;
 
         Ok(())
     }
@@ -714,8 +738,7 @@ impl<'a> ClrOutput<'a> {
     /// * `Err(ClrError)` - If an error occurs while capturing the output.
     pub fn capture(&self) -> Result<String> {
         // Ensure that the StringWriter instance is available
-        let mut instance = self
-            .string_writer
+        let mut instance = self.string_writer
             .ok_or(ClrError::GenericError("No StringWriter instance found"))?;
 
         // Resolve the 'ToString' method on the StringWriter type
@@ -782,7 +805,8 @@ impl RustClrEnv {
     /// ```
     pub fn new(runtime_version: Option<RuntimeVersion>) -> Result<Self> {
         // Initialize MetaHost
-        let meta_host = CLRCreateInstance::<ICLRMetaHost>(&CLSID_CLRMETAHOST).map_err(|e| ClrError::MetaHostCreationError(format!("{e}")))?;
+        let meta_host = CLRCreateInstance::<ICLRMetaHost>(&CLSID_CLRMETAHOST)
+            .map_err(|e| ClrError::MetaHostCreationError(format!("{e}")))?;
 
         // Initialize RuntimeInfo
         let version_str = runtime_version.unwrap_or(RuntimeVersion::V4).to_vec();

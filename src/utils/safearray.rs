@@ -9,14 +9,22 @@ use windows_sys::Win32::{
     Foundation::{SysFreeString, VARIANT_FALSE, VARIANT_TRUE},
     System::{
         Com::{SAFEARRAY, SAFEARRAYBOUND},
-        Ole::{SafeArrayAccessData, SafeArrayCreate, SafeArrayCreateVector, SafeArrayPutElement, SafeArrayUnaccessData},
-        Variant::{VARIANT, VT_ARRAY, VT_BOOL, VT_BSTR, VT_I4, VT_I8, VT_UI1, VT_UNKNOWN, VT_VARIANT},
+        Ole::{
+            SafeArrayAccessData, SafeArrayCreate, 
+            SafeArrayCreateVector, SafeArrayPutElement,
+            SafeArrayUnaccessData,
+        },
+        Variant::{
+            VARIANT, VT_ARRAY, VT_BOOL, 
+            VT_BSTR, VT_I4, VT_I8, VT_UI1, 
+            VT_UNKNOWN, VT_VARIANT,
+        },
     },
 };
 
 use super::WinStr;
-use crate::error::ClrError;
 use crate::Result;
+use crate::error::ClrError;
 
 /// Trait to convert various Rust types to Windows COM-compatible `VARIANT` types.
 ///
@@ -76,7 +84,8 @@ impl Variant for bool {
     fn to_variant(&self) -> VARIANT {
         let mut variant = unsafe { core::mem::zeroed::<VARIANT>() };
         variant.Anonymous.Anonymous.vt = Self::var_type();
-        variant.Anonymous.Anonymous.Anonymous.boolVal = if *self { VARIANT_TRUE } else { VARIANT_FALSE };
+        variant.Anonymous.Anonymous.Anonymous.boolVal =
+            if *self { VARIANT_TRUE } else { VARIANT_FALSE };
 
         variant
     }
@@ -156,7 +165,9 @@ pub fn create_safe_array_args<T: Variant>(args: Vec<T>) -> Result<*mut SAFEARRAY
             let variant = arg.to_variant();
             let index = i as i32;
             let value_ptr = match vartype {
-                VT_BOOL => &variant.Anonymous.Anonymous.Anonymous.boolVal as *const _ as *const c_void,
+                VT_BOOL => {
+                    &variant.Anonymous.Anonymous.Anonymous.boolVal as *const _ as *const c_void
+                }
                 VT_I4 => &variant.Anonymous.Anonymous.Anonymous.lVal as *const _ as *const c_void,
                 VT_BSTR => variant.Anonymous.Anonymous.Anonymous.bstrVal as *const c_void,
                 _ => return Err(ClrError::VariantUnsupported),
@@ -178,7 +189,11 @@ pub fn create_safe_array_args<T: Variant>(args: Vec<T>) -> Result<*mut SAFEARRAY
         var_array.Anonymous.Anonymous.Anonymous.parray = psa;
 
         let index = 0;
-        let hr = SafeArrayPutElement(args, &index, &mut var_array as *const VARIANT as *const c_void);
+        let hr = SafeArrayPutElement(
+            args,
+            &index,
+            &mut var_array as *const VARIANT as *const c_void,
+        );
         if hr != 0 {
             return Err(ClrError::ApiError("SafeArrayPutElement (2)", hr));
         }
@@ -203,7 +218,8 @@ pub fn create_safe_args(args: Vec<VARIANT>) -> Result<*mut SAFEARRAY> {
         for (i, var) in args.iter().enumerate() {
             let index = i as i32;
             let mut variant = *var;
-            let hr = SafeArrayPutElement(arg, &index, &mut variant as *const VARIANT as *const c_void);
+            let hr =
+                SafeArrayPutElement(arg, &index, &mut variant as *const VARIANT as *const c_void);
             if hr != 0 {
                 return Err(ClrError::ApiError("SafeArrayPutElement", hr));
             }

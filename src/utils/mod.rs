@@ -1,5 +1,4 @@
 use alloc::{string::String, vec::Vec};
-
 use windows_sys::Win32::Foundation::{SysAllocString, SysStringLen};
 
 /// Module related to safearray creation

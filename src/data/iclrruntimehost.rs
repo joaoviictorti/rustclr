@@ -47,7 +47,12 @@ impl ICLRuntimeHost {
     where
         T: windows_core::Param<IHostControl>,
     {
-        let hr = unsafe { (Interface::vtable(self).SetHostControl)(Interface::as_raw(self), phostcontrol.param().abi()) };
+        let hr = unsafe {
+            (Interface::vtable(self).SetHostControl)(
+                Interface::as_raw(self),
+                phostcontrol.param().abi(),
+            )
+        };
         if hr == 0 {
             Ok(())
         } else {
@@ -120,7 +125,10 @@ pub struct ICLRuntimeHost_Vtbl {
     /// # Returns
     ///
     /// * Returns an HRESULT indicating success or failure.
-    pub SetHostControl: unsafe extern "system" fn(this: *mut c_void, phostcontrol: *mut c_void) -> HRESULT,
+    pub SetHostControl: unsafe extern "system" fn(
+        this: *mut c_void, 
+        phostcontrol: *mut c_void
+    ) -> HRESULT,
 
     /// Placeholder for the methods. Not used directly.
     pub GetCLRControl: *const c_void,

@@ -105,7 +105,12 @@ impl _PropertyInfo {
     pub fn GetValue(&self, instance: VARIANT, args: *mut SAFEARRAY) -> Result<VARIANT> {
         unsafe {
             let mut result = core::mem::zeroed();
-            let hr = (Interface::vtable(self).GetValue)(Interface::as_raw(self), instance, args, &mut result);
+            let hr = (Interface::vtable(self).GetValue)(
+                Interface::as_raw(self),
+                instance,
+                args,
+                &mut result,
+            );
             if hr == 0 {
                 Ok(result)
             } else {
@@ -190,7 +195,12 @@ pub struct _PropertyInfo_Vtbl {
     /// # Returns
     ///
     /// * Returns an HRESULT indicating success or failure.
-    GetValue: unsafe extern "system" fn(this: *mut c_void, obj: VARIANT, index: *mut SAFEARRAY, pRetVal: *mut VARIANT) -> HRESULT,
+    GetValue: unsafe extern "system" fn(
+        this: *mut c_void,
+        obj: VARIANT,
+        index: *mut SAFEARRAY,
+        pRetVal: *mut VARIANT,
+    ) -> HRESULT,
 
     /// Placeholder for the methods .Not used directly.
     GetValue_2: *const c_void,

@@ -49,7 +49,10 @@ impl IHostAssemblyStore_Vtbl {
     ///
     /// This table contains function pointers for each method exposed by the interface.
     pub const fn new<Identity: IHostAssemblyStore_Impl, const OFFSET: isize>() -> Self {
-        unsafe extern "system" fn ProvideAssembly<Identity: IHostAssemblyStore_Impl, const OFFSET: isize>(
+        unsafe extern "system" fn ProvideAssembly<
+            Identity: IHostAssemblyStore_Impl,
+            const OFFSET: isize,
+        >(
             this: *mut c_void,
             pbindinfo: *const AssemblyBindInfo,
             passemblyid: *mut u64,
@@ -58,7 +61,8 @@ impl IHostAssemblyStore_Vtbl {
             ppstmpdb: *mut *mut c_void,
         ) -> windows_core::HRESULT {
             unsafe {
-                let this: &Identity = &*((this as *const *const ()).offset(OFFSET) as *const Identity);
+                let this: &Identity =
+                    &*((this as *const *const ()).offset(OFFSET) as *const Identity);
                 IHostAssemblyStore_Impl::ProvideAssembly(
                     this,
                     transmute_copy(&pbindinfo),
@@ -71,7 +75,10 @@ impl IHostAssemblyStore_Vtbl {
             }
         }
 
-        unsafe extern "system" fn ProvideModule<Identity: IHostAssemblyStore_Impl, const OFFSET: isize>(
+        unsafe extern "system" fn ProvideModule<
+            Identity: IHostAssemblyStore_Impl,
+            const OFFSET: isize,
+        >(
             this: *mut c_void,
             pbindinfo: *const ModuleBindInfo,
             pdwmoduleid: *mut u32,
@@ -79,7 +86,8 @@ impl IHostAssemblyStore_Vtbl {
             ppstmpdb: *mut *mut c_void,
         ) -> windows_core::HRESULT {
             unsafe {
-                let this: &Identity = &*((this as *const *const ()).offset(OFFSET) as *const Identity);
+                let this: &Identity =
+                    &*((this as *const *const ()).offset(OFFSET) as *const Identity);
                 IHostAssemblyStore_Impl::ProvideModule(
                     this,
                     transmute_copy(&pbindinfo),

@@ -1,8 +1,8 @@
 use alloc::string::{String, ToString};
 use core::{ffi::c_void, ptr::null_mut};
 
-use windows_core::*;
 use obfstr::obfstr as s;
+use windows_core::*;
 use windows_sys::Win32::UI::Shell::SHCreateMemStream;
 
 use crate::data::*;
@@ -59,12 +59,19 @@ impl IHostControl_Impl for RustClrControl_Impl {
             // IID_IHostPolicyManager
             // IHostSecurityManager
             *ppobject = null_mut();
-            Err(Error::new(HRESULT(0x80004002u32 as i32), s!("E_NOINTERFACE")))
+            Err(Error::new(
+                HRESULT(0x80004002u32 as i32),
+                s!("E_NOINTERFACE"),
+            ))
         }
     }
 
     /// Not implemented.
-    fn SetAppDomainManager(&self, _dwappdomainid: u32, _punkappdomainmanager: Ref<'_, IUnknown>) -> Result<()> {
+    fn SetAppDomainManager(
+        &self,
+        _dwappdomainid: u32,
+        _punkappdomainmanager: Ref<'_, IUnknown>,
+    ) -> Result<()> {
         Ok(())
     }
 }
@@ -159,16 +166,20 @@ impl IHostAssemblyStore_Impl for RustClrStore_Impl<'_> {
         _ppstmpdb: *mut *mut c_void,
     ) -> Result<()> {
         let identity = unsafe { (*pbindinfo).lpPostPolicyIdentity.to_string() }?;
-
         if self.assembly == identity {
-            let stream = unsafe { SHCreateMemStream(self.buffer.as_ptr(), self.buffer.len() as u32) };
+            let stream = unsafe { 
+                SHCreateMemStream(self.buffer.as_ptr(), self.buffer.len() as u32) 
+            };
             unsafe { *passemblyid = 800 };
             unsafe { *pcontext = 0 }
             unsafe { *ppstmassemblyimage = stream };
             return Ok(());
         }
 
-        Err(Error::new(HRESULT(0x80070002u32 as i32), s!("Assembly not recognized")))
+        Err(Error::new(
+            HRESULT(0x80070002u32 as i32),
+            s!("Assembly not recognized"),
+        ))
     }
 
     /// Not implemented.
@@ -179,6 +190,9 @@ impl IHostAssemblyStore_Impl for RustClrStore_Impl<'_> {
         _ppstmmoduleimage: *mut *mut c_void,
         _ppstmpdb: *mut *mut c_void,
     ) -> Result<()> {
-        Err(Error::new(HRESULT(0x80070002u32 as i32), s!("Module not recognized")))
+        Err(Error::new(
+            HRESULT(0x80070002u32 as i32),
+            s!("Module not recognized"),
+        ))
     }
 }

@@ -1,6 +1,6 @@
+use crate::data::IHostAssemblyStore;
 use core::{ffi::c_void, ops::Deref, ptr::null_mut};
 use windows_core::{GUID, Interface};
-use crate::data::IHostAssemblyStore;
 
 /// Represents the COM `IHostAssemblyManager` interface.
 #[repr(C)]
@@ -21,12 +21,16 @@ impl IHostAssemblyManager_Vtbl {
     ///
     /// This binds the trait implementation to the raw function pointers expected by COM.
     pub const fn new<Identity: IHostAssemblyManager_Impl, const OFFSET: isize>() -> Self {
-        unsafe extern "system" fn GetNonHostStoreAssemblies<Identity: IHostAssemblyManager_Impl, const OFFSET: isize>(
+        unsafe extern "system" fn GetNonHostStoreAssemblies<
+            Identity: IHostAssemblyManager_Impl,
+            const OFFSET: isize,
+        >(
             this: *mut c_void,
             ppreferencelist: *mut *mut c_void,
         ) -> windows_core::HRESULT {
             unsafe {
-                let this: &Identity = &*((this as *const *const ()).offset(OFFSET) as *const Identity);
+                let this: &Identity =
+                    &*((this as *const *const ()).offset(OFFSET) as *const Identity);
                 match IHostAssemblyManager_Impl::GetNonHostStoreAssemblies(this) {
                     Ok(_) => {
                         ppreferencelist.write(null_mut());
@@ -37,12 +41,16 @@ impl IHostAssemblyManager_Vtbl {
             }
         }
 
-        unsafe extern "system" fn GetAssemblyStore<Identity: IHostAssemblyManager_Impl, const OFFSET: isize>(
+        unsafe extern "system" fn GetAssemblyStore<
+            Identity: IHostAssemblyManager_Impl,
+            const OFFSET: isize,
+        >(
             this: *mut c_void,
             ppassemblystore: *mut *mut c_void,
         ) -> windows_core::HRESULT {
             unsafe {
-                let this: &Identity = &*((this as *const *const ()).offset(OFFSET) as *const Identity);
+                let this: &Identity =
+                    &*((this as *const *const ()).offset(OFFSET) as *const Identity);
                 match IHostAssemblyManager_Impl::GetAssemblyStore(this) {
                     Ok(ok) => {
                         ppassemblystore.write(core::mem::transmute(ok));
@@ -111,7 +119,10 @@ pub struct IHostAssemblyManager_Vtbl {
     /// # Returns
     ///
     /// * HRESULT indicating success or failure.
-    pub GetNonHostStoreAssemblies: unsafe extern "system" fn(this: *mut c_void, ppreferencelist: *mut *mut c_void) -> windows_core::HRESULT,
+    pub GetNonHostStoreAssemblies: unsafe extern "system" fn(
+        this: *mut c_void,
+        ppreferencelist: *mut *mut c_void,
+    ) -> windows_core::HRESULT,
 
     /// Retrieves the `IHostAssemblyStore` associated with the host.
     ///
@@ -123,5 +134,8 @@ pub struct IHostAssemblyManager_Vtbl {
     /// # Returns
     ///
     /// * HRESULT indicating success or failure.
-    pub GetAssemblyStore: unsafe extern "system" fn(this: *mut c_void, ppassemblystore: *mut *mut c_void) -> windows_core::HRESULT,
+    pub GetAssemblyStore: unsafe extern "system" fn(
+        this: *mut c_void,
+        ppassemblystore: *mut *mut c_void,
+    ) -> windows_core::HRESULT,
 }

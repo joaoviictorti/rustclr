@@ -1,5 +1,4 @@
 use alloc::string::String;
-
 use thiserror::Error;
 
 /// Represents errors that can occur when interacting with the .NET runtime
