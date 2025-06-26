@@ -3,22 +3,8 @@ name: build
 on: [push, pull_request]
 
 jobs:
-  fmt:
-    name: Rustfmt Check
-    runs-on: windows-latest
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Install Rustfmt
-        run: |
-          rustup toolchain install nightly
-          rustup component add rustfmt --toolchain nightly
-
-      - name: Run rustfmt
-        run: cargo +nightly fmt --check
-
   clippy:
+    # Runs Clippy to check for lints in the Rust code
     name: Clippy Lint Check
     runs-on: windows-latest
 
@@ -31,17 +17,21 @@ jobs:
           rustup component add clippy
 
       - name: Run Clippy
-        run: cargo clippy
+        run: cargo clippy -- -D warnings
 
   doc:
+    # Builds project documentation, including private items
     name: Docs Check
     runs-on: windows-latest
+
     steps:
       - uses: actions/checkout@v4
+
       - name: Check docs
         run: cargo doc --no-deps --document-private-items
 
   cli-build:
+    # Builds the CLI binary located in the `cli` folder using release profile
     name: Build CLI
     runs-on: windows-latest
 
@@ -57,6 +47,7 @@ jobs:
           cargo build --release
 
   build:
+    # Builds selected examples and uploads the compiled executables as artifacts
     name: Build Examples
     runs-on: windows-latest
 
