@@ -12,9 +12,13 @@ use windows_sys::{
     Win32::{
         Foundation::VARIANT_BOOL,
         System::{
-            Variant::VARIANT,
             Com::SAFEARRAY,
-            Ole::{SafeArrayGetElement, SafeArrayGetLBound, SafeArrayGetUBound},
+            Variant::VARIANT,
+            Ole::{
+                SafeArrayGetElement, 
+                SafeArrayGetLBound, 
+                SafeArrayGetUBound
+            },
         },
     },
 };
@@ -183,7 +187,8 @@ impl _Assembly {
     /// * `Err(ClrError)` - If retrieval fails, returns a `ClrError`.
     pub fn GetHashCode(&self) -> Result<u32> {
         let mut result = 0;
-        let hr = unsafe { (Interface::vtable(self).GetHashCode)(Interface::as_raw(self), &mut result) };
+        let hr =
+            unsafe { (Interface::vtable(self).GetHashCode)(Interface::as_raw(self), &mut result) };
         if hr == 0 {
             Ok(result)
         } else {
@@ -199,7 +204,9 @@ impl _Assembly {
     /// * `Err(ClrError)` - If retrieval fails, returns a `ClrError`.
     pub fn get_EntryPoint(&self) -> Result<_MethodInfo> {
         let mut result = null_mut();
-        let hr = unsafe { (Interface::vtable(self).get_EntryPoint)(Interface::as_raw(self), &mut result) };
+        let hr = unsafe {
+            (Interface::vtable(self).get_EntryPoint)(Interface::as_raw(self), &mut result)
+        };
         if hr == 0 {
             _MethodInfo::from_raw(result as *mut c_void)
         } else {
@@ -219,7 +226,9 @@ impl _Assembly {
     /// * `Err(ClrError)` - If retrieval fails, returns a `ClrError`.
     pub fn GetType_2(&self, name: BSTR) -> Result<_Type> {
         let mut result = null_mut();
-        let hr = unsafe { (Interface::vtable(self).GetType_2)(Interface::as_raw(self), name, &mut result) };
+        let hr = unsafe {
+            (Interface::vtable(self).GetType_2)(Interface::as_raw(self), name, &mut result)
+        };
         if hr == 0 {
             _Type::from_raw(result as *mut c_void)
         } else {
@@ -235,7 +244,8 @@ impl _Assembly {
     /// * `Err(ClrError)` - If retrieval fails, returns a `ClrError`.
     pub fn GetTypes(&self) -> Result<*mut SAFEARRAY> {
         let mut result = null_mut();
-        let hr = unsafe { (Interface::vtable(self).GetTypes)(Interface::as_raw(self), &mut result) };
+        let hr =
+            unsafe { (Interface::vtable(self).GetTypes)(Interface::as_raw(self), &mut result) };
         if hr == 0 {
             Ok(result)
         } else {
@@ -255,7 +265,9 @@ impl _Assembly {
     /// * `Err(ClrError)` - If creation fails, returns a `ClrError`.
     pub fn CreateInstance(&self, typeName: BSTR) -> Result<VARIANT> {
         let mut result = unsafe { core::mem::zeroed::<VARIANT>() };
-        let hr = unsafe { (Interface::vtable(self).CreateInstance)(Interface::as_raw(self), typeName, &mut result) };
+        let hr = unsafe {
+            (Interface::vtable(self).CreateInstance)(Interface::as_raw(self), typeName, &mut result)
+        };
         if hr == 0 {
             Ok(result)
         } else {
@@ -312,7 +324,8 @@ impl _Assembly {
     pub fn get_EscapedCodeBase(&self) -> Result<String> {
         unsafe {
             let mut result = null::<u16>();
-            let hr = (Interface::vtable(self).get_EscapedCodeBase)(Interface::as_raw(self), &mut result);
+            let hr =
+                (Interface::vtable(self).get_EscapedCodeBase)(Interface::as_raw(self), &mut result);
             if hr == 0 {
                 let mut len = 0;
                 while *result.add(len) != 0 {
@@ -358,7 +371,11 @@ impl _Assembly {
     pub fn GetName_2(&self, copiedName: VARIANT_BOOL) -> Result<*mut c_void> {
         unsafe {
             let mut result = null_mut();
-            let hr = (Interface::vtable(self).GetName_2)(Interface::as_raw(self), copiedName, &mut result);
+            let hr = (Interface::vtable(self).GetName_2)(
+                Interface::as_raw(self),
+                copiedName,
+                &mut result,
+            );
             if hr == 0 {
                 Ok(result)
             } else {
@@ -515,7 +532,8 @@ pub struct _Assembly_Vtbl {
     /// # Returns
     ///
     /// * Returns an HRESULT indicating success or failure.
-    get_EscapedCodeBase: unsafe extern "system" fn(this: *mut c_void, pRetVal: *mut BSTR) -> HRESULT,
+    get_EscapedCodeBase:
+        unsafe extern "system" fn(this: *mut c_void, pRetVal: *mut BSTR) -> HRESULT,
 
     /// Retrieves the name of the assembly.
     ///
@@ -539,7 +557,11 @@ pub struct _Assembly_Vtbl {
     /// # Returns
     ///
     /// * Returns an HRESULT indicating success or failure.
-    GetName_2: unsafe extern "system" fn(this: *mut c_void, copiedName: VARIANT_BOOL, pRetVal: *mut *mut c_void) -> HRESULT,
+    GetName_2: unsafe extern "system" fn(
+        this: *mut c_void,
+        copiedName: VARIANT_BOOL,
+        pRetVal: *mut *mut c_void,
+    ) -> HRESULT,
 
     /// Retrieves the name of the assembly, with an option to specify if a copy of the name is returned.
     ///
@@ -564,7 +586,8 @@ pub struct _Assembly_Vtbl {
     /// # Returns
     ///
     /// * Returns an HRESULT indicating success or failure.
-    get_EntryPoint: unsafe extern "system" fn(this: *mut c_void, pRetVal: *mut *mut _MethodInfo) -> HRESULT,
+    get_EntryPoint:
+        unsafe extern "system" fn(this: *mut c_void, pRetVal: *mut *mut _MethodInfo) -> HRESULT,
 
     /// Retrieves a type by its name from the assembly.
     ///
@@ -577,7 +600,11 @@ pub struct _Assembly_Vtbl {
     /// # Returns
     ///
     /// * Returns an HRESULT indicating success or failure.
-    GetType_2: unsafe extern "system" fn(this: *mut c_void, name: BSTR, pRetVal: *mut *mut _Type) -> HRESULT,
+    GetType_2: unsafe extern "system" fn(
+        this: *mut c_void,
+        name: BSTR,
+        pRetVal: *mut *mut _Type,
+    ) -> HRESULT,
 
     /// Placeholder for the method. Not used directly.
     GetType_3: *const c_void,
@@ -643,7 +670,11 @@ pub struct _Assembly_Vtbl {
     /// # Returns
     ///
     /// * Returns an HRESULT indicating success or failure.
-    CreateInstance: unsafe extern "system" fn(this: *mut c_void, typeName: BSTR, pRetVal: *mut VARIANT) -> HRESULT,
+    CreateInstance: unsafe extern "system" fn(
+        this: *mut c_void,
+        typeName: BSTR,
+        pRetVal: *mut VARIANT,
+    ) -> HRESULT,
 
     /// Placeholder for the methods. Not used directly.
     CreateInstance_2: *const c_void,

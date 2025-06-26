@@ -1,9 +1,7 @@
 use alloc::{string::String, vec};
 use core::{ffi::c_void, ops::Deref};
-
 use windows_core::{GUID, IUnknown, Interface, PWSTR};
 use windows_sys::core::HRESULT;
-
 use crate::{Result, error::ClrError};
 
 /// This struct represents the COM `ICLRAssemblyIdentityManager` interface,
@@ -71,9 +69,22 @@ impl ICLRAssemblyIdentityManager {
     ///
     /// * `Ok(())` - If the operation succeeds.
     /// * `Err(ClrError)` - On failure.
-    pub fn GetBindingIdentityFromStream(&self, pstream: *mut c_void, dwFlags: u32, pwzBuffer: PWSTR, pcchbuffersize: *mut u32) -> Result<()> {
-        let hr =
-            unsafe { (Interface::vtable(self).GetBindingIdentityFromStream)(Interface::as_raw(self), pstream, dwFlags, pwzBuffer, pcchbuffersize) };
+    pub fn GetBindingIdentityFromStream(
+        &self,
+        pstream: *mut c_void,
+        dwFlags: u32,
+        pwzBuffer: PWSTR,
+        pcchbuffersize: *mut u32,
+    ) -> Result<()> {
+        let hr = unsafe {
+            (Interface::vtable(self).GetBindingIdentityFromStream)(
+                Interface::as_raw(self),
+                pstream,
+                dwFlags,
+                pwzBuffer,
+                pcchbuffersize,
+            )
+        };
         if hr == 0 {
             Ok(())
         } else {
@@ -131,8 +142,13 @@ pub struct ICLRAssemblyIdentityManager_Vtbl {
     /// # Returns
     ///
     /// * HRESULT indicating success or failure.
-    pub GetBindingIdentityFromStream:
-        unsafe extern "system" fn(this: *mut c_void, pstream: *mut c_void, dwFlags: u32, pwzBuffer: PWSTR, pcchbuffersize: *mut u32) -> HRESULT,
+    pub GetBindingIdentityFromStream: unsafe extern "system" fn(
+        this: *mut c_void,
+        pstream: *mut c_void,
+        dwFlags: u32,
+        pwzBuffer: PWSTR,
+        pcchbuffersize: *mut u32,
+    ) -> HRESULT,
 
     /// Placeholder for the method. Not used directly.
     pub GetReferencedAssembliesFromFile: *const c_void,

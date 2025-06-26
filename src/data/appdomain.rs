@@ -1,17 +1,25 @@
-use core::{ffi::c_void, ops::Deref, ptr::null_mut};
 use alloc::{string::String, vec::Vec};
+use core::{ffi::c_void, ops::Deref, ptr::null_mut};
 
 use windows_core::{GUID, IUnknown, Interface};
 use windows_sys::{
     core::{BSTR, HRESULT},
     Win32::System::{
         Com::SAFEARRAY,
-        Ole::{SafeArrayGetElement, SafeArrayGetLBound, SafeArrayGetUBound},
+        Ole::{
+            SafeArrayGetElement, 
+            SafeArrayGetLBound, 
+            SafeArrayGetUBound
+        },
     },
 };
 
 use super::{_Assembly, _Type};
-use crate::{Result, WinStr, create_safe_array_buffer, error::ClrError};
+use crate::{
+    Result, WinStr, 
+    create_safe_array_buffer, 
+    error::ClrError
+};
 
 /// This struct represents the COM `_AppDomain` interface,
 /// a .NET assembly in the CLR environment.
@@ -118,7 +126,8 @@ impl _AppDomain {
 
             for i in lbound..=ubound {
                 let mut p_assembly = null_mut::<_Assembly>();
-                let hr = SafeArrayGetElement(sa_assemblies, &i, &mut p_assembly as *mut _ as *mut _);
+                let hr =
+                    SafeArrayGetElement(sa_assemblies, &i, &mut p_assembly as *mut _ as *mut _);
                 if hr != 0 || p_assembly.is_null() {
                     return Err(ClrError::ApiError("SafeArrayGetElement", hr));
                 }
@@ -149,7 +158,9 @@ impl _AppDomain {
     /// * `Err(ClrError)` - If loading fails, returns a `ClrError`.
     pub fn Load_3(&self, rawAssembly: *mut SAFEARRAY) -> Result<_Assembly> {
         let mut result = null_mut();
-        let hr = unsafe { (Interface::vtable(self).Load_3)(Interface::as_raw(self), rawAssembly, &mut result) };
+        let hr = unsafe {
+            (Interface::vtable(self).Load_3)(Interface::as_raw(self), rawAssembly, &mut result)
+        };
         if hr == 0 {
             _Assembly::from_raw(result as *mut c_void)
         } else {
@@ -169,7 +180,9 @@ impl _AppDomain {
     /// * `Err(ClrError)` - If loading fails, returns a `ClrError`.
     pub fn Load_2(&self, assemblyString: BSTR) -> Result<_Assembly> {
         let mut result = null_mut();
-        let hr = unsafe { (Interface::vtable(self).Load_2)(Interface::as_raw(self), assemblyString, &mut result) };
+        let hr = unsafe {
+            (Interface::vtable(self).Load_2)(Interface::as_raw(self), assemblyString, &mut result)
+        };
         if hr == 0 {
             _Assembly::from_raw(result as *mut c_void)
         } else {
@@ -185,7 +198,9 @@ impl _AppDomain {
     /// * `Err(ClrError)` - If the call fails, returns a `ClrError`.
     pub fn GetHashCode(&self) -> Result<u32> {
         let mut result = 0;
-        let hr = unsafe { (Interface::vtable(self).GetHashCode)(Interface::as_raw(self), &mut result) };
+        let hr = unsafe { 
+            (Interface::vtable(self).GetHashCode)(Interface::as_raw(self), &mut result) 
+        };
         if hr == 0 {
             Ok(result)
         } else {
@@ -201,7 +216,9 @@ impl _AppDomain {
     /// * `Err(ClrError)` - If the type cannot be retrieved, returns a `ClrError`.
     pub fn GetType(&self) -> Result<_Type> {
         let mut result = null_mut();
-        let hr: i32 = unsafe { (Interface::vtable(self).GetType)(Interface::as_raw(self), &mut result) };
+        let hr  = unsafe { 
+            (Interface::vtable(self).GetType)(Interface::as_raw(self), &mut result) 
+        };
         if hr == 0 {
             _Type::from_raw(result as *mut c_void)
         } else {
@@ -217,7 +234,9 @@ impl _AppDomain {
     /// * `Err(ClrError)` – If the COM call fails or returns an error HRESULT.
     pub fn GetAssemblies(&self) -> Result<*mut SAFEARRAY> {
         let mut result = null_mut();
-        let hr: i32 = unsafe { (Interface::vtable(self).GetAssemblies)(Interface::as_raw(self), &mut result) };
+        let hr: i32 = unsafe {
+            (Interface::vtable(self).GetAssemblies)(Interface::as_raw(self), &mut result)
+        };
         if hr == 0 {
             Ok(result)
         } else {
@@ -342,7 +361,11 @@ pub struct _AppDomainVtbl {
     /// # Returns
     ///
     /// * Returns an HRESULT indicating success or failure.
-    Load_2: unsafe extern "system" fn(this: *mut c_void, assemblyString: BSTR, pRetVal: *mut *mut _Assembly) -> HRESULT,
+    Load_2: unsafe extern "system" fn(
+        this: *mut c_void,
+        assemblyString: BSTR,
+        pRetVal: *mut *mut _Assembly,
+    ) -> HRESULT,
 
     /// Implementation of the `Load_3` method.
     ///
@@ -357,7 +380,11 @@ pub struct _AppDomainVtbl {
     /// # Returns
     ///
     /// * Returns an HRESULT indicating success or failure.
-    Load_3: unsafe extern "system" fn(this: *mut c_void, rawAssembly: *mut SAFEARRAY, pRetVal: *mut *mut _Assembly) -> HRESULT,
+    Load_3: unsafe extern "system" fn(
+        this: *mut c_void,
+        rawAssembly: *mut SAFEARRAY,
+        pRetVal: *mut *mut _Assembly,
+    ) -> HRESULT,
 
     /// Placeholder for the methods. Not used directly.
     Load_4: *const c_void,
@@ -384,7 +411,8 @@ pub struct _AppDomainVtbl {
     /// # Returns
     ///
     /// * Returns an HRESULT indicating success or failure.
-    GetAssemblies: unsafe extern "system" fn(this: *mut c_void, pRetVal: *mut *mut SAFEARRAY) -> HRESULT,
+    GetAssemblies:
+        unsafe extern "system" fn(this: *mut c_void, pRetVal: *mut *mut SAFEARRAY) -> HRESULT,
 
     /// Placeholder for the methods. Not used directly.
     AppendPrivatePath: *const c_void,

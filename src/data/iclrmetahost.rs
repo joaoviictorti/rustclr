@@ -4,14 +4,11 @@ use core::{ffi::c_void, ops::Deref, ptr::null_mut};
 use windows_core::{GUID, Interface, PCWSTR, PWSTR};
 use windows_sys::{Win32::Foundation::HANDLE, core::HRESULT};
 
+use super::{ICLRRuntimeInfo, IEnumUnknown};
 use crate::Result;
 use crate::error::ClrError;
-use super::{ICLRRuntimeInfo, IEnumUnknown};
 
 /// Function pointer type for the callback invoked when a runtime is loaded.
-///
-/// This callback function is called when a runtime is loaded, and it receives the loaded runtime information
-/// along with functions to set and unset callback threads.
 ///
 /// # Arguments
 ///
@@ -27,11 +24,9 @@ pub type RuntimeLoadedCallbackFnPtr = Option<
 >;
 
 /// Function pointer for setting the callback thread in the CLR.
-/// This function returns an HRESULT indicating the success of the operation.
 pub type CallbackThreadSetFnPtr = Option<unsafe extern "system" fn() -> HRESULT>;
 
 /// Function pointer for unsetting the callback thread in the CLR.
-/// This function returns an HRESULT indicating the success of the operation.
 pub type CallbackThreadUnsetFnPtr = Option<unsafe extern "system" fn() -> HRESULT>;
 
 /// This struct represents the COM `ICLRMetaHoste` interface,
@@ -99,7 +94,12 @@ impl ICLRMetaHost {
     {
         unsafe {
             let mut result = null_mut();
-            let hr = (Interface::vtable(self).GetRuntime)(Interface::as_raw(self), pwzversion, &T::IID, &mut result);
+            let hr = (Interface::vtable(self).GetRuntime)(
+                Interface::as_raw(self),
+                pwzversion,
+                &T::IID,
+                &mut result,
+            );
             if hr == 0 {
                 Ok(core::mem::transmute_copy(&result))
             } else {
@@ -117,7 +117,10 @@ impl ICLRMetaHost {
     pub fn EnumerateInstalledRuntimes(&self) -> Result<IEnumUnknown> {
         unsafe {
             let mut result = core::mem::zeroed();
-            let hr = (Interface::vtable(self).EnumerateInstalledRuntimes)(Interface::as_raw(self), &mut result);
+            let hr = (Interface::vtable(self).EnumerateInstalledRuntimes)(
+                Interface::as_raw(self),
+                &mut result,
+            );
             if hr == 0 {
                 Ok(IEnumUnknown::from_raw(result))
             } else {
@@ -138,9 +141,19 @@ impl ICLRMetaHost {
     ///
     /// * `Ok(())` - On success, the version string is written to `pwzbuffer`.
     /// * `Err(ClrError)` - If the operation fails, returns a `ClrError`.
-    pub fn GetVersionFromFile(&self, pwzfilepath: PCWSTR, pwzbuffer: PWSTR, pcchbuffer: *mut u32) -> Result<()> {
+    pub fn GetVersionFromFile(
+        &self,
+        pwzfilepath: PCWSTR,
+        pwzbuffer: PWSTR,
+        pcchbuffer: *mut u32,
+    ) -> Result<()> {
         unsafe {
-            let hr = (Interface::vtable(self).GetVersionFromFile)(Interface::as_raw(self), pwzfilepath, pwzbuffer, pcchbuffer);
+            let hr = (Interface::vtable(self).GetVersionFromFile)(
+                Interface::as_raw(self),
+                pwzfilepath,
+                pwzbuffer,
+                pcchbuffer,
+            );
             if hr == 0 {
                 Ok(())
             } else {
@@ -162,7 +175,11 @@ impl ICLRMetaHost {
     pub fn EnumerateLoadedRuntimes(&self, hndprocess: HANDLE) -> Result<IEnumUnknown> {
         unsafe {
             let mut result = core::mem::zeroed();
-            let hr = (Interface::vtable(self).EnumerateLoadedRuntimes)(Interface::as_raw(self), hndprocess, &mut result);
+            let hr = (Interface::vtable(self).EnumerateLoadedRuntimes)(
+                Interface::as_raw(self),
+                hndprocess,
+                &mut result,
+            );
             if hr == 0 {
                 Ok(IEnumUnknown::from_raw(result))
             } else {
@@ -181,9 +198,15 @@ impl ICLRMetaHost {
     ///
     /// * `Ok(())` - On success, the callback is registered.
     /// * `Err(ClrError)` - If registration fails, returns a `ClrError`.
-    pub fn RequestRuntimeLoadedNotification(&self, pcallbackfunction: RuntimeLoadedCallbackFnPtr) -> Result<()> {
+    pub fn RequestRuntimeLoadedNotification(
+        &self,
+        pcallbackfunction: RuntimeLoadedCallbackFnPtr,
+    ) -> Result<()> {
         unsafe {
-            let hr = (Interface::vtable(self).RequestRuntimeLoadedNotification)(Interface::as_raw(self), pcallbackfunction);
+            let hr = (Interface::vtable(self).RequestRuntimeLoadedNotification)(
+                Interface::as_raw(self),
+                pcallbackfunction,
+            );
             if hr == 0 {
                 Ok(())
             } else {
@@ -204,7 +227,11 @@ impl ICLRMetaHost {
     {
         unsafe {
             let mut result = null_mut();
-            let hr = (Interface::vtable(self).QueryLegacyV2RuntimeBinding)(Interface::as_raw(self), &T::IID, &mut result);
+            let hr = (Interface::vtable(self).QueryLegacyV2RuntimeBinding)(
+                Interface::as_raw(self),
+                &T::IID,
+                &mut result,
+            );
             if hr == 0 {
                 Ok(core::mem::transmute_copy(&result))
             } else {
@@ -279,7 +306,12 @@ pub struct ICLRMetaHost_Vtbl {
     /// * `pwzVersion` - Version of the runtime.
     /// * `riid` - GUID of the requested interface.
     /// * `ppRuntime` - Pointer to the interface.
-    pub GetRuntime: unsafe extern "system" fn(*mut c_void, pwzVersion: PCWSTR, riid: *const GUID, ppRuntime: *mut *mut c_void) -> HRESULT,
+    pub GetRuntime: unsafe extern "system" fn(
+        this: *mut c_void,
+        pwzVersion: PCWSTR,
+        riid: *const GUID,
+        ppRuntime: *mut *mut c_void,
+    ) -> HRESULT,
 
     /// Retrieves the version of the CLR from a file.
     ///
@@ -293,7 +325,12 @@ pub struct ICLRMetaHost_Vtbl {
     /// # Returns
     ///
     /// * Returns an HRESULT indicating success or failure.
-    pub GetVersionFromFile: unsafe extern "system" fn(this: *mut c_void, pwzFilePath: PCWSTR, pwzBuffer: PWSTR, pcchBuffer: *mut u32) -> HRESULT,
+    pub GetVersionFromFile: unsafe extern "system" fn(
+        this: *mut c_void,
+        pwzFilePath: PCWSTR,
+        pwzBuffer: PWSTR,
+        pcchBuffer: *mut u32,
+    ) -> HRESULT,
 
     /// Enumerates all installed runtimes on the system.
     ///
@@ -305,7 +342,10 @@ pub struct ICLRMetaHost_Vtbl {
     /// # Returns
     ///
     /// * Returns an HRESULT indicating success or failure.
-    pub EnumerateInstalledRuntimes: unsafe extern "system" fn(this: *mut c_void, ppEnumerator: *mut *mut c_void) -> HRESULT,
+    pub EnumerateInstalledRuntimes: unsafe extern "system" fn(
+        this: *mut c_void, 
+        ppEnumerator: *mut *mut c_void
+    ) -> HRESULT,
 
     /// Enumerates all loaded runtimes in the specified process.
     ///
@@ -318,7 +358,11 @@ pub struct ICLRMetaHost_Vtbl {
     /// # Returns
     ///
     /// * Returns an HRESULT indicating success or failure.
-    pub EnumerateLoadedRuntimes: unsafe extern "system" fn(this: *mut c_void, hndProcess: HANDLE, ppEnumerator: *mut *mut c_void) -> HRESULT,
+    pub EnumerateLoadedRuntimes: unsafe extern "system" fn(
+        this: *mut c_void,
+        hndProcess: HANDLE,
+        ppEnumerator: *mut *mut c_void,
+    ) -> HRESULT,
 
     /// Registers a notification callback for when a runtime is loaded.
     ///
@@ -330,7 +374,10 @@ pub struct ICLRMetaHost_Vtbl {
     /// # Returns
     ///
     /// * Returns an HRESULT indicating success or failure.
-    pub RequestRuntimeLoadedNotification: unsafe extern "system" fn(this: *mut c_void, pCallbackFunction: RuntimeLoadedCallbackFnPtr) -> HRESULT,
+    pub RequestRuntimeLoadedNotification: unsafe extern "system" fn(
+        this: *mut c_void,
+        pCallbackFunction: RuntimeLoadedCallbackFnPtr,
+    ) -> HRESULT,
 
     /// Queries for a legacy runtime binding.
     ///
@@ -343,7 +390,11 @@ pub struct ICLRMetaHost_Vtbl {
     /// # Returns
     ///
     /// * Returns an HRESULT indicating success or failure.
-    pub QueryLegacyV2RuntimeBinding: unsafe extern "system" fn(this: *mut c_void, riid: *const GUID, ppUnk: *mut *mut c_void) -> HRESULT,
+    pub QueryLegacyV2RuntimeBinding: unsafe extern "system" fn(
+        this: *mut c_void,
+        riid: *const GUID,
+        ppUnk: *mut *mut c_void,
+    ) -> HRESULT,
 
     /// Terminates the process by calling the CLR's `ExitProcess` method.
     ///

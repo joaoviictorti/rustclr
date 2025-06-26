@@ -9,9 +9,13 @@ use windows_core::{GUID, IUnknown, Interface};
 use windows_sys::{
     core::{BSTR, HRESULT},
     Win32::System::{
-        Variant::VARIANT,
         Com::SAFEARRAY,
-        Ole::{SafeArrayGetElement, SafeArrayGetLBound, SafeArrayGetUBound},
+        Variant::VARIANT,
+        Ole::{
+            SafeArrayGetElement, 
+            SafeArrayGetLBound, 
+            SafeArrayGetUBound
+        },
     },
 };
 
@@ -104,12 +108,20 @@ impl _Type {
     /// * `Err(ClrError)` - On failure, returns a `ClrError`.
     pub fn property(&self, name: &str) -> Result<_PropertyInfo> {
         unsafe {
-            let binding_flags =
-                BindingFlags::Public | BindingFlags::Instance | BindingFlags::Static | BindingFlags::FlattenHierarchy | BindingFlags::NonPublic;
+            let binding_flags = BindingFlags::Public
+                | BindingFlags::Instance
+                | BindingFlags::Static
+                | BindingFlags::FlattenHierarchy
+                | BindingFlags::NonPublic;
 
             let property_name = name.to_bstr();
             let mut result = null_mut();
-            let hr = (Interface::vtable(self).GetProperty)(Interface::as_raw(self), property_name, binding_flags, &mut result);
+            let hr = (Interface::vtable(self).GetProperty)(
+                Interface::as_raw(self),
+                property_name,
+                binding_flags,
+                &mut result,
+            );
 
             if hr == 0 && !result.is_null() {
                 Ok(_PropertyInfo::from_raw(result)?)
@@ -132,10 +144,26 @@ impl _Type {
     ///
     /// * `Ok(VARIANT)` - On success, returns the result as `VARIANT`.
     /// * `Err(ClrError)` - On failure, returns `ClrError`.
-    pub fn invoke(&self, name: &str, instance: Option<VARIANT>, args: Option<Vec<VARIANT>>, invocation_type: Invocation) -> Result<VARIANT> {
+    pub fn invoke(
+        &self,
+        name: &str,
+        instance: Option<VARIANT>,
+        args: Option<Vec<VARIANT>>,
+        invocation_type: Invocation,
+    ) -> Result<VARIANT> {
         let flags = match invocation_type {
-            Invocation::Static => BindingFlags::NonPublic | BindingFlags::Public | BindingFlags::Static | BindingFlags::InvokeMethod,
-            Invocation::Instance => BindingFlags::NonPublic | BindingFlags::Public | BindingFlags::Instance | BindingFlags::InvokeMethod,
+            Invocation::Static => {
+                BindingFlags::NonPublic
+                    | BindingFlags::Public
+                    | BindingFlags::Static
+                    | BindingFlags::InvokeMethod
+            }
+            Invocation::Instance => {
+                BindingFlags::NonPublic
+                    | BindingFlags::Public
+                    | BindingFlags::Instance
+                    | BindingFlags::InvokeMethod
+            }
         };
 
         let method_name = name.to_bstr();
@@ -154,8 +182,11 @@ impl _Type {
     /// * `Ok(Vec<(String, _MethodInfo)>)` - On success, returns a vector of method names and `_MethodInfo`.
     /// * `Err(ClrError)` - On failure, returns a `ClrError`.
     pub fn methods(&self) -> Result<Vec<(String, _MethodInfo)>> {
-        let binding_flags =
-            BindingFlags::Public | BindingFlags::Instance | BindingFlags::Static | BindingFlags::FlattenHierarchy | BindingFlags::NonPublic;
+        let binding_flags = BindingFlags::Public
+            | BindingFlags::Instance
+            | BindingFlags::Static
+            | BindingFlags::FlattenHierarchy
+            | BindingFlags::NonPublic;
 
         let sa_methods = self.GetMethods(binding_flags)?;
         if sa_methods.is_null() {
@@ -192,8 +223,11 @@ impl _Type {
     /// * `Ok(Vec<(String, _PropertyInfo)>)` - On success, returns a vector of property names and `_PropertyInfo`.
     /// * `Err(ClrError)` - On failure, returns a `ClrError`.
     pub fn properties(&self) -> Result<Vec<(String, _PropertyInfo)>> {
-        let binding_flags =
-            BindingFlags::Public | BindingFlags::Instance | BindingFlags::Static | BindingFlags::FlattenHierarchy | BindingFlags::NonPublic;
+        let binding_flags = BindingFlags::Public
+            | BindingFlags::Instance
+            | BindingFlags::Static
+            | BindingFlags::FlattenHierarchy
+            | BindingFlags::NonPublic;
 
         let sa_properties = self.GetProperties(binding_flags)?;
         if sa_properties.is_null() {
@@ -209,7 +243,8 @@ impl _Type {
 
             let mut p_property = null_mut::<_PropertyInfo>();
             for i in lbound..=ubound {
-                let hr = SafeArrayGetElement(sa_properties, &i, &mut p_property as *mut _ as *mut _);
+                let hr =
+                    SafeArrayGetElement(sa_properties, &i, &mut p_property as *mut _ as *mut _);
                 if hr != 0 || p_property.is_null() {
                     return Err(ClrError::ApiError("SafeArrayGetElement", hr));
                 }
@@ -283,7 +318,11 @@ impl _Type {
     pub fn GetProperties(&self, bindingAttr: BindingFlags) -> Result<*mut SAFEARRAY> {
         unsafe {
             let mut result = null_mut();
-            let hr = (Interface::vtable(self).GetProperties)(Interface::as_raw(self), bindingAttr, &mut result);
+            let hr = (Interface::vtable(self).GetProperties)(
+                Interface::as_raw(self),
+                bindingAttr,
+                &mut result,
+            );
 
             if hr == 0 {
                 Ok(result)
@@ -306,7 +345,11 @@ impl _Type {
     pub fn GetMethods(&self, bindingAttr: BindingFlags) -> Result<*mut SAFEARRAY> {
         unsafe {
             let mut result = null_mut();
-            let hr = (Interface::vtable(self).GetMethods)(Interface::as_raw(self), bindingAttr, &mut result);
+            let hr = (Interface::vtable(self).GetMethods)(
+                Interface::as_raw(self),
+                bindingAttr,
+                &mut result,
+            );
             if hr == 0 {
                 Ok(result)
             } else {
@@ -352,10 +395,24 @@ impl _Type {
     ///
     /// * `Ok(VARIANT)` - On success, returns the result of the invocation as a `VARIANT`.
     /// * `Err(ClrError)` - If invocation fails, returns an appropriate `ClrError`.
-    pub fn InvokeMember_3(&self, name: BSTR, invoke_attr: BindingFlags, instance: VARIANT, args: *mut SAFEARRAY) -> Result<VARIANT> {
+    pub fn InvokeMember_3(
+        &self,
+        name: BSTR,
+        invoke_attr: BindingFlags,
+        instance: VARIANT,
+        args: *mut SAFEARRAY,
+    ) -> Result<VARIANT> {
         unsafe {
             let mut result = core::mem::zeroed();
-            let hr = (Interface::vtable(self).InvokeMember_3)(Interface::as_raw(self), name, invoke_attr, null_mut(), instance, args, &mut result);
+            let hr = (Interface::vtable(self).InvokeMember_3)(
+                Interface::as_raw(self),
+                name,
+                invoke_attr,
+                null_mut(),
+                instance,
+                args,
+                &mut result,
+            );
             if hr == 0 {
                 Ok(result)
             } else {
@@ -466,7 +523,11 @@ pub struct _Type_Vtbl {
     /// # Returns
     ///
     /// * Returns an HRESULT indicating success or failure.
-    GetMethods: unsafe extern "system" fn(this: *mut c_void, bindingAttr: BindingFlags, pRetVal: *mut *mut SAFEARRAY) -> HRESULT,
+    GetMethods: unsafe extern "system" fn(
+        this: *mut c_void,
+        bindingAttr: BindingFlags,
+        pRetVal: *mut *mut SAFEARRAY,
+    ) -> HRESULT,
 
     /// Placeholder for the methods. Not used directly.
     GetField: *const c_void,
@@ -483,7 +544,12 @@ pub struct _Type_Vtbl {
     /// # Returns
     ///
     /// * HRESULT indicating success or failure.
-    pub GetProperty: unsafe extern "system" fn(this: *mut c_void, name: BSTR, bindingAttr: BindingFlags, result: *mut *mut c_void) -> HRESULT,
+    pub GetProperty: unsafe extern "system" fn(
+        this: *mut c_void,
+        name: BSTR,
+        bindingAttr: BindingFlags,
+        result: *mut *mut c_void,
+    ) -> HRESULT,
 
     /// Placeholder for the methods. Not used directly.
     GetProperty_2: *const c_void,
@@ -499,7 +565,11 @@ pub struct _Type_Vtbl {
     /// # Returns
     ///
     /// * Returns an HRESULT indicating success or failure.
-    GetProperties: unsafe extern "system" fn(this: *mut c_void, bindingAttr: BindingFlags, pRetVal: *mut *mut SAFEARRAY) -> HRESULT,
+    GetProperties: unsafe extern "system" fn(
+        this: *mut c_void,
+        bindingAttr: BindingFlags,
+        pRetVal: *mut *mut SAFEARRAY,
+    ) -> HRESULT,
 
     GetMember_2: *const c_void,
     GetMembers: *const c_void,
@@ -553,7 +623,11 @@ pub struct _Type_Vtbl {
     /// # Returns
     ///
     /// * Returns an HRESULT indicating success or failure.
-    GetMethod_6: unsafe extern "system" fn(this: *mut c_void, name: BSTR, pRetVal: *mut *mut _MethodInfo) -> HRESULT,
+    GetMethod_6: unsafe extern "system" fn(
+        this: *mut c_void,
+        name: BSTR,
+        pRetVal: *mut *mut _MethodInfo,
+    ) -> HRESULT,
 
     /// Placeholder for the methods. Not used directly.
     GetMethods_2: *const c_void,

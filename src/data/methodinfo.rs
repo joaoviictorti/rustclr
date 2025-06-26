@@ -39,7 +39,11 @@ impl _MethodInfo {
     ///
     /// * `Ok(VARIANT)` - On successful invocation, returns the result as a `VARIANT`.
     /// * `Err(ClrError)` - Returns an error if the entry point cannot be resolved or invoked.
-    pub fn invoke(&self, obj: Option<VARIANT>, parameters: Option<*mut SAFEARRAY>) -> Result<VARIANT> {
+    pub fn invoke(
+        &self,
+        obj: Option<VARIANT>,
+        parameters: Option<*mut SAFEARRAY>,
+    ) -> Result<VARIANT> {
         let variant_obj = unsafe { obj.unwrap_or(core::mem::zeroed::<VARIANT>()) };
         self.Invoke_3(variant_obj, parameters.unwrap_or(null_mut()))
     }
@@ -129,7 +133,12 @@ impl _MethodInfo {
     pub fn Invoke_3(&self, obj: VARIANT, parameters: *mut SAFEARRAY) -> Result<VARIANT> {
         unsafe {
             let mut result = core::mem::zeroed();
-            let hr = (Interface::vtable(self).Invoke_3)(Interface::as_raw(self), obj, parameters, &mut result);
+            let hr = (Interface::vtable(self).Invoke_3)(
+                Interface::as_raw(self),
+                obj,
+                parameters,
+                &mut result,
+            );
             if hr == 0 {
                 Ok(result)
             } else {
@@ -147,7 +156,9 @@ impl _MethodInfo {
     /// * `Err(ClrError)` - Returns an error if the parameters cannot be retrieved.
     pub fn GetParameters(&self) -> Result<*mut SAFEARRAY> {
         let mut result = null_mut();
-        let hr = unsafe { (Interface::vtable(self).GetParameters)(Interface::as_raw(self), &mut result) };
+        let hr = unsafe {
+            (Interface::vtable(self).GetParameters)(Interface::as_raw(self), &mut result)
+        };
         if hr == 0 {
             Ok(result)
         } else {
@@ -163,7 +174,12 @@ impl _MethodInfo {
     /// * `Err(ClrError)` - If the call fails, returns a `ClrError`.
     pub fn GetHashCode(&self) -> Result<u32> {
         let mut result = 0;
-        let hr = unsafe { (Interface::vtable(self).GetHashCode)(Interface::as_raw(self), &mut result) };
+        let hr = unsafe { 
+            (Interface::vtable(self).GetHashCode)(
+                Interface::as_raw(self), 
+                &mut result
+            ) 
+        };
         if hr == 0 {
             Ok(result)
         } else {
@@ -182,7 +198,9 @@ impl _MethodInfo {
     /// * `Err(ClrError)` - Returns a `ClrError` if the call to `GetBaseDefinition` fails.
     pub fn GetBaseDefinition(&self) -> Result<_MethodInfo> {
         let mut result = null_mut();
-        let hr = unsafe { (Interface::vtable(self).GetBaseDefinition)(Interface::as_raw(self), &mut result) };
+        let hr = unsafe {
+            (Interface::vtable(self).GetBaseDefinition)(Interface::as_raw(self), &mut result)
+        };
         if hr == 0 {
             _MethodInfo::from_raw(result as *mut c_void)
         } else {
@@ -316,7 +334,10 @@ pub struct _MethodInfo_Vtbl {
     /// # Returns
     ///
     /// * Returns an HRESULT indicating success or failure.
-    GetParameters: unsafe extern "system" fn(this: *mut c_void, pRetVal: *mut *mut SAFEARRAY) -> HRESULT,
+    GetParameters: unsafe extern "system" fn(
+        this: *mut c_void, 
+        pRetVal: *mut *mut SAFEARRAY
+    ) -> HRESULT,
 
     /// Placeholder for the methods. Not used directly.
     GetMethodImplementationFlags: *const c_void,
@@ -350,7 +371,12 @@ pub struct _MethodInfo_Vtbl {
     /// # Returns
     ///
     /// * Returns an HRESULT indicating success or failure.
-    Invoke_3: unsafe extern "system" fn(this: *mut c_void, obj: VARIANT, parameters: *mut SAFEARRAY, pRetVal: *mut VARIANT) -> HRESULT,
+    Invoke_3: unsafe extern "system" fn(
+        this: *mut c_void,
+        obj: VARIANT,
+        parameters: *mut SAFEARRAY,
+        pRetVal: *mut VARIANT,
+    ) -> HRESULT,
 
     /// Placeholder for the methods. Not used directly.
     get_returnType: *const c_void,
@@ -366,5 +392,8 @@ pub struct _MethodInfo_Vtbl {
     /// # Returns
     ///
     /// * Returns an HRESULT indicating success or failure.
-    GetBaseDefinition: unsafe extern "system" fn(this: *mut c_void, pRetVal: *mut *mut _MethodInfo) -> HRESULT,
+    GetBaseDefinition: unsafe extern "system" fn(
+        this: *mut c_void, 
+        pRetVal: *mut *mut _MethodInfo
+    ) -> HRESULT,
 }

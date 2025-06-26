@@ -1,11 +1,11 @@
 use core::ffi::c_void;
 
-use windows_core::{GUID, Interface};
 use dinvk::{GetProcAddress, LoadLibraryA};
+use windows_core::{GUID, Interface};
 use windows_sys::core::HRESULT;
 
-use crate::error::ClrError;
 use crate::Result;
+use crate::error::ClrError;
 
 /// CLSID (Class ID) constants for various CLR components.
 ///
@@ -28,7 +28,11 @@ static CLR_CREATE_INSTANCE: spin::Once<Option<CLRCreateInstanceType>> = spin::On
 /// # Returns
 ///
 /// * An `HRESULT` indicating success (`S_OK`) or the failure reason.
-type CLRCreateInstanceType = fn(clsid: *const windows_core::GUID, riid: *const windows_core::GUID, ppinterface: *mut *mut c_void) -> HRESULT;
+type CLRCreateInstanceType = fn(
+    clsid: *const windows_core::GUID,
+    riid: *const windows_core::GUID,
+    ppinterface: *mut *mut c_void,
+) -> HRESULT;
 
 /// Function type for retrieving the current thread's CLR identity.
 ///
@@ -65,7 +69,9 @@ where
             let addr = GetProcAddress(module, 2672818687u32, Some(dinvk::hash::murmur3));
 
             // Transmute the address to the function type
-            return Some(unsafe { core::mem::transmute::<*mut c_void, CLRCreateInstanceType>(addr) });
+            return Some(unsafe {
+                core::mem::transmute::<*mut c_void, CLRCreateInstanceType>(addr)
+            });
         }
 
         None
@@ -83,6 +89,8 @@ where
             Err(ClrError::ApiError("CLRCreateInstance", hr))
         }
     } else {
-        Err(ClrError::GenericError("CLRCreateInstance function not found"))
+        Err(ClrError::GenericError(
+            "CLRCreateInstance function not found",
+        ))
     }
 }
