@@ -10,36 +10,31 @@ repository = "https://github.com/joaoviictorti/rustclr"
 homepage = "https://github.com/joaoviictorti/rustclr"
 keywords = ["dotnet", "clr", "windows", "rust", "redteam"]
 categories = ["os", "security", "api-bindings"]
-include = [
-    "src/**",
-    "Cargo.toml",
-    "README.md",
-    "LICENSE",
-]
+include = ["src/**", "Cargo.toml", "README.md", "LICENSE"]
 
 [dependencies]
 dinvk = "0.2.6"
 obfstr = "0.4.4"
 thiserror = { version = "2.0.12", default-features = false }
 windows-core = { version = "0.61.2", default-features = false }
-uuid = { version = "1.16.0", default-features = false } 
+uuid = { version = "1.16.0", default-features = false }
 spin = { version = "0.10.0", default-features = false }
 
 [dependencies.windows-sys]
 version = "0.59.0"
 features = [
-    "Win32_System_Com", 
-    "Win32_System_Ole", 
-    "Win32_System_Variant",
-    "Win32_System_Memory",
-    "Win32_System_LibraryLoader", 
-    "Win32_System_SystemServices", 
-    "Win32_System_Diagnostics_Debug", 
-    "Win32_System_SystemInformation",
-    "Win32_Storage_FileSystem",
-    "Win32_Security",
-    "Win32_System_IO",
-    "Win32_UI_Shell"
+  "Win32_System_Com",
+  "Win32_System_Ole",
+  "Win32_System_Variant",
+  "Win32_System_Memory",
+  "Win32_System_LibraryLoader",
+  "Win32_System_SystemServices",
+  "Win32_System_Diagnostics_Debug",
+  "Win32_System_SystemInformation",
+  "Win32_Storage_FileSystem",
+  "Win32_Security",
+  "Win32_System_IO",
+  "Win32_UI_Shell",
 ]
 
 [package.metadata.docs.rs]
