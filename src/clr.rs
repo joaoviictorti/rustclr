@@ -15,11 +15,11 @@ use dinvk::{
 };
 use windows_core::{IUnknown, Interface, PCWSTR};
 use windows_sys::Win32::{
+    UI::Shell::SHCreateMemStream,
     System::{
         Memory::PAGE_EXECUTE_READWRITE,
         Variant::{VARIANT, VariantClear},
     },
-    UI::Shell::SHCreateMemStream,
 };
 
 use super::{com::*, data::*};
@@ -688,9 +688,7 @@ impl<'a> ClrOutput<'a> {
     /// * `Err(ClrError)` - If an error occurs while attempting to redirect the streams.
     pub fn redirect(&mut self) -> Result<()> {
         let console = self.mscorlib.resolve_type(s!("System.Console"))?;
-        let string_writer = self
-            .mscorlib
-            .create_instance(s!("System.IO.StringWriter"))?;
+        let string_writer = self.mscorlib.create_instance(s!("System.IO.StringWriter"))?;
 
         // Invokes the methods
         console.invoke(
@@ -720,8 +718,7 @@ impl<'a> ClrOutput<'a> {
     /// * `Err(ClrError)` - If an error occurs while restoring the streams.
     pub fn restore(&mut self) -> Result<()> {
         let console = self.mscorlib.resolve_type(s!("System.Console"))?;
-        console
-            .method_signature(s!("Void InitializeStdOutError(Boolean)"))?
+        console.method_signature(s!("Void InitializeStdOutError(Boolean)"))?
             .invoke(
                 None,
                 Some(crate::create_safe_args(vec![true.to_variant()])?),

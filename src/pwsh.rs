@@ -1,5 +1,6 @@
 use alloc::{format, string::String, vec};
 use obfstr::obfstr as s;
+
 use crate::{Invocation, Result, Variant, WinStr};
 use crate::{RustClrEnv, data::_Assembly};
 
@@ -22,8 +23,7 @@ impl PowerShell {
     ///
     /// # Returns
     ///
-    /// A new `PowerShell` instance ready to execute commands.
-    #[rustfmt::skip]
+    /// * A new [`PowerShell`] instance ready to execute commands.
     pub fn new() -> Result<Self> {
         // Initialize .NET runtime (v4.0).
         let clr = RustClrEnv::new(None)?;
@@ -54,7 +54,6 @@ impl PowerShell {
     /// # Returns
     ///
     /// * Returns the textual output of the PowerShell command.
-    #[rustfmt::skip]
     pub fn execute(&self, command: &str) -> Result<String> {
         // Invoke `CreateRunspace` method.
         let runspace_factory = self.automation.resolve_type(s!("System.Management.Automation.Runspaces.RunspaceFactory"))?;
