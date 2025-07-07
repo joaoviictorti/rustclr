@@ -11,6 +11,9 @@
 
 extern crate alloc;
 
+mod com;
+mod host_control;
+
 /// Defines data structures and descriptions for manipulating and interacting with the CLR.
 pub mod data;
 
@@ -28,9 +31,6 @@ pub use pwsh::*;
 /// Utilities
 mod utils;
 pub use utils::*;
-
-mod com;
-mod host_control;
 
 /// Type alias for `Result` with `ClrError` as the error type.
 pub(crate) type Result<T> = core::result::Result<T, crate::error::ClrError>;

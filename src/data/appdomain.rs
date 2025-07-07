@@ -411,8 +411,7 @@ pub struct _AppDomainVtbl {
     /// # Returns
     ///
     /// * Returns an HRESULT indicating success or failure.
-    GetAssemblies:
-        unsafe extern "system" fn(this: *mut c_void, pRetVal: *mut *mut SAFEARRAY) -> HRESULT,
+    GetAssemblies:unsafe extern "system" fn(this: *mut c_void, pRetVal: *mut *mut SAFEARRAY) -> HRESULT,
 
     /// Placeholder for the methods. Not used directly.
     AppendPrivatePath: *const c_void,

@@ -532,8 +532,7 @@ pub struct _Assembly_Vtbl {
     /// # Returns
     ///
     /// * Returns an HRESULT indicating success or failure.
-    get_EscapedCodeBase:
-        unsafe extern "system" fn(this: *mut c_void, pRetVal: *mut BSTR) -> HRESULT,
+    get_EscapedCodeBase: unsafe extern "system" fn(this: *mut c_void, pRetVal: *mut BSTR) -> HRESULT,
 
     /// Retrieves the name of the assembly.
     ///
@@ -586,8 +585,7 @@ pub struct _Assembly_Vtbl {
     /// # Returns
     ///
     /// * Returns an HRESULT indicating success or failure.
-    get_EntryPoint:
-        unsafe extern "system" fn(this: *mut c_void, pRetVal: *mut *mut _MethodInfo) -> HRESULT,
+    get_EntryPoint: unsafe extern "system" fn(this: *mut c_void, pRetVal: *mut *mut _MethodInfo) -> HRESULT,
 
     /// Retrieves a type by its name from the assembly.
     ///
