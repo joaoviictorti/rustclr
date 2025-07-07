@@ -135,31 +135,12 @@ impl<'a> RustClr<'a> {
 
     /// Sets the .NET runtime version to use.
     ///
-    /// # Arguments
-    ///
-    /// * `version` - The `RuntimeVersion` enum representing the .NET version.
-    ///
-    /// # Returns
-    ///
-    /// * Returns the modified `RustClr` instance.
-    ///
     /// # Example
     ///
     /// ```rust,ignore
-    /// use rustclr::{RustClr, RuntimeVersion};
-    /// use std::fs;
-    ///
-    /// fn main() -> Result<(), Box<dyn std::error::Error>> {
-    ///     let buffer = fs::read("examples/sample.exe")?;
-    ///
-    ///     // Set a specific .NET runtime version
-    ///     let clr = RustClr::new(&buffer)?
-    ///         .runtime_version(RuntimeVersion::V4);
-    ///
-    ///     println!("Runtime version set successfully.");
-    ///
-    ///     Ok(())
-    /// }
+    /// use rustclr::RustClr;
+    /// 
+    /// let clr = RustClr::new("app.exe")?.runtime_version(RuntimeVersion::V4);
     /// ```
     pub fn runtime_version(mut self, version: RuntimeVersion) -> Self {
         self.runtime_version = Some(version);
@@ -168,30 +149,12 @@ impl<'a> RustClr<'a> {
 
     /// Sets the application domain name to use.
     ///
-    /// # Arguments
-    ///
-    /// * `domain_name` - A string representing the name of the application domain.
-    ///
-    /// # Returns
-    ///
-    /// * Returns the modified `RustClr` instance.
-    ///
     /// # Example
     ///
     /// ```rust,ignore
     /// use rustclr::RustClr;
-    /// use std::fs;
-    ///
-    /// fn main() -> Result<(), Box<dyn std::error::Error>> {
-    ///     let buffer = fs::read("examples/sample.exe")?;
-    ///
-    ///     // Set a custom application domain name
-    ///     let clr = RustClr::new(&buffer)?
-    ///         .domain("CustomDomain");
-    ///
-    ///     println!("Domain set successfully.");
-    ///     Ok(())
-    /// }
+    /// 
+    /// let clr = RustClr::new("app.exe")?.domain("CustomDomain");
     /// ```
     pub fn domain(mut self, domain_name: &str) -> Self {
         self.domain_name = Some(domain_name.to_string());
@@ -200,30 +163,12 @@ impl<'a> RustClr<'a> {
 
     /// Sets the arguments to pass to the .NET assembly's entry point.
     ///
-    /// # Arguments
-    ///
-    /// * `args` - A vector of strings representing the arguments.
-    ///
-    /// # Returns
-    ///
-    /// * Returns the modified `RustClr` instance.
-    ///
-    /// # Examples
+    /// # Example
     ///
     /// ```rust,ignore
     /// use rustclr::RustClr;
-    /// use std::fs;
-    ///
-    /// fn main() -> Result<(), Box<dyn std::error::Error>> {
-    ///     let buffer = fs::read("examples/sample.exe")?;
-    ///
-    ///     // Pass arguments to the .NET assembly's entry point
-    ///     let clr = RustClr::new(&buffer)?
-    ///         .args(vec!["arg1", "arg2"]);
-    ///
-    ///     println!("Arguments set successfully.");
-    ///     Ok(())
-    /// }
+    /// 
+    /// let clr = RustClr::new("app.exe")?.args(vec!["arg1", "arg2"]);
     /// ```
     pub fn args(mut self, args: Vec<&str>) -> Self {
         self.args = Some(args.iter().map(|&s| s.to_string()).collect());
@@ -232,30 +177,12 @@ impl<'a> RustClr<'a> {
 
     /// Enables or disables output redirection.
     ///
-    /// # Arguments
-    ///
-    /// * `redirect` - A boolean indicating whether to enable output redirection.
-    ///
-    /// # Returns
-    ///
-    /// * The modified `RustClr` instance with the updated output redirection setting.
-    ///
     /// # Example
     ///
     /// ```rust,ignore
     /// use rustclr::RustClr;
-    /// use std::fs;
-    ///
-    /// fn main() -> Result<(), Box<dyn std::error::Error>> {
-    ///     let buffer = fs::read("examples/sample.exe")?;
-    ///
-    ///     // Enable output redirection to capture console output
-    ///     let clr = RustClr::new(&buffer)?
-    ///         .output();
-    ///
-    ///     println!("Output redirection enabled.");
-    ///     Ok(())
-    /// }
+    /// 
+    /// let clr = RustClr::new("app.exe")?.output();
     /// ```
     pub fn output(mut self) -> Self {
         self.redirect_output = true;
@@ -264,26 +191,12 @@ impl<'a> RustClr<'a> {
 
     /// Enables patching of the `System.Environment.Exit` method in `mscorlib`.
     ///
-    /// # Returns
-    ///
-    /// * The modified `RustClr` instance with the patch setting enabled.
-    ///
     /// # Example
     ///
     /// ```rust,ignore
     /// use rustclr::RustClr;
-    /// use std::fs;
-    ///
-    /// fn main() -> Result<(), Box<dyn std::error::Error>> {
-    ///     let buffer = fs::read("examples/sample.exe")?;
-    ///
-    ///     // Enable patching of Environment.Exit
-    ///     let clr = RustClr::new(&buffer)?
-    ///         .exit();
-    ///
-    ///     println!("Environment.Exit will be patched to prevent termination.");
-    ///     Ok(())
-    /// }
+    /// 
+    /// let clr = RustClr::new("app.exe")?.exit();
     /// ```
     pub fn exit(mut self) -> Self {
         self.patch_exit = true;
@@ -789,7 +702,7 @@ impl RustClrEnv {
     ///
     /// # Examples
     ///
-    /// ```ignore
+    /// ```rust,ignore
     /// use rustclr::{RustClrEnv, RuntimeVersion};
     ///
     /// fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -891,10 +804,7 @@ impl RuntimeVersion {
             RuntimeVersion::UNKNOWN => "UNKNOWN",
         };
 
-        runtime_version
-            .encode_utf16()
-            .chain(Some(0))
-            .collect::<Vec<u16>>()
+        runtime_version.encode_utf16().chain(Some(0)).collect::<Vec<u16>>()
     }
 }
 
