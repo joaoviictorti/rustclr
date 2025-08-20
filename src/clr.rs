@@ -232,12 +232,12 @@ impl<'a> RustClr<'a> {
         // Creates the `ICLRuntimeHost`
         let iclr_runtime_host = self.get_clr_runtime_host(&runtime_info)?;
 
-        // Create and register IHostControl with custom assembly and identity
-        let host_control: IHostControl = RustClrControl::new(self.buffer, &self.identity_assembly).into();
-        iclr_runtime_host.SetHostControl(&host_control)?;
-
         // Checks if the runtime is started
         if runtime_info.IsLoadable().is_ok() && !runtime_info.is_started() {
+            // Create and register IHostControl with custom assembly and identity
+            let host_control: IHostControl = RustClrControl::new(self.buffer, &self.identity_assembly).into();
+            iclr_runtime_host.SetHostControl(&host_control)?;
+            
             // Starts the CLR runtime
             self.start_runtime(&iclr_runtime_host)?;
         }
