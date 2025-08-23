@@ -808,71 +808,71 @@ impl RuntimeVersion {
     }
 }
 
-/// Represents the COFF data source, which can be a file or a memory buffer.
+/// Represents a source of CLR data, which can come from a file path or an in-memory buffer.
 #[derive(Debug, Clone)]
 pub enum ClrSource<'a> {
-    /// COFF file indicated by a string representing the file path.
+    /// File indicated by a string representing the file path.
     File(&'a str),
 
-    /// Memory buffer containing COFF data.
+    /// In-memory buffer containing the data.
     Buffer(&'a [u8]),
 }
 
 impl<'a> From<&'a str> for ClrSource<'a> {
-    /// Converts a file path (`&'a str`) to a COFF source (`ClrSource::File`).
+    /// Converts a file path (`&'a str`) into a [`ClrSource::File`].
     ///
     /// # Arguments
     ///
-    /// * `file` - Path of the COFF file.
+    /// * `file` - Path to the file on disk.
     ///
     /// # Returns
     ///
-    /// * The input string will be treated as the path of a COFF file.
+    /// A [`ClrSource`] representing a file path.
     fn from(file: &'a str) -> Self {
         ClrSource::File(file)
     }
 }
 
 impl<'a, const N: usize> From<&'a [u8; N]> for ClrSource<'a> {
-    /// Converts a fixed-size byte array (`&[u8; N]`) to a COFF source (`ClrSource::Buffer`).
+    /// Converts a fixed-size byte array into a [`ClrSource::Buffer`].
     ///
     /// # Arguments
     ///
-    /// * `buffer` - A fixed-size byte array representing the COFF file data.
+    /// * `buffer` - Fixed-size byte array with the data.
     ///
     /// # Returns
     ///
-    /// * The input byte array will be treated as a COFF buffer in memory.
+    /// A [`ClrSource`] representing an in-memory buffer.
     fn from(buffer: &'a [u8; N]) -> Self {
         ClrSource::Buffer(buffer)
     }
 }
 
 impl<'a> From<&'a [u8]> for ClrSource<'a> {
-    /// Converts a byte slice (`&[u8]`) to a COFF source (`ClrSource::Buffer`).
+    /// Converts a byte slice into a [`ClrSource::Buffer`].
     ///
     /// # Arguments
     ///
-    /// * `buffer` - A byte slice representing the COFF file data.
+    /// * `buffer` - Byte slice with the data.
     ///
     /// # Returns
     ///
-    /// * The input byte slice will be treated as a COFF buffer in memory.
+    /// A [`ClrSource`] representing an in-memory buffer.
     fn from(buffer: &'a [u8]) -> Self {
         ClrSource::Buffer(buffer)
     }
 }
 
 impl<'a> From<&'a Vec<u8>> for ClrSource<'a> {
-    /// Converts a byte slice (`&Vec<u8>`) to a COFF source (`ClrSource::Buffer`).
+    /// Converts a [`Vec<u8>`] reference into a [`ClrSource::Buffer`].
     ///
     /// # Arguments
     ///
-    /// * `buffer` - A byte slice representing the COFF file data.
+    /// * `buffer` - A reference to a vector with the data.
     ///
     /// # Returns
     ///
-    /// * The input byte slice will be treated as a COFF buffer in memory.
+    /// A [`ClrSource`] representing an in-memory buffer.
     fn from(buffer: &'a Vec<u8>) -> Self {
         ClrSource::Buffer(buffer.as_slice())
     }
