@@ -15,7 +15,7 @@ pub trait WinStr {
     ///
     /// # Returns
     ///
-    /// * `*const u16` - A pointer to the UTF-16 encoded BSTR.
+    /// * A pointer to the UTF-16 encoded BSTR.
     ///
     /// This method is implemented for `&str` and `String`, converting
     /// them into BSTRs, and for `*const u16` as a passthrough.
