@@ -29,8 +29,8 @@ static CLR_CREATE_INSTANCE: spin::Once<Option<CLRCreateInstanceType>> = spin::On
 ///
 /// * An `HRESULT` indicating success (`S_OK`) or the failure reason.
 type CLRCreateInstanceType = fn(
-    clsid: *const windows_core::GUID,
-    riid: *const windows_core::GUID,
+    clsid: *const GUID,
+    riid: *const GUID,
     ppinterface: *mut *mut c_void,
 ) -> HRESULT;
 
