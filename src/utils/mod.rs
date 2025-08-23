@@ -1,11 +1,9 @@
 use alloc::{string::String, vec::Vec};
 use windows_sys::Win32::Foundation::{SysAllocString, SysStringLen};
 
-/// Module related to safearray creation
 mod safearray;
 pub use safearray::*;
 
-/// Module used to validate that the file corresponds to what is expected
 pub(crate) mod file;
 
 /// The `WinStr` trait provides methods for working with BSTRs (Binary String),
