@@ -1,3 +1,5 @@
+//! Manages specific error types used when interacting with the CLR and COM APIs.
+
 use alloc::string::String;
 use thiserror::Error;
 
