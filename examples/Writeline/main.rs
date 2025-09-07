@@ -1,25 +1,35 @@
 use rustclr::{ClrOutput, Invocation, RustClrEnv, Variant};
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    // Create and initialize the CLR environment
+    // Initialize the CLR environment and load the 'mscorlib' assembly
     let clr = RustClrEnv::new(None)?;
     let mscorlib = clr.app_domain.get_assembly("mscorlib")?;
     let console = mscorlib.resolve_type("System.Console")?;
 
-    // Set up output redirection
+    // Create a ClrOutput to intercept stdout via StringWriter
     let mut clr_output = ClrOutput::new(&mscorlib);
+
+    // First redirection: captures Console.WriteLine output
     clr_output.redirect()?;
 
-    // Prepare the arguments
+    // Call Console.WriteLine("Hello World")
     let args = vec!["Hello World".to_variant()];
-
-    // Invoke the WriteLine method
     console.invoke("WriteLine", None, Some(args), Invocation::Static)?;
 
-    // Restore the original output and capture redirected content
-    clr_output.restore()?;
+    // Capture and print the redirected output
     let output = clr_output.capture()?;
-    print!("{output}");
+    print!("OUTPUT (1) ====> {output}");
+
+    // Second redirection: resets the internal buffer
+    clr_output.redirect()?;
+
+    // Call Console.WriteLine("Hello Victor")
+    let args = vec!["Hello Victor".to_variant()];
+    console.invoke("WriteLine", None, Some(args), Invocation::Static)?;
+
+    // Capture and print the new output
+    let output = clr_output.capture()?;
+    print!("OUTPUT (2) ====> {output}");
 
     Ok(())
 }
