@@ -324,7 +324,7 @@ impl<'a> RustClr<'a> {
             // Invokes the `Main` method of the assembly
             assembly.run(parameters)?;
 
-            // Restores output if redirected
+            // Capture the output
             output_manager.capture()?
         } else {
             // Invokes the `Main` method of the assembly
