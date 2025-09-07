@@ -14,12 +14,10 @@ use super::{
 /// Provides a persistent interface for executing PowerShell commands
 /// from a .NET runtime hosted inside a Rust application.
 pub struct PowerShell {
-    /// The loaded .NET automation assembly (`System.Management.Automation`),
-    /// used to resolve types like `Runspace`, `Pipeline`, `PSObject`, etc.
+    /// The loaded .NET automation assembly (`System.Management.Automation`).
     automation: _Assembly,
 
     /// CLR environment used to host the .NET runtime.
-    /// This is kept alive to ensure assemblies and types remain valid.
     #[allow(dead_code)]
     clr: RustClrEnv,
 }
@@ -50,9 +48,6 @@ impl PowerShell {
     }
 
     /// Executes a PowerShell command and returns its output as a string.
-    ///
-    /// This method creates a new temporary `Runspace` and `Pipeline` for
-    /// each invocation. The result is captured via `PSObject.ToString()`.
     ///
     /// # Arguments
     ///
