@@ -50,12 +50,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // Create and configure a RustClr instance with runtime version and output redirection
     let output = RustClr::new(&buffer)?
-        .runtime_version(RuntimeVersion::V4) // Specify .NET runtime version
-        .output() // Redirect output to capture it in Rust
-        .domain("CustomDomain") // Optionally set a custom application domain
-        .exit() // Patch Environment.Exit to prevent host process termination
-        .args(vec!["arg1", "arg2"]) // Pass arguments to the .NET assembly's entry point
-        .run()?; // Execute the assembly
+        .runtime_version(RuntimeVersion::V4)
+        .output()
+        .domain("CustomDomain")
+        .exit()
+        .args(vec!["arg1", "arg2"])
+        .run()?;
 
     println!("Captured output: {}", output);
 
@@ -99,32 +99,38 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
 - **`ClrOutput`**: Manages redirection of standard output and error streams from .NET to Rust. This is especially useful if you need to capture and process all output produced by .NET code within a Rust environment.
 ```rs
-use rustclr::{
-    RustClrEnv, ClrOutput, 
-    Invocation, Variant
-};
+use rustclr::{ClrOutput, Invocation, RustClrEnv, Variant};
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    // Create and initialize the CLR environment
+    // Initialize the CLR environment and load the 'mscorlib' assembly
     let clr = RustClrEnv::new(None)?;
-    let mscorlib = clr.app_domain.load_lib("mscorlib")?;
+    let mscorlib = clr.app_domain.get_assembly("mscorlib")?;
     let console = mscorlib.resolve_type("System.Console")?;
 
-    // Set up output redirection
+    // Create a ClrOutput to intercept stdout via StringWriter
     let mut clr_output = ClrOutput::new(&mscorlib);
+
+    // First redirection: captures Console.WriteLine output
     clr_output.redirect()?;
 
-    // Prepare the arguments
+    // Call Console.WriteLine("Hello World")
     let args = vec!["Hello World".to_variant()];
-
-    // Invoke the WriteLine method
     console.invoke("WriteLine", None, Some(args), Invocation::Static)?;
 
-    // Restore the original output and capture redirected content
-    clr_output.restore()?;
+    // Capture and print the redirected output
     let output = clr_output.capture()?;
+    print!("OUTPUT (1) ====> {output}");
 
-    print!("{output}");
+    // Second redirection: resets the internal buffer
+    clr_output.redirect()?;
+
+    // Call Console.WriteLine("Hello Victor")
+    let args = vec!["Hello Victor".to_variant()];
+    console.invoke("WriteLine", None, Some(args), Invocation::Static)?;
+
+    // Capture and print the new output
+    let output = clr_output.capture()?;
+    print!("OUTPUT (2) ====> {output}");
 
     Ok(())
 }
@@ -132,7 +138,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
 ## Additional Resources
 
-For more examples, check the [examples](/examples) folder in the repository.
+For more examples, check the [examples](https://github.com/joaoviictorti/rustclr/tree/main/examples) folder in the repository.
 
 ## CLI
 
@@ -177,4 +183,4 @@ I want to express my gratitude to these projects that inspired me to create `rus
 
 ## License
 
-This project is licensed under the MIT License. See the [LICENSE](/LICENSE) file for details.
+This project is licensed under the MIT License. See the [LICENSE](https://github.com/joaoviictorti/rustclr/tree/main/LICENSE) file for details.
