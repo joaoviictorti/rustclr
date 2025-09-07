@@ -11,7 +11,7 @@ use obfstr::obfstr as s;
 use dinvk::{
     NtCurrentProcess, 
     NtProtectVirtualMemory, 
-    data::NT_SUCCESS
+    NT_SUCCESS
 };
 use windows_core::{IUnknown, Interface, PCWSTR};
 use windows_sys::Win32::{
@@ -24,11 +24,19 @@ use windows_sys::Win32::{
 
 use super::{com::*, data::*};
 use super::{
-    Invocation, Result, Variant,
-    WinStr, create_safe_array_args,
-    error::ClrError, uuid,
-    file::{read_file, validate_file},
+    error::ClrError,
     host_control::RustClrControl
+};
+use super::{
+    uuid,
+    create_safe_array_args,
+    file::{read_file, validate_file}
+};
+use super::{
+    Invocation, 
+    Result, 
+    Variant,
+    WinStr,
 };
 
 /// Represents a Rust interface to the Common Language Runtime (CLR).
@@ -318,7 +326,6 @@ impl<'a> RustClr<'a> {
 
             // Restores output if redirected
             let output = output_manager.capture()?;
-            output_manager.restore()?;
             output
         } else {
             // Invokes the `Main` method of the assembly
@@ -564,10 +571,6 @@ impl Drop for RustClr<'_> {
 }
 
 /// Manages output redirection in the CLR by using a `StringWriter`.
-///
-/// This struct handles the redirection of standard output and error streams
-/// to a `StringWriter` instance, enabling the capture of output produced
-/// by the .NET code.
 pub struct ClrOutput<'a> {
     /// The `StringWriter` instance used to capture output.
     string_writer: Option<VARIANT>,
@@ -620,23 +623,6 @@ impl<'a> ClrOutput<'a> {
 
         // Saves the StringWriter instance to retrieve the output later
         self.string_writer = Some(string_writer);
-        Ok(())
-    }
-
-    /// Restores the original standard output and error streams.
-    ///
-    /// # Returns
-    ///
-    /// * `Ok(())` - If the restoration is successful.
-    /// * `Err(ClrError)` - If an error occurs while restoring the streams.
-    pub fn restore(&mut self) -> Result<()> {
-        let console = self.mscorlib.resolve_type(s!("System.Console"))?;
-        console.method_signature(s!("Void InitializeStdOutError(Boolean)"))?
-            .invoke(
-                None,
-                Some(crate::create_safe_args(vec![true.to_variant()])?),
-            )?;
-
         Ok(())
     }
 

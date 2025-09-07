@@ -1,7 +1,7 @@
 use alloc::{ffi::CString, vec, vec::Vec};
 use core::ptr::null_mut;
 
-use dinvk::{data::IMAGE_NT_HEADERS, parse::PE};
+use dinvk::{data::IMAGE_NT_HEADERS, pe::PE};
 use windows_sys::Win32::System::Diagnostics::Debug::{
     IMAGE_DIRECTORY_ENTRY_COM_DESCRIPTOR, IMAGE_FILE_DLL, 
     IMAGE_FILE_EXECUTABLE_IMAGE, IMAGE_SUBSYSTEM_NATIVE,
@@ -17,10 +17,6 @@ use windows_sys::Win32::{
 use crate::{Result, error::ClrError};
 
 /// Checks if the PE headers indicate a valid Windows executable (not DLL, not Native subsystem).
-///
-/// # Safety
-///
-/// `nt_header` must be a valid pointer to an `IMAGE_NT_HEADERS` struct.
 fn is_valid_executable(nt_header: *const IMAGE_NT_HEADERS) -> bool {
     unsafe {
         let characteristics = (*nt_header).FileHeader.Characteristics;
@@ -31,10 +27,6 @@ fn is_valid_executable(nt_header: *const IMAGE_NT_HEADERS) -> bool {
 }
 
 /// Checks if the PE contains a COM Descriptor directory (i.e., is a .NET assembly).
-///
-/// # Safety
-///
-/// `nt_header` must be a valid pointer to an `IMAGE_NT_HEADERS` struct.
 fn is_dotnet(nt_header: *const IMAGE_NT_HEADERS) -> bool {
     unsafe {
         let com_dir = (*nt_header).OptionalHeader.DataDirectory
@@ -44,11 +36,6 @@ fn is_dotnet(nt_header: *const IMAGE_NT_HEADERS) -> bool {
 }
 
 /// Validates whether the given PE buffer represents a .NET executable.
-///
-/// # Returns
-///
-/// * `Ok(())` if the buffer is a valid .NET executable.
-/// * `Err(ClrError)` otherwise.
 pub(crate) fn validate_file(buffer: &[u8]) -> Result<()> {
     let pe = PE::parse(buffer.as_ptr().cast_mut().cast());
     let Some(nt_header) = pe.nt_header() else {
@@ -67,15 +54,6 @@ pub(crate) fn validate_file(buffer: &[u8]) -> Result<()> {
 }
 
 /// Reads the entire contents of a file into memory using the Windows API.
-///
-/// # Arguments
-///
-/// * `name` - The path to the file as a UTF-8 string.
-///
-/// # Returns
-///
-/// Returns `Ok(Vec<u8>)` containing the file's contents if the operation succeeds, or a
-/// `ClrError::GenericError` if any step fails.
 pub fn read_file(name: &str) -> Result<Vec<u8>> {
     let file_name = CString::new(name).map_err(|_| ClrError::GenericError("Invalid cstring"))?;
     let h_file = unsafe {

@@ -5,7 +5,7 @@ use obfstr::obfstr as s;
 use windows_core::*;
 use windows_sys::Win32::UI::Shell::SHCreateMemStream;
 
-use crate::data::*;
+use super::data::*;
 
 /// Implements `IHostControl`. Exposes a custom `IHostAssemblyManager` to the CLR.
 #[implement(IHostControl)]

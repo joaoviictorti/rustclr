@@ -1,8 +1,15 @@
 use alloc::{format, string::String, vec};
 use obfstr::obfstr as s;
 
-use crate::{Invocation, Result, Variant, WinStr};
-use crate::{RustClrEnv, data::_Assembly};
+use super::utils::create_safe_args;
+use super::data::_Assembly;
+use super::{
+    Invocation,
+    Result,
+    Variant,
+    WinStr,
+    RustClrEnv
+};
 
 /// Provides a persistent interface for executing PowerShell commands
 /// from a .NET runtime hosted inside a Rust application.
@@ -34,7 +41,7 @@ impl PowerShell {
 
         // Resolve and invoke `LoadWithPartialName` method.
         let load_partial_name = reflection_assembly.method_signature(s!("System.Reflection.Assembly LoadWithPartialName(System.String)"))?;
-        let param = crate::create_safe_args(vec![s!("System.Management.Automation").to_variant()])?;
+        let param = create_safe_args(vec![s!("System.Management.Automation").to_variant()])?;
         let result = load_partial_name.invoke(None, Some(param))?;
 
         // Convert result to `_Assembly`.
@@ -63,6 +70,7 @@ impl PowerShell {
         // Invoke `CreatePipeline` method.
         let assembly_runspace = self.automation.resolve_type(s!("System.Management.Automation.Runspaces.Runspace"))?;
         assembly_runspace.invoke(s!("Open"), Some(runspace), None, Invocation::Instance)?;
+        
         let create_pipeline = assembly_runspace.method_signature(s!("System.Management.Automation.Runspaces.Pipeline CreatePipeline()"))?;
         let pipe = create_pipeline.invoke(Some(runspace), None)?;
 
@@ -73,9 +81,9 @@ impl PowerShell {
         // Invoke `AddScript` method.
         let command_collection = self.automation.resolve_type(s!("System.Management.Automation.Runspaces.CommandCollection"))?;
         let cmd = vec![format!("{} | {}", command, s!("Out-String")).to_variant()];
-        let args = crate::create_safe_args(cmd)?;
+
         let add_script = command_collection.method_signature(s!("Void AddScript(System.String)"))?;
-        add_script.invoke(Some(get_command), Some(args))?;
+        add_script.invoke(Some(get_command), Some(create_safe_args(cmd)?))?;
 
         // Invoke `InvokeAsync` method.
         pipeline.invoke(s!("InvokeAsync"), Some(pipe), None, Invocation::Instance)?;
