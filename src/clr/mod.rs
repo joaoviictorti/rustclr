@@ -17,12 +17,12 @@ use windows_sys::Win32::System::Variant::{
 use self::file::{read_file, validate_file};
 use self::runtime::{RustClrRuntime, uuid};
 use super::com::*;
+use super::Result;
 use super::error::ClrError;
-use super::create_safe_array_args;
-use super::{
-    Result, 
-    Variant,
-    ComString,
+use super::string::ComString;
+use super::variant::{
+    Variant, 
+    create_safe_array_args
 };
 
 mod hosting;

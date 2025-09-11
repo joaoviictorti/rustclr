@@ -1,12 +1,15 @@
 use alloc::{format, string::String, vec};
 use obfstr::obfstr as s;
-use super::create_safe_args;
+
 use super::com::_Assembly;
+use super::string::ComString;
+use super::variant::{
+    Variant,
+    create_safe_args
+};
 use super::{
     Invocation,
     Result,
-    Variant,
-    ComString,
     RustClrEnv
 };
 

@@ -15,12 +15,9 @@ use windows_sys::{
 };
 
 use super::{_Assembly, _Type};
-use crate::{
-    Result, 
-    ComString, 
-    create_safe_array_buffer,
-    error::ClrError
-};
+use crate::string::ComString;
+use crate::variant::create_safe_array_buffer;
+use crate::{Result, error::ClrError};
 
 /// This struct represents the COM `_AppDomain` interface.
 #[repr(C)]

@@ -11,7 +11,7 @@ use windows_sys::{
     core::{BSTR, HRESULT},
 };
 
-use crate::create_safe_args;
+use crate::variant::create_safe_args;
 use crate::{Result, error::ClrError};
 
 /// This struct represents the COM `_PropertyInfo` interface.

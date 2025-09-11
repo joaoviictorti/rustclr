@@ -24,9 +24,9 @@ use windows_sys::{
 };
 
 use super::{_MethodInfo, _Type};
+use crate::string::ComString;
 use crate::{
-    Result, 
-    ComString, 
+    Result,
     error::ClrError
 };
 

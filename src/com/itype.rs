@@ -19,14 +19,11 @@ use windows_sys::{
     },
 };
 
-use crate::com::{_MethodInfo, _PropertyInfo};
 use crate::error::ClrError;
-use crate::{
-    Invocation, 
-    Result, 
-    ComString, 
-    create_safe_args,
-};
+use crate::string::ComString;
+use crate::variant::create_safe_args;
+use crate::{Invocation, Result};
+use crate::com::{_MethodInfo, _PropertyInfo};
 
 /// This struct represents the COM `_Type` interface.
 #[repr(C)]
