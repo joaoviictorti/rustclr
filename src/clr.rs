@@ -85,19 +85,22 @@ impl<'a> RustClr<'a> {
     /// # Example
     ///
     /// ```rust,ignore
-    /// use rustclr::RustClr;
+    /// use rustclr::{RustClr, RuntimeVersion};
     /// use std::fs;
-    ///
-    /// fn main() -> Result<(), Box<dyn std::error::Error>> {
-    ///     // Load a sample .NET assembly into a buffer
-    ///     let buffer = fs::read("examples/sample.exe")?;
-    ///
-    ///     // Create a new RustClr instance
-    ///     let clr = RustClr::new(&buffer)?;
-    ///     println!("RustClr instance created successfully.");
-    ///
-    ///     Ok(())
-    /// }
+    /// 
+    /// // Load a sample .NET assembly into a buffer
+    /// let buffer = fs::read("examples/sample.exe")?;
+    /// 
+    // // Create and configure a RustClr instance
+    /// let mut clr = RustClr::new(&buffer)?
+    ///     .runtime_version(RuntimeVersion::V4)
+    ///     .domain("CustomDomain")
+    ///     .args(vec!["arg1", "arg2"])
+    ///     .output();
+    /// 
+    /// // Run the .NET assembly and capture the output
+    /// let output = clr.run()?;
+    /// println!("Output: {}", output);
     /// ```
     pub fn new<T: Into<ClrSource<'a>>>(source: T) -> Result<Self> {
         let buffer = match source.into() {
@@ -147,35 +150,31 @@ impl<'a> RustClr<'a> {
         self
     }
 
-    /// Runs the .NET assembly by loading it into the application domain and invoking its entry point.
+    /// Loads the .NET assembly and runs its entry point.
     ///
     /// # Returns
     ///
     /// * `Ok(String)` - The output from the .NET assembly if executed successfully.
     /// * `Err(ClrError)` - If an error occurs during execution.
-    ///
-    /// # Examples
-    ///
+    /// 
+    /// # Example
+    /// 
     /// ```rust,ignore
     /// use rustclr::{RustClr, RuntimeVersion};
     /// use std::fs;
     ///
-    /// fn main() -> Result<(), Box<dyn std::error::Error>> {
-    ///     let buffer = fs::read("examples/sample.exe")?;
+    /// let buffer = fs::read("examples/sample.exe")?;
     ///
-    ///     // Create and configure a RustClr instance
-    ///     let mut clr = RustClr::new(&buffer)?
-    ///         .runtime_version(RuntimeVersion::V4)
-    ///         .domain("CustomDomain")
-    ///         .args(vec!["arg1", "arg2"])
-    ///         .output();
+    /// // Create and configure a RustClr instance
+    ///  let mut clr = RustClr::new(&buffer)?
+    ///     .runtime_version(RuntimeVersion::V4)
+    ///     .domain("CustomDomain")
+    ///     .args(vec!["arg1", "arg2"])
+    ///     .output();
     ///
-    ///     // Run the .NET assembly and capture the output
-    ///     let output = clr.run()?;
-    ///     println!("Output: {}", output);
-    ///
-    ///     Ok(())
-    /// }
+    /// // Run the .NET assembly and capture the output
+    /// let output = clr.run()?;
+    /// println!("Output: {}", output);
     /// ```
     pub fn run(&mut self) -> Result<String> {
         // Prepare the CLR environment
@@ -219,12 +218,7 @@ impl<'a> RustClr<'a> {
         Ok(output)
     }
 
-    /// Prepares the CLR environment by initializing the runtime and application domain.
-    ///
-    /// # Returns
-    ///
-    /// * `Ok(())` - If the environment is successfully prepared.
-    /// * `Err(ClrError)` - If any error occurs during the preparation process.
+    /// Prepares the CLR environment.
     fn prepare(&mut self) -> Result<()> {
         // Creates the MetaHost to access the available CLR versions
         let meta_host = self.create_meta_host()?;
