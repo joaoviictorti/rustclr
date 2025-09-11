@@ -1,4 +1,5 @@
-use rustclr::{ClrOutput, Invocation, RustClrEnv, Variant};
+use rustclr::variant::Variant;
+use rustclr::{ClrOutput, Invocation, RustClrEnv};
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Initialize the CLR environment and load the 'mscorlib' assembly
