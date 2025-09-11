@@ -16,31 +16,24 @@ use crate::error::ClrError;
 #[derive(Clone, Debug)]
 pub struct ICorRuntimeHost(windows_core::IUnknown);
 
-/// Implementation of auxiliary methods for convenience.
-///
-/// These methods provide Rust-friendly wrappers around the original `ICorRuntimeHost` methods.
 impl ICorRuntimeHost {
     /// Creates a new .NET AppDomain with the specified name.
     ///
     /// # Arguments
     ///
-    /// * `name` - A string slice (`&str`) representing the name of the AppDomain to be created.
+    /// * `name` - A string representing the name of the AppDomain to be created.
     ///
     /// # Returns
     ///
-    /// * `Ok(_AppDomain)` - On success, returns an instance of `_AppDomain`, representing the created .NET AppDomain.
-    /// * `Err(ClrError)` - If the domain creation fails, returns an error variant from `ClrError` describing the issue.
+    /// * `Ok(_AppDomain)` - On success, returns an instance of `_AppDomain`.
+    /// * `Err(ClrError)` - If the domain creation fails.
+    #[inline]
     pub fn create_domain(&self, name: &str) -> Result<_AppDomain> {
         let name = name.encode_utf16().chain(Some(0)).collect::<Vec<u16>>();
         let domain_name = PCWSTR(name.as_ptr());
         self.CreateDomain(domain_name, null_mut())
     }
-}
 
-/// Implementation of the original `ICorRuntimeHost` COM interface methods.
-///
-/// These methods are direct FFI bindings to the corresponding functions in the COM interface.
-impl ICorRuntimeHost {
     /// Starts the .NET runtime host.
     ///
     /// # Returns

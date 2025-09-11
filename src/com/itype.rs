@@ -19,10 +19,13 @@ use windows_sys::{
     },
 };
 
+use crate::com::{_MethodInfo, _PropertyInfo};
+use crate::error::ClrError;
 use crate::{
-    Invocation, Result, ComString, create_safe_args,
-    data::{_MethodInfo, _PropertyInfo},
-    error::ClrError,
+    Invocation, 
+    Result, 
+    ComString, 
+    create_safe_args,
 };
 
 /// This struct represents the COM `_Type` interface.
@@ -30,9 +33,6 @@ use crate::{
 #[derive(Clone, Debug)]
 pub struct _Type(windows_core::IUnknown);
 
-/// Implementation of auxiliary methods for convenience.
-///
-/// These methods provide Rust-friendly wrappers around the original `_Type` methods.
 impl _Type {
     /// Retrieves a method by its name from the type.
     ///
@@ -274,12 +274,7 @@ impl _Type {
             .cast::<_Type>()
             .map_err(|_| ClrError::CastingError("_Type"))
     }
-}
 
-/// Implementation of the original `_Type` COM interface methods.
-///
-/// These methods are direct FFI bindings to the corresponding functions in the COM interface.
-impl _Type {
     /// Retrieves the string representation of the type.
     ///
     /// # Returns
@@ -384,8 +379,7 @@ impl _Type {
     /// # Arguments
     ///
     /// * `name` - The name of the member to invoke, provided as a `BSTR`.
-    /// * `invoke_attr` - `BindingFlags` that specify invocation options (such as
-    ///   whether to target a static or instance method).
+    /// * `invoke_attr` - `BindingFlags` that specify invocation options.
     /// * `instance` - A `VARIANT` representing the object instance on which to invoke
     ///   the member, or a `null`/default value for static members.
     /// * `args` - A pointer to a `SAFEARRAY` containing the arguments for the method invocation.
@@ -442,6 +436,85 @@ impl Deref for _Type {
     /// and `QueryInterface`.
     fn deref(&self) -> &Self::Target {
         unsafe { core::mem::transmute(self) }
+    }
+}
+
+/// Specifies flags that control binding and the way in which members are searched and invoked.
+#[repr(C)]
+pub enum BindingFlags {
+    /// Default binding, no special options.
+    Default = 0,
+
+    /// Ignores case when looking up members.
+    IgnoreCase = 1,
+
+    /// Only members declared at the level of the supplied type's hierarchy should be considered.
+    DeclaredOnly = 2,
+
+    /// Specifies instance members.
+    Instance = 4,
+
+    /// Specifies static members.
+    Static = 8,
+
+    /// Specifies public members.
+    Public = 16,
+
+    /// Specifies non-public members.
+    NonPublic = 32,
+
+    /// Includes inherited members in the search.
+    FlattenHierarchy = 64,
+
+    /// Specifies that the member to invoke is a method.
+    InvokeMethod = 256,
+
+    /// Creates an instance of the object.
+    CreateInstance = 512,
+
+    /// Specifies that the member to retrieve is a field.
+    GetField = 1024,
+
+    /// Specifies that the member to set is a field.
+    SetField = 2048,
+
+    /// Specifies that the member to retrieve is a property.
+    GetProperty = 4096,
+
+    /// Specifies that the member to set is a property.
+    SetProperty = 8192,
+
+    /// Sets a COM object property.
+    PutDispProperty = 16384,
+
+    /// Sets a COM object reference property.
+    PutRefDispProperty = 32768,
+
+    /// Uses the most precise match during binding.
+    ExactBinding = 65536,
+
+    /// Suppresses coercion of argument types during method invocation.
+    SuppressChangeType = 131072,
+
+    /// Allows binding to optional parameters.
+    OptionalParamBinding = 262144,
+
+    /// Ignores the return value of a method.
+    IgnoreReturn = 16777216,
+}
+
+impl BitOr for BindingFlags {
+    type Output = Self;
+
+    /// Enables combining multiple `BindingFlags` using bitwise OR.
+    ///
+    /// # Example
+    ///
+    /// ```ignore
+    /// let flags = BindingFlags::Public | BindingFlags::Instance;
+    /// ```
+    fn bitor(self, rhs: Self) -> Self::Output {
+        unsafe { core::mem::transmute::<u32, BindingFlags>(self as u32 | rhs as u32) }
     }
 }
 
@@ -589,83 +662,4 @@ pub struct _Type_Vtbl {
     get_IsContextful: *const c_void,
     get_IsMarshalByRef: *const c_void,
     Equals_2: *const c_void,
-}
-
-/// Specifies flags that control binding and the way in which members are searched and invoked.
-#[repr(C)]
-pub enum BindingFlags {
-    /// Default binding, no special options.
-    Default = 0,
-
-    /// Ignores case when looking up members.
-    IgnoreCase = 1,
-
-    /// Only members declared at the level of the supplied type's hierarchy should be considered.
-    DeclaredOnly = 2,
-
-    /// Specifies instance members.
-    Instance = 4,
-
-    /// Specifies static members.
-    Static = 8,
-
-    /// Specifies public members.
-    Public = 16,
-
-    /// Specifies non-public members.
-    NonPublic = 32,
-
-    /// Includes inherited members in the search.
-    FlattenHierarchy = 64,
-
-    /// Specifies that the member to invoke is a method.
-    InvokeMethod = 256,
-
-    /// Creates an instance of the object.
-    CreateInstance = 512,
-
-    /// Specifies that the member to retrieve is a field.
-    GetField = 1024,
-
-    /// Specifies that the member to set is a field.
-    SetField = 2048,
-
-    /// Specifies that the member to retrieve is a property.
-    GetProperty = 4096,
-
-    /// Specifies that the member to set is a property.
-    SetProperty = 8192,
-
-    /// Sets a COM object property.
-    PutDispProperty = 16384,
-
-    /// Sets a COM object reference property.
-    PutRefDispProperty = 32768,
-
-    /// Uses the most precise match during binding.
-    ExactBinding = 65536,
-
-    /// Suppresses coercion of argument types during method invocation.
-    SuppressChangeType = 131072,
-
-    /// Allows binding to optional parameters.
-    OptionalParamBinding = 262144,
-
-    /// Ignores the return value of a method.
-    IgnoreReturn = 16777216,
-}
-
-impl BitOr for BindingFlags {
-    type Output = Self;
-
-    /// Enables combining multiple `BindingFlags` using bitwise OR.
-    ///
-    /// # Example
-    ///
-    /// ```ignore
-    /// let flags = BindingFlags::Public | BindingFlags::Instance;
-    /// ```
-    fn bitor(self, rhs: Self) -> Self::Output {
-        unsafe { core::mem::transmute::<u32, BindingFlags>(self as u32 | rhs as u32) }
-    }
 }

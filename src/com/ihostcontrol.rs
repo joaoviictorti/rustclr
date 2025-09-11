@@ -125,7 +125,7 @@ impl Deref for IHostControl {
     }
 }
 
-/// Raw COM vtable for the `_Type` interface.
+/// Raw COM vtable for the `IHostControl` interface.
 #[repr(C)]
 pub struct IHostControl_Vtbl {
     pub base__: windows_core::IUnknown_Vtbl,

@@ -3,7 +3,7 @@ use core::{ffi::c_void, ptr::null_mut};
 use obfstr::obfstr as s;
 use windows_core::*;
 use windows_sys::Win32::UI::Shell::SHCreateMemStream;
-use crate::data::*;
+use crate::com::*;
 
 /// Implements `IHostControl`.
 #[implement(IHostControl)]

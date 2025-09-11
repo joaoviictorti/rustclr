@@ -1,3 +1,35 @@
+//! Raw COM interface bindings for interacting with the .NET CLR runtime.
+
+mod appdomain;
+mod assembly;
+mod assembly_identity;
+mod assembly_manager;
+mod assembly_store;
+mod iclrmetahost;
+mod iclrruntimehost;
+mod iclrruntimeinfo;
+mod icorruntimehost;
+mod ienumunknown;
+mod ihostcontrol;
+mod ipropertyinfo;
+mod itype;
+mod methodinfo;
+
+pub use appdomain::*;
+pub use assembly::*;
+pub use assembly_identity::*;
+pub use assembly_manager::*;
+pub use assembly_store::*;
+pub use iclrmetahost::*;
+pub use iclrruntimehost::*;
+pub use iclrruntimeinfo::*;
+pub use icorruntimehost::*;
+pub use ienumunknown::*;
+pub use ihostcontrol::*;
+pub use ipropertyinfo::*;
+pub use itype::*;
+pub use methodinfo::*;
+
 use core::ffi::c_void;
 use dinvk::{GetProcAddress, LoadLibraryA};
 use windows_core::{GUID, Interface};
@@ -5,9 +37,6 @@ use windows_sys::core::HRESULT;
 use crate::{Result, error::ClrError};
 
 /// Caches the address of the `CLRCreateInstance` function on first use.
-///
-/// This avoids repeated calls to `LoadLibraryA` and `GetProcAddress` by memoizing
-/// the resolved function pointer for future calls.
 static CLR_CREATE_INSTANCE: spin::Once<Option<CLRCreateInstanceType>> = spin::Once::new();
 
 /// CLSID for the CLR MetaHost (`ICLRMetaHost`).
@@ -19,6 +48,12 @@ pub const CLSID_COR_RUNTIME_HOST: GUID = GUID::from_u128(0xCB2F6723_AB3A_11D2_9C
 /// CLSID for the ICLR Runtime Host (`ICLRRuntimeHost`).
 pub const CLSID_ICLR_RUNTIME_HOST: GUID = GUID::from_u128(0x90F1_A06E_7712_4762_86B5_7A5E_BA6B_DB02);
 
+/// Function pointer type for retrieving the CLR identity of the current thread.
+pub(crate) type CLRIdentityManagerType = fn(
+    riid: *const GUID, 
+    ppv: *mut *mut c_void
+) -> HRESULT;
+
 /// Signature of the `CLRCreateInstance` function exported by `mscoree.dll`.
 type CLRCreateInstanceType = fn(
     clsid: *const GUID,
@@ -26,13 +61,7 @@ type CLRCreateInstanceType = fn(
     ppinterface: *mut *mut c_void,
 ) -> HRESULT;
 
-/// Function pointer type for retrieving the CLR identity of the current thread.
-pub type CLRIdentityManagerType = fn(
-    riid: *const GUID, 
-    ppv: *mut *mut c_void
-) -> HRESULT;
-
-/// Dynamically loads and invokes the `CLRCreateInstance` function from `mscoree.dll`.
+/// Dynamically loads and invokes the `CLRCreateInstance`.
 pub fn CLRCreateInstance<T>(clsid: *const GUID) -> Result<T>
 where
     T: Interface,

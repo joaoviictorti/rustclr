@@ -23,9 +23,6 @@ use crate::error::ClrError;
 #[derive(Debug, Clone)]
 pub struct _MethodInfo(windows_core::IUnknown);
 
-/// Implementation of auxiliary methods for convenience.
-///
-/// These methods provide Rust-friendly wrappers around the original `_MethodInfo` methods.
 impl _MethodInfo {
     /// Invokes the method represented by this `_MethodInfo` instance.
     ///
@@ -38,6 +35,7 @@ impl _MethodInfo {
     ///
     /// * `Ok(VARIANT)` - On successful invocation, returns the result as a `VARIANT`.
     /// * `Err(ClrError)` - Returns an error if the entry point cannot be resolved or invoked.
+    #[inline]
     pub fn invoke(
         &self,
         obj: Option<VARIANT>,
@@ -57,19 +55,14 @@ impl _MethodInfo {
     ///
     /// * `Ok(_MethodInfo)` - Wraps the given COM interface as `_MethodInfo`.
     /// * `Err(ClrError)` - If casting fails, returns a `ClrError`.
-    #[inline(always)]
+    #[inline]
     pub fn from_raw(raw: *mut c_void) -> Result<_MethodInfo> {
         let iunknown = unsafe { IUnknown::from_raw(raw) };
         iunknown
             .cast::<_MethodInfo>()
             .map_err(|_| ClrError::CastingError("_MethodInfo"))
     }
-}
 
-/// Implementation of the original `_MethodInfo` COM interface methods.
-///
-/// These methods are direct FFI bindings to the corresponding functions in the COM interface.
-impl _MethodInfo {
     /// Retrieves the string representation of the method (equivalent to `ToString` in .NET).
     ///
     /// # Returns

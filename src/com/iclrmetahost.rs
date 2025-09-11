@@ -28,9 +28,6 @@ pub type RuntimeLoadedCallbackFnPtr = Option<
 #[derive(Clone, Debug)]
 pub struct ICLRMetaHost(windows_core::IUnknown);
 
-/// Implementation of auxiliary methods for convenience.
-///
-/// These methods provide Rust-friendly wrappers around the original `ICLRMetaHost` methods.
 impl ICLRMetaHost {
     /// Retrieves a map of available runtime versions and corresponding runtime information.
     ///
@@ -38,6 +35,7 @@ impl ICLRMetaHost {
     ///
     /// * `Ok(BTreeMap<String, ICLRRuntimeInfo>)` - A map where keys are runtime versions.
     /// * `Err(ClrError)` - If casting to `ICLRRuntimeInfo` fails.
+    #[inline]
     pub fn runtimes(&self) -> Result<BTreeMap<String, ICLRRuntimeInfo>> {
         let enum_unknown = self.EnumerateInstalledRuntimes()?;
         let mut fetched = 0;
@@ -63,12 +61,7 @@ impl ICLRMetaHost {
 
         Ok(runtimes)
     }
-}
 
-/// Implementation of the original `_Assembly` COM interface methods.
-///
-/// These methods are direct FFI bindings to the corresponding functions in the COM interface.
-impl ICLRMetaHost {
     /// Retrieves a runtime based on the specified version.
     ///
     /// # Arguments

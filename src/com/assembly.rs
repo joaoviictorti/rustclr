@@ -35,9 +35,6 @@ use crate::{
 #[derive(Debug, Clone)]
 pub struct _Assembly(windows_core::IUnknown);
 
-/// Implementation of auxiliary methods for convenience.
-///
-/// These methods provide Rust-friendly wrappers around the original `_Assembly` methods.
 impl _Assembly {
     /// Resolves a type by name within the assembly.
     ///
@@ -152,12 +149,7 @@ impl _Assembly {
             .cast::<_Assembly>()
             .map_err(|_| ClrError::CastingError("_Assembly"))
     }
-}
 
-/// Implementation of the original `_Assembly` COM interface methods.
-///
-/// These methods are direct FFI bindings to the corresponding functions in the COM interface.
-impl _Assembly {
     /// Retrieves the string representation of the assembly.
     ///
     /// # Returns

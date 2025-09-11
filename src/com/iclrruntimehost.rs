@@ -1,16 +1,13 @@
 use core::{ffi::c_void, ops::Deref};
 use windows_core::{GUID, Interface};
 use windows_sys::core::HRESULT;
-use crate::{Result, data::IHostControl, error::ClrError};
+use crate::{Result, com::IHostControl, error::ClrError};
 
 /// This struct represents the COM `ICLRuntimeHost` interface.
 #[repr(C)]
 #[derive(Clone, Debug)]
 pub struct ICLRuntimeHost(windows_core::IUnknown);
 
-/// Implementation of the original `ICLRuntimeHost` COM interface methods.
-///
-/// These methods are direct FFI bindings to the corresponding functions in the COM interface.
 impl ICLRuntimeHost {
     /// Starts the .NET runtime host.
     ///
@@ -42,6 +39,7 @@ impl ICLRuntimeHost {
     ///
     /// * `Ok(())` - If the call succeeded.
     /// * `Err(ClrError)` - If the underlying COM call failed.
+    #[inline]
     pub fn SetHostControl<T>(&self, phostcontrol: T) -> Result<()>
     where
         T: windows_core::Param<IHostControl>,

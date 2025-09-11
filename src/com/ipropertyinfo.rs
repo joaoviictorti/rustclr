@@ -19,9 +19,6 @@ use crate::{Result, error::ClrError};
 #[derive(Debug, Clone)]
 pub struct _PropertyInfo(windows_core::IUnknown);
 
-/// Implementation of auxiliary methods for convenience.
-///
-/// These methods provide Rust-friendly wrappers around the original `_PropertyInfo` methods.
 impl _PropertyInfo {
     /// Retrieves the value of the property.
     ///
@@ -61,12 +58,7 @@ impl _PropertyInfo {
             .cast::<_PropertyInfo>()
             .map_err(|_| ClrError::CastingError("_PropertyInfo"))
     }
-}
 
-/// Implementation of the original `_PropertyInfo` COM interface methods.
-///
-/// These methods are direct FFI bindings to the corresponding functions in the COM interface.
-impl _PropertyInfo {
     /// Retrieves the string representation of the method (equivalent to `ToString` in .NET).
     ///
     /// # Returns

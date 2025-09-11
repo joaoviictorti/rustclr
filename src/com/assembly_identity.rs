@@ -9,9 +9,6 @@ use crate::{Result, error::ClrError};
 #[derive(Debug, Clone)]
 pub struct ICLRAssemblyIdentityManager(windows_core::IUnknown);
 
-/// Implementation of auxiliary methods for convenience.
-///
-/// These methods provide Rust-friendly wrappers around the original `ICLRAssemblyIdentityManager` methods.
 impl ICLRAssemblyIdentityManager {
     /// Extracts the textual identity of an assembly from a binary stream.
     ///
@@ -49,12 +46,7 @@ impl ICLRAssemblyIdentityManager {
             .cast::<ICLRAssemblyIdentityManager>()
             .map_err(|_| ClrError::CastingError("ICLRAssemblyIdentityManager"))
     }
-}
 
-/// Implementation of the original `ICLRAssemblyIdentityManager` COM interface methods.
-///
-/// These methods are direct FFI bindings to the corresponding functions in the COM interface.
-impl ICLRAssemblyIdentityManager {
     /// Retrieves the binding identity from a binary stream representing an assembly.
     ///
     /// # Arguments

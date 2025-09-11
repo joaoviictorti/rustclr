@@ -16,9 +16,6 @@ use crate::error::ClrError;
 #[derive(Debug, Clone)]
 pub struct IEnumUnknown(windows_core::IUnknown);
 
-/// Implementation of the original `IEnumUnknown` COM interface methods.
-///
-/// These methods are direct FFI bindings to the corresponding functions in the COM interface.
 impl IEnumUnknown {
     /// Retrieves the next set of interfaces from the enumerator.
     ///
@@ -56,6 +53,7 @@ impl IEnumUnknown {
     ///
     /// * `Ok(())` - If successful, returns an empty `Ok`.
     /// * `Err(ClrError)` - If skipping fails, returns a `ClrError`.
+    #[inline]
     pub fn Skip(&self, celt: u32) -> Result<()> {
         let hr = unsafe { (Interface::vtable(self).Skip)(Interface::as_raw(self), celt) };
         if hr == 0 {
@@ -71,6 +69,7 @@ impl IEnumUnknown {
     ///
     /// * `Ok(())` - If successful, returns an empty `Ok`.
     /// * `Err(ClrError)` - If resetting fails, returns a `ClrError`.
+    #[inline]
     pub fn Reset(&self) -> Result<()> {
         let hr = unsafe { (Interface::vtable(self).Reset)(Interface::as_raw(self)) };
         if hr == 0 {
@@ -86,6 +85,7 @@ impl IEnumUnknown {
     ///
     /// * `Ok(*mut IEnumUnknown)` - If successful, returns a pointer to the new `IEnumUnknown`.
     /// * `Err(ClrError)` - If cloning fails, returns a `ClrError`.
+    #[inline]
     pub fn Clone(&self) -> Result<*mut IEnumUnknown> {
         let mut result = null_mut();
         let hr = unsafe { (Interface::vtable(self).Clone)(Interface::as_raw(self), &mut result) };

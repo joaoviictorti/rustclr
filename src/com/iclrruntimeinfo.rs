@@ -15,28 +15,19 @@ use crate::error::ClrError;
 #[derive(Clone, Debug)]
 pub struct ICLRRuntimeInfo(windows_core::IUnknown);
 
-/// Implementation of auxiliary methods for convenience.
-///
-/// These methods provide Rust-friendly wrappers around the original `ICLRRuntimeInfo` methods.
 impl ICLRRuntimeInfo {
     /// Checks if the CLR runtime has been started.
     ///
     /// # Returns
     ///
-    /// * `true` - If the runtime has been started (`started != 0`).
-    /// * `false` - If the runtime has not been started or if `IsStarted` fails.
+    /// * If the runtime has been started.
+    #[inline]
     pub fn is_started(&self) -> bool {
         let mut started = 0;
         let mut startup_flags = 0;
-
         self.IsStarted(&mut started, &mut startup_flags).is_ok() && started != 0
     }
-}
 
-/// Implementation of the original `ICLRRuntimeInfo` COM interface methods.
-///
-/// These methods are direct FFI bindings to the corresponding functions in the COM interface.
-impl ICLRRuntimeInfo {
     /// Checks if the .NET runtime is loadable in the current process.
     ///
     /// # Returns

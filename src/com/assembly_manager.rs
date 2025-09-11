@@ -1,4 +1,4 @@
-use crate::data::IHostAssemblyStore;
+use crate::com::IHostAssemblyStore;
 use core::{ffi::c_void, ops::Deref, ptr::null_mut};
 use windows_core::{GUID, Interface};
 

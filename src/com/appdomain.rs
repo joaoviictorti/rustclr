@@ -27,9 +27,6 @@ use crate::{
 #[derive(Debug, Clone)]
 pub struct _AppDomain(windows_core::IUnknown);
 
-/// Implementation of auxiliary methods for convenience.
-///
-/// These methods provide Rust-friendly wrappers around the original `_AppDomain` methods.
 impl _AppDomain {
     /// Loads an assembly into the current application domain from a byte slice.
     ///
@@ -140,12 +137,7 @@ impl _AppDomain {
 
         Ok(assemblies)
     }
-}
 
-/// Implementation of the original `_AppDomain` COM interface methods.
-///
-/// These methods are direct FFI bindings to the corresponding functions in the COM interface.
-impl _AppDomain {
     /// Calls the `Load_3` method from the vtable of the `_AppDomain` interface.
     ///
     /// # Arguments

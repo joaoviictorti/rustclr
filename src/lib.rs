@@ -9,7 +9,7 @@
 
 extern crate alloc;
 
-pub mod data;
+pub mod com;
 pub mod error;
 
 mod pwsh;

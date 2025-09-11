@@ -22,8 +22,7 @@ use windows_sys::Win32::{
 };
 
 use super::hosting::RustClrControl;
-use super::com::*;
-use crate::data::*;
+use crate::com::*;
 use crate::error::ClrError;
 use super::{ 
     Result, 

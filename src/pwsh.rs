@@ -1,7 +1,7 @@
 use alloc::{format, string::String, vec};
 use obfstr::obfstr as s;
 use super::create_safe_args;
-use super::data::_Assembly;
+use super::com::_Assembly;
 use super::{
     Invocation,
     Result,

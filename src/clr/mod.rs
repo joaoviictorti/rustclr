@@ -16,8 +16,7 @@ use windows_sys::Win32::System::Variant::{
 
 use self::file::{read_file, validate_file};
 use self::runtime::{RustClrRuntime, uuid};
-use self::com::*;
-use super::data::*;
+use super::com::*;
 use super::error::ClrError;
 use super::create_safe_array_args;
 use super::{
@@ -28,7 +27,6 @@ use super::{
 
 mod hosting;
 mod runtime;
-mod com;
 mod file;
 
 pub use runtime::RuntimeVersion;
