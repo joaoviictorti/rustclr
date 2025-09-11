@@ -10,7 +10,12 @@ repository = "https://github.com/joaoviictorti/rustclr"
 homepage = "https://github.com/joaoviictorti/rustclr"
 keywords = ["dotnet", "clr", "windows", "rust", "redteam"]
 categories = ["os", "security", "api-bindings"]
-include = ["src/**", "Cargo.toml", "README.md", "LICENSE"]
+include = [
+  "src/**", 
+  "Cargo.toml", 
+  "README.md", 
+  "LICENSE"
+]
 
 [dependencies]
 dinvk = "0.2.7"
@@ -42,9 +47,9 @@ default-target = "x86_64-pc-windows-msvc"
 targets = ["x86_64-pc-windows-gnu", "x86_64-pc-windows-msvc"]
 
 [[example]]
-name = "Powershell"
+name = "powershell"
 path = "examples/Powershell/main.rs"
 
 [[example]]
-name = "WriteLine"
+name = "writeline"
 path = "examples/WriteLine/main.rs"
