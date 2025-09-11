@@ -40,7 +40,7 @@ The following flags provide full control over your CLR environment and the execu
   
 Using `rustclr` to load and execute a .NET assembly, redirect its output and customize the CLR runtime environment.
 
-```rs
+```rust
 use std::fs;
 use rustclr::{RustClr, RuntimeVersion};
 
@@ -67,7 +67,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
 `rustclr` also provides a high-level interface to execute `PowerShell` commands from Rust using the built-in .NET `System.Management.Automation` namespace.
 
-```rs
+```rust
 use std::error::Error;
 use rustclr::PowerShell;
 
@@ -85,7 +85,7 @@ fn main() -> Result<(), Box<dyn Error>> {
 For more fine-grained control, rustclr provides the `RustClrEnv` and `ClrOutput` components:
 
 - **`RustClrEnv`**: Allows for low-level customization and initialization of the .NET runtime environment, which is useful if you need to manually control the CLR version, MetaHost, runtime information, and application domain. This struct provides an alternative way to initialize a CLR environment without executing an assembly immediately.
-```rs
+```rust
 use rustclr::{RustClrEnv, RuntimeVersion};
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -98,7 +98,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 ```
 
 - **`ClrOutput`**: Manages redirection of standard output and error streams from .NET to Rust. This is especially useful if you need to capture and process all output produced by .NET code within a Rust environment.
-```rs
+```rust
 use rustclr::{ClrOutput, Invocation, RustClrEnv, Variant};
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
