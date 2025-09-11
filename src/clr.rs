@@ -259,11 +259,9 @@ impl<'a> RustClr<'a> {
         let mut ptr = null_mut();
         GetCLRIdentityManager(&ICLRAssemblyIdentityManager::IID, &mut ptr);
 
-        // Create a stream for the in-memory assembly
+        // Create a stream for the in-memory assembly and get the identity string from the stream
         let iclr_assembly = ICLRAssemblyIdentityManager::from_raw(ptr)?;
         let stream = unsafe { SHCreateMemStream(self.buffer.as_ptr(), self.buffer.len() as u32) };
-
-        // Get the identity string from the stream
         self.identity_assembly = iclr_assembly.get_identity_stream(stream, 0)?;
 
         // Creates the `ICLRuntimeHost`
@@ -290,7 +288,7 @@ impl<'a> RustClr<'a> {
         Ok(())
     }
 
-    /// Patches the `System.Environment.Exit` method in `mscorlib` to avoid process termination.
+    /// Patches the `System.Environment.Exit` method to avoid process termination.
     fn patch_exit(&self, mscorlib: &_Assembly) -> Result<()> {
         // Resolve System.Environment type and the Exit method
         let env = mscorlib.resolve_type(s!("System.Environment"))?;
@@ -395,7 +393,6 @@ impl<'a> RustClr<'a> {
 
     /// Initializes the application domain with the specified name or uses the default domain.
     fn init_app_domain(&mut self, cor_runtime_host: &ICorRuntimeHost) -> Result<()> {
-        // Creates the application domain based on the specified name or uses the default domain
         let app_domain = if let Some(domain_name) = &self.domain_name {
             let wide_domain_name = domain_name
                 .encode_utf16()
