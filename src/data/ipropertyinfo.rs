@@ -14,8 +14,7 @@ use windows_sys::{
 use crate::create_safe_args;
 use crate::{Result, error::ClrError};
 
-/// This struct represents the COM `_PropertyInfo` interface,
-/// a .NET assembly in the CLR environment.
+/// This struct represents the COM `_PropertyInfo` interface.
 #[repr(C)]
 #[derive(Debug, Clone)]
 pub struct _PropertyInfo(windows_core::IUnknown);

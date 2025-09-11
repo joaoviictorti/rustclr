@@ -4,8 +4,7 @@ use windows_core::{GUID, IUnknown, Interface, PWSTR};
 use windows_sys::core::HRESULT;
 use crate::{Result, error::ClrError};
 
-/// This struct represents the COM `ICLRAssemblyIdentityManager` interface,
-/// a .NET assembly in the CLR environment.
+/// This struct represents the COM `ICLRAssemblyIdentityManager` interface.
 #[repr(C)]
 #[derive(Debug, Clone)]
 pub struct ICLRAssemblyIdentityManager(windows_core::IUnknown);

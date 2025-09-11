@@ -3,8 +3,7 @@ use windows_core::{GUID, Interface};
 use windows_sys::core::HRESULT;
 use crate::{Result, data::IHostControl, error::ClrError};
 
-/// This struct represents the COM `ICLRuntimeHost` interface,
-/// a .NET assembly in the CLR environment.
+/// This struct represents the COM `ICLRuntimeHost` interface.
 #[repr(C)]
 #[derive(Clone, Debug)]
 pub struct ICLRuntimeHost(windows_core::IUnknown);

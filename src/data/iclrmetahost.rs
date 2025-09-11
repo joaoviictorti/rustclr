@@ -4,17 +4,17 @@ use core::{ffi::c_void, ops::Deref, ptr::null_mut};
 use windows_core::{GUID, Interface, PCWSTR, PWSTR};
 use windows_sys::{Win32::Foundation::HANDLE, core::HRESULT};
 
-use super::{ICLRRuntimeInfo, IEnumUnknown};
 use crate::Result;
 use crate::error::ClrError;
+use super::{ICLRRuntimeInfo, IEnumUnknown};
+
+/// Function pointer for setting the callback thread in the CLR.
+pub type CallbackThreadSetFnPtr = Option<unsafe extern "system" fn() -> HRESULT>;
+
+/// Function pointer for unsetting the callback thread in the CLR.
+pub type CallbackThreadUnsetFnPtr = Option<unsafe extern "system" fn() -> HRESULT>;
 
 /// Function pointer type for the callback invoked when a runtime is loaded.
-///
-/// # Arguments
-///
-/// * `pruntimeinfo` - An optional pointer to `ICLRRuntimeInfo`, containing information about the loaded runtime.
-/// * `pfncallbackthreadset` - A pointer to the callback function for setting threads.
-/// * `pfncallbackthreadunset` - A pointer to the callback function for unsetting threads.
 pub type RuntimeLoadedCallbackFnPtr = Option<
     unsafe extern "system" fn(
         pruntimeinfo: *mut ICLRRuntimeInfo,
@@ -23,14 +23,7 @@ pub type RuntimeLoadedCallbackFnPtr = Option<
     ),
 >;
 
-/// Function pointer for setting the callback thread in the CLR.
-pub type CallbackThreadSetFnPtr = Option<unsafe extern "system" fn() -> HRESULT>;
-
-/// Function pointer for unsetting the callback thread in the CLR.
-pub type CallbackThreadUnsetFnPtr = Option<unsafe extern "system" fn() -> HRESULT>;
-
-/// This struct represents the COM `ICLRMetaHoste` interface,
-/// a .NET assembly in the CLR environment.
+/// This struct represents the COM `ICLRMetaHost` interface.
 #[repr(C)]
 #[derive(Clone, Debug)]
 pub struct ICLRMetaHost(windows_core::IUnknown);
@@ -43,9 +36,8 @@ impl ICLRMetaHost {
     ///
     /// # Returns
     ///
-    /// * `Ok(BTreeMap<String, ICLRRuntimeInfo>)` - A map where keys are runtime versions (as strings) and values
-    ///   are `ICLRRuntimeInfo` instances with details about each runtime.
-    /// * `Err(ClrError)` - Returns a `ClrError::CastingError` if casting to `ICLRRuntimeInfo` fails.
+    /// * `Ok(BTreeMap<String, ICLRRuntimeInfo>)` - A map where keys are runtime versions.
+    /// * `Err(ClrError)` - If casting to `ICLRRuntimeInfo` fails.
     pub fn runtimes(&self) -> Result<BTreeMap<String, ICLRRuntimeInfo>> {
         let enum_unknown = self.EnumerateInstalledRuntimes()?;
         let mut fetched = 0;
@@ -81,12 +73,12 @@ impl ICLRMetaHost {
     ///
     /// # Arguments
     ///
-    /// * `pwzversion` - A `PCWSTR` reference to the .NET runtime version to retrieve (e.g., `"v4.0"`).
+    /// * `pwzversion` - A `PCWSTR` reference to the .NET runtime version to retrieve.
     ///
     /// # Returns
     ///
     /// * `Ok(T)` - Returns the requested runtime as the generic type `T` if successful.
-    /// * `Err(ClrError)` - Returns a `ClrError::ApiError` if the runtime could not be retrieved.
+    /// * `Err(ClrError)` - If the runtime could not be retrieved.
     #[inline]
     pub fn GetRuntime<T>(&self, pwzversion: PCWSTR) -> Result<T>
     where

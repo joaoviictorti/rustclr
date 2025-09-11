@@ -10,8 +10,7 @@ use windows_sys::{
 use crate::Result;
 use crate::error::ClrError;
 
-/// This struct represents the COM `ICLRRuntimeInfo` interface,
-/// a .NET assembly in the CLR environment.
+/// This struct represents the COM `ICLRRuntimeInfo` interface;
 #[repr(C)]
 #[derive(Clone, Debug)]
 pub struct ICLRRuntimeInfo(windows_core::IUnknown);

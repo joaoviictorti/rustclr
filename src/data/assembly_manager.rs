@@ -106,6 +106,7 @@ impl Deref for IHostAssemblyManager {
 pub struct IHostAssemblyManager_Vtbl {
     pub base__: windows_core::IUnknown_Vtbl,
 
+    // Methods specific to the COM interface
     pub GetNonHostStoreAssemblies: unsafe extern "system" fn(
         this: *mut c_void,
         ppreferencelist: *mut *mut c_void,

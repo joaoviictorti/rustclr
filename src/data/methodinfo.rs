@@ -18,8 +18,7 @@ use super::_Type;
 use crate::Result;
 use crate::error::ClrError;
 
-/// This struct represents the COM `_MethodInfo` interface,
-/// a .NET assembly in the CLR environment.
+/// This struct represents the COM `_MethodInfo` interface.
 #[repr(C)]
 #[derive(Debug, Clone)]
 pub struct _MethodInfo(windows_core::IUnknown);

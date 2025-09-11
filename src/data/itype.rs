@@ -25,8 +25,7 @@ use crate::{
     error::ClrError,
 };
 
-/// This struct represents the COM `_Type` interface,
-/// a .NET assembly in the CLR environment.
+/// This struct represents the COM `_Type` interface.
 #[repr(C)]
 #[derive(Clone, Debug)]
 pub struct _Type(windows_core::IUnknown);

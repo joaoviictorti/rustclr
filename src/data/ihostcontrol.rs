@@ -1,8 +1,7 @@
 use core::{ffi::c_void, ops::Deref};
 use windows_core::{GUID, Interface};
 
-/// This struct represents the COM `IHostControl` interface,
-/// a .NET assembly in the CLR environment.
+/// This struct represents the COM `IHostControl` interface.
 #[repr(C)]
 #[derive(Clone, Debug)]
 pub struct IHostControl(windows_core::IUnknown);

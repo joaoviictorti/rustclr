@@ -11,8 +11,7 @@ use windows_sys::core::HRESULT;
 use crate::Result;
 use crate::error::ClrError;
 
-/// This struct represents the COM `IEnumUnknown` interface,
-/// a .NET assembly in the CLR environment.
+/// This struct represents the COM `IEnumUnknown` interface.
 #[repr(C)]
 #[derive(Debug, Clone)]
 pub struct IEnumUnknown(windows_core::IUnknown);

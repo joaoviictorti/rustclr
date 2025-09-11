@@ -1,8 +1,7 @@
 use core::{ffi::c_void, mem::transmute_copy, ops::Deref};
 use windows_core::{GUID, Interface};
 
-/// This struct represents the COM `IHostAssemblyStore` interface,
-/// a .NET assembly in the CLR environment.
+/// This struct represents the COM `IHostAssemblyStore` interface.
 #[repr(C)]
 #[derive(Clone, Debug)]
 pub struct IHostAssemblyStore(windows_core::IUnknown);

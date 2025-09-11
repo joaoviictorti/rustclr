@@ -11,8 +11,7 @@ use super::_AppDomain;
 use crate::Result;
 use crate::error::ClrError;
 
-/// This struct represents the COM `ICorRuntimeHost` interface,
-/// a .NET assembly in the CLR environment.
+/// This struct represents the COM `ICorRuntimeHost` interface.
 #[repr(C)]
 #[derive(Clone, Debug)]
 pub struct ICorRuntimeHost(windows_core::IUnknown);

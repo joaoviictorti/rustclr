@@ -24,10 +24,13 @@ use windows_sys::{
 };
 
 use super::{_MethodInfo, _Type};
-use crate::{Result, ComString, error::ClrError};
+use crate::{
+    Result, 
+    ComString, 
+    error::ClrError
+};
 
-/// This struct represents the COM `_Assembly` interface,
-/// a .NET assembly in the CLR environment.
+/// This struct represents the COM `_Assembly` interface.
 #[repr(C)]
 #[derive(Debug, Clone)]
 pub struct _Assembly(windows_core::IUnknown);

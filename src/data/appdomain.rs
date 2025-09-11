@@ -16,13 +16,13 @@ use windows_sys::{
 
 use super::{_Assembly, _Type};
 use crate::{
-    Result, ComString, 
-    create_safe_array_buffer, 
+    Result, 
+    ComString, 
+    create_safe_array_buffer,
     error::ClrError
 };
 
-/// This struct represents the COM `_AppDomain` interface,
-/// a .NET assembly in the CLR environment.
+/// This struct represents the COM `_AppDomain` interface.
 #[repr(C)]
 #[derive(Debug, Clone)]
 pub struct _AppDomain(windows_core::IUnknown);
