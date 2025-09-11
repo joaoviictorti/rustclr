@@ -657,7 +657,7 @@ impl RuntimeVersion {
     }
 }
 
-/// Represents a source of CLR data, which can come from a file path or an in-memory buffer.
+/// Represents a source of CLR data.
 #[derive(Debug, Clone)]
 pub enum ClrSource<'a> {
     /// File indicated by a string representing the file path.
