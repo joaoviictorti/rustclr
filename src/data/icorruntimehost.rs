@@ -433,7 +433,7 @@ unsafe impl Interface for ICorRuntimeHost {
     /// This GUID is used to identify the `ICorRuntimeHost` interface when calling
     /// COM methods like `QueryInterface`. It is defined based on the standard
     /// .NET CLR IID for the `ICorRuntimeHost` interface.
-    const IID: GUID = GUID::from_u128(0xCB2F6722_AB3A_11d2_9C40_00C04FA30A3E);
+    const IID: GUID = GUID::from_u128(0xCB2F6722_AB3A_11D2_9C40_00C04FA30A3E);
 }
 
 impl Deref for ICorRuntimeHost {

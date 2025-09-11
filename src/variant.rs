@@ -26,21 +26,11 @@ use super::WinStr;
 use crate::{Result, error::ClrError};
 
 /// Trait to convert various Rust types to Windows COM-compatible `VARIANT` types.
-///
-/// This trait is implemented for common Rust types like `String`, `&str`, `bool`, and `i32`.
 pub trait Variant {
     /// Converts the Rust type to a `VARIANT`.
-    ///
-    /// # Returns
-    ///
-    /// * The corresponding `VARIANT` structure for the implementing type.
     fn to_variant(&self) -> VARIANT;
 
     /// Returns the `u16` representing the VARIANT type.
-    ///
-    /// # Returns
-    ///
-    /// * The type ID for the VARIANT.
     fn var_type() -> u16;
 }
 
@@ -217,8 +207,11 @@ pub fn create_safe_args(args: Vec<VARIANT>) -> Result<*mut SAFEARRAY> {
         for (i, var) in args.iter().enumerate() {
             let index = i as i32;
             let mut variant = *var;
-            let hr =
-                SafeArrayPutElement(arg, &index, &mut variant as *const VARIANT as *const c_void);
+            let hr = SafeArrayPutElement(
+                arg, 
+                &index, 
+                &mut variant as *const VARIANT as *const c_void
+            );
             if hr != 0 {
                 return Err(ClrError::ApiError("SafeArrayPutElement", hr));
             }

@@ -14,29 +14,13 @@ use windows_sys::Win32::{
     },
 };
 
-use crate::{Result, error::ClrError};
-
-/// Checks if the PE headers indicate a valid Windows executable (not DLL, not Native subsystem).
-fn is_valid_executable(nt_header: *const IMAGE_NT_HEADERS) -> bool {
-    unsafe {
-        let characteristics = (*nt_header).FileHeader.Characteristics;
-        (characteristics & IMAGE_FILE_EXECUTABLE_IMAGE != 0)
-            && (characteristics & IMAGE_FILE_DLL == 0)
-            && (characteristics & IMAGE_SUBSYSTEM_NATIVE == 0)
-    }
-}
-
-/// Checks if the PE contains a COM Descriptor directory (i.e., is a .NET assembly).
-fn is_dotnet(nt_header: *const IMAGE_NT_HEADERS) -> bool {
-    unsafe {
-        let com_dir = (*nt_header).OptionalHeader.DataDirectory
-            [IMAGE_DIRECTORY_ENTRY_COM_DESCRIPTOR as usize];
-        com_dir.VirtualAddress != 0 && com_dir.Size != 0
-    }
-}
+use crate::{
+    Result, 
+    error::ClrError
+};
 
 /// Validates whether the given PE buffer represents a .NET executable.
-pub(crate) fn validate_file(buffer: &[u8]) -> Result<()> {
+pub fn validate_file(buffer: &[u8]) -> Result<()> {
     let pe = PE::parse(buffer.as_ptr().cast_mut().cast());
     let Some(nt_header) = pe.nt_header() else {
         return Err(ClrError::InvalidNtHeader);
@@ -55,7 +39,8 @@ pub(crate) fn validate_file(buffer: &[u8]) -> Result<()> {
 
 /// Reads the entire contents of a file into memory using the Windows API.
 pub fn read_file(name: &str) -> Result<Vec<u8>> {
-    let file_name = CString::new(name).map_err(|_| ClrError::GenericError("Invalid cstring"))?;
+    let file_name = CString::new(name)
+        .map_err(|_| ClrError::GenericError("Invalid cstring"))?;
     let h_file = unsafe {
         CreateFileA(
             file_name.as_ptr().cast(),
@@ -90,4 +75,23 @@ pub fn read_file(name: &str) -> Result<Vec<u8>> {
     }
 
     Ok(out)
+}
+
+/// Checks if the PE headers indicate a valid Windows executable.
+fn is_valid_executable(nt_header: *const IMAGE_NT_HEADERS) -> bool {
+    unsafe {
+        let characteristics = (*nt_header).FileHeader.Characteristics;
+        (characteristics & IMAGE_FILE_EXECUTABLE_IMAGE != 0)
+            && (characteristics & IMAGE_FILE_DLL == 0)
+            && (characteristics & IMAGE_SUBSYSTEM_NATIVE == 0)
+    }
+}
+
+/// Checks if the PE contains a COM Descriptor directory (i.e., is a .NET assembly).
+fn is_dotnet(nt_header: *const IMAGE_NT_HEADERS) -> bool {
+    unsafe {
+        let com_dir = (*nt_header).OptionalHeader.DataDirectory
+            [IMAGE_DIRECTORY_ENTRY_COM_DESCRIPTOR as usize];
+        com_dir.VirtualAddress != 0 && com_dir.Size != 0
+    }
 }

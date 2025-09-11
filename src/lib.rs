@@ -4,8 +4,6 @@
 #![allow(
     clippy::not_unsafe_ptr_arg_deref,
     clippy::missing_transmute_annotations,
-    clippy::mixed_case_hex_literals,
-    clippy::unusual_byte_groupings,
     clippy::useless_transmute,
 )]
 
@@ -14,14 +12,14 @@ extern crate alloc;
 pub mod data;
 pub mod error;
 
-mod com;
-mod host_control;
 mod pwsh;
-mod utils;
+mod string;
+mod variant;
 mod clr;
 
 pub use clr::*;
 pub use pwsh::*;
-pub use utils::*;
+pub use variant::*;
+pub use string::*;
 
 type Result<T> = core::result::Result<T, error::ClrError>;
