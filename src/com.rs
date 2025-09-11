@@ -1,9 +1,7 @@
 use core::ffi::c_void;
-
 use dinvk::{GetProcAddress, LoadLibraryA};
 use windows_core::{GUID, Interface};
 use windows_sys::core::HRESULT;
-
 use super::{Result, error::ClrError};
 
 /// Static cache for the `CLRCreateInstance` function.

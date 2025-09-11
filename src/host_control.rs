@@ -1,10 +1,8 @@
 use alloc::string::{String, ToString};
 use core::{ffi::c_void, ptr::null_mut};
-
 use obfstr::obfstr as s;
 use windows_core::*;
 use windows_sys::Win32::UI::Shell::SHCreateMemStream;
-
 use super::data::*;
 
 /// Implements `IHostControl`.
