@@ -420,7 +420,6 @@ impl<'a> RustClr<'a> {
         if let (Some(cor_runtime_host), Some(app_domain)) =
             (&self.cor_runtime_host, &self.app_domain)
         {
-            // Attempt to unload the AppDomain, log error if it fails
             cor_runtime_host.UnloadDomain(
                 app_domain
                     .cast::<windows_core::IUnknown>()
