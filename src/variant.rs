@@ -1,3 +1,5 @@
+//! Helper to convert Rust types into COM `VARIANT` and build `SAFEARRAY`.
+
 use alloc::{string::String, vec::Vec};
 use core::{
     ffi::c_void,

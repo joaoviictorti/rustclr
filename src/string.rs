@@ -1,3 +1,5 @@
+//! Defines the `ComString` trait for converting between Rust strings and BSTRs.
+
 use alloc::{string::String, vec::Vec};
 use windows_sys::Win32::Foundation::{SysAllocString, SysStringLen};
 
