@@ -99,10 +99,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
 - **`ClrOutput`**: Manages redirection of standard output and error streams from .NET to Rust. This is especially useful if you need to capture and process all output produced by .NET code within a Rust environment.
 ```rust
-use rustclr::{ClrOutput, Invocation, RustClrEnv, Variant};
+use rustclr::variant::Variant;
+use rustclr::{ClrOutput, Invocation, RustClrEnv};
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    // Initialize the CLR environment and load the 'mscorlib' assembly
+    // Initialize the CLR environment
     let clr = RustClrEnv::new(None)?;
     let mscorlib = clr.app_domain.get_assembly("mscorlib")?;
     let console = mscorlib.resolve_type("System.Console")?;
@@ -119,7 +120,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // Capture and print the redirected output
     let output = clr_output.capture()?;
-    print!("OUTPUT (1) ====> {output}");
+    print!("OUTPUT: {output}");
 
     // Second redirection: resets the internal buffer
     clr_output.redirect()?;
@@ -130,7 +131,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // Capture and print the new output
     let output = clr_output.capture()?;
-    print!("OUTPUT (2) ====> {output}");
+    print!("OUTPUT: {output}");
 
     Ok(())
 }
