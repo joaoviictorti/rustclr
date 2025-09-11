@@ -53,7 +53,7 @@ jobs:
 
     strategy:
       matrix:
-        example: [WriteLine, Powershell]
+        example: [writeline, powershell]
 
     steps:
       - uses: actions/checkout@v4
