@@ -101,39 +101,15 @@ impl Deref for IHostAssemblyManager {
     }
 }
 
+/// Raw COM vtable for the `IHostAssemblyManager` interface.
 #[repr(C)]
 pub struct IHostAssemblyManager_Vtbl {
-    /// Base vtable inherited from the `IUnknown` interface.
-    ///
-    /// This field contains the basic methods for reference management,
-    /// like `AddRef`, `Release`, and `QueryInterface`.
     pub base__: windows_core::IUnknown_Vtbl,
 
-    /// Retrieves assemblies not stored in the host store.
-    ///
-    /// # Arguments
-    ///
-    /// * `this` - Pointer to the COM object.
-    /// * `ppreferencelist` - Output pointer that receives a reserved list (currently null).
-    ///
-    /// # Returns
-    ///
-    /// * HRESULT indicating success or failure.
     pub GetNonHostStoreAssemblies: unsafe extern "system" fn(
         this: *mut c_void,
         ppreferencelist: *mut *mut c_void,
     ) -> windows_core::HRESULT,
-
-    /// Retrieves the `IHostAssemblyStore` associated with the host.
-    ///
-    /// # Arguments
-    ///
-    /// * `this` - Pointer to the COM object.
-    /// * `ppassemblystore` - Output pointer to receive the `IHostAssemblyStore` interface.
-    ///
-    /// # Returns
-    ///
-    /// * HRESULT indicating success or failure.
     pub GetAssemblyStore: unsafe extern "system" fn(
         this: *mut c_void,
         ppassemblystore: *mut *mut c_void,

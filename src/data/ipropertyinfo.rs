@@ -144,33 +144,22 @@ impl Deref for _PropertyInfo {
     }
 }
 
+/// Raw COM vtable for the `_PropertyInfo` interface.
 #[repr(C)]
 pub struct _PropertyInfo_Vtbl {
-    /// Base vtable inherited from the `IUnknown` interface.
-    ///
-    /// This field contains the basic methods for reference management,
-    /// like `AddRef`, `Release`, and `QueryInterface`.
     pub base__: windows_core::IUnknown_Vtbl,
-
-    /// Placeholder for the methods .Not used directly.
+    
+    // IDispatch methods
     GetTypeInfoCount: *const c_void,
     GetTypeInfo: *const c_void,
     GetIDsOfNames: *const c_void,
     Invoke: *const c_void,
 
-    /// Retrieves the string representation of the Property.
-    ///
-    /// # Arguments
-    ///
-    /// * `this` - Pointer to the COM object.
-    /// * `pRetVal` - Pointer to a `BSTR` that receives the string result.
-    ///
-    /// # Returns
-    ///
-    /// * Returns an HRESULT indicating success or failure.
-    get_ToString: unsafe extern "system" fn(this: *mut c_void, pRetVal: *mut BSTR) -> HRESULT,
-
-    /// Placeholder for the methods .Not used directly.
+    // Methods specific to the COM interface
+    get_ToString: unsafe extern "system" fn(
+        this: *mut c_void, 
+        pRetVal: *mut BSTR
+    ) -> HRESULT,
     Equals: *const c_void,
     GetHashCode: *const c_void,
     GetType: *const c_void,
@@ -182,27 +171,12 @@ pub struct _PropertyInfo_Vtbl {
     GetCustomAttributes_2: *const c_void,
     IsDefined: *const c_void,
     get_PropertyType: *const c_void,
-
-    /// Retrieves the value of the property for a given object instance and optional index parameters.
-    ///
-    /// # Arguments
-    ///
-    /// * `this` - Pointer to the COM object.
-    /// * `obj` - The `VARIANT` representing the object whose property value is to be retrieved.
-    /// * `index` - Pointer to a `SAFEARRAY` of `VARIANT`s representing optional index parameters (or `NULL`).
-    /// * `pRetVal` - Pointer to a `VARIANT` that will receive the property value.
-    ///
-    /// # Returns
-    ///
-    /// * Returns an HRESULT indicating success or failure.
     GetValue: unsafe extern "system" fn(
         this: *mut c_void,
         obj: VARIANT,
         index: *mut SAFEARRAY,
         pRetVal: *mut VARIANT,
     ) -> HRESULT,
-
-    /// Placeholder for the methods .Not used directly.
     GetValue_2: *const c_void,
     SetValue: *const c_void,
     SetValue_2: *const c_void,

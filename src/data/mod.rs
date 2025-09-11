@@ -1,7 +1,5 @@
-//! # CLR (Common Language Runtime) Interface Bindings
-//!
-//! This library provides bindings for interacting with the .NET CLR, including the ability to
-//! enumerate runtimes, manage AppDomains, manipulate assemblies and access type information.
+//! Bindings for interacting with the .NET CLR, including the ability to enumerate runtimes, 
+//! manage AppDomains, manipulate assemblies and access type information.
 
 mod appdomain;
 mod assembly;

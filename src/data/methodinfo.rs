@@ -249,97 +249,33 @@ impl Deref for _MethodInfo {
     }
 }
 
+/// Raw COM vtable for the `_MethodInfo` interface.
 #[repr(C)]
 pub struct _MethodInfo_Vtbl {
-    /// Base vtable inherited from the `IUnknown` interface.
-    ///
-    /// This field contains the basic methods for reference management,
-    /// like `AddRef`, `Release`, and `QueryInterface`.
     pub base__: windows_core::IUnknown_Vtbl,
 
-    /// Placeholder for the methods .Not used directly.
+    // IDispatch methods
     GetTypeInfoCount: *const c_void,
     GetTypeInfo: *const c_void,
     GetIDsOfNames: *const c_void,
     Invoke: *const c_void,
 
-    /// Retrieves the string representation of the Method.
-    ///
-    /// # Arguments
-    ///
-    /// * `this` - Pointer to the COM object.
-    /// * `pRetVal` - Pointer to a `BSTR` that receives the string result.
-    ///
-    /// # Returns
-    ///
-    /// * Returns an HRESULT indicating success or failure.
+    // Methods specific to the COM interface
     get_ToString: unsafe extern "system" fn(this: *mut c_void, pRetVal: *mut BSTR) -> HRESULT,
-
-    /// Placeholder for the method. Not used directly.
     Equals: *const c_void,
-
-    /// Calculates the hash code for the method.
-    ///
-    /// # Arguments
-    ///
-    /// * `this` - Pointer to the COM object.
-    /// * `pRetVal` - Pointer to a `u32` that receives the hash code.
-    ///
-    /// # Returns
-    ///
-    /// * Returns an HRESULT indicating success or failure.
     GetHashCode: unsafe extern "system" fn(this: *mut c_void, pRetVal: *mut u32) -> HRESULT,
-
-    /// Retrieves the type information associated with the method.
-    ///
-    /// # Arguments
-    ///
-    /// * `this` - Pointer to the COM object.
-    /// * `pRetVal` - Pointer to `_Type` where the type information is stored.
-    ///
-    /// # Returns
-    ///
-    /// * Returns an HRESULT indicating success or failure.
     GetType: unsafe extern "system" fn(this: *mut c_void, pRetVal: *mut *mut _Type) -> HRESULT,
-
-    /// Placeholder for the method. Not used directly.
     get_MemberType: *const c_void,
-
-    /// Retrieves the name of the method as a `BSTR`.
-    ///
-    /// # Arguments
-    ///
-    /// * `this` - Pointer to the COM object.
-    /// * `pRetVal` - Pointer to a `BSTR` that receives the method's name.
-    ///
-    /// # Returns
-    ///
-    /// * Returns an HRESULT indicating success or failure.
     get_name: unsafe extern "system" fn(this: *mut c_void, pRetVal: *mut BSTR) -> HRESULT,
-
-    /// Placeholder for the methods. Not used directly.
     get_DeclaringType: *const c_void,
     get_ReflectedType: *const c_void,
     GetCustomAttributes: *const c_void,
     GetCustomAttributes_2: *const c_void,
     IsDefined: *const c_void,
-
-    /// Retrieves the method parameters as a `SAFEARRAY`.
-    ///
-    /// # Arguments
-    ///
-    /// * `this` - Pointer to the COM object.
-    /// - `pRetVal` - Pointer to a `SAFEARRAY` that receives the parameters.
-    ///
-    /// # Returns
-    ///
-    /// * Returns an HRESULT indicating success or failure.
     GetParameters: unsafe extern "system" fn(
         this: *mut c_void, 
         pRetVal: *mut *mut SAFEARRAY
     ) -> HRESULT,
-
-    /// Placeholder for the methods. Not used directly.
     GetMethodImplementationFlags: *const c_void,
     get_MethodHandle: *const c_void,
     get_Attributes: *const c_void,
@@ -358,40 +294,14 @@ pub struct _MethodInfo_Vtbl {
     get_IsAbstract: *const c_void,
     get_IsSpecialName: *const c_void,
     get_IsConstructor: *const c_void,
-
-    /// Invokes the method represented by this vtable entry.
-    ///
-    /// # Arguments
-    ///
-    /// * `this` - Pointer to the COM object.
-    /// * `obj` - A `VARIANT` representing the target instance (or null for static methods).
-    /// * `parameters` - A pointer to a `SAFEARRAY` of parameters.
-    /// * `pRetVal` - Pointer to a `VARIANT` that will hold the result of the invocation.
-    ///
-    /// # Returns
-    ///
-    /// * Returns an HRESULT indicating success or failure.
     Invoke_3: unsafe extern "system" fn(
         this: *mut c_void,
         obj: VARIANT,
         parameters: *mut SAFEARRAY,
         pRetVal: *mut VARIANT,
     ) -> HRESULT,
-
-    /// Placeholder for the methods. Not used directly.
     get_returnType: *const c_void,
     get_ReturnTypeCustomAttributes: *const c_void,
-
-    /// Retrieves the base definition of the method.
-    ///
-    /// # Arguments
-    ///
-    /// * `this` - Pointer to the COM object.
-    /// * `pRetVal` - Pointer to `_MethodInfo` that will hold the base definition.
-    ///
-    /// # Returns
-    ///
-    /// * Returns an HRESULT indicating success or failure.
     GetBaseDefinition: unsafe extern "system" fn(
         this: *mut c_void, 
         pRetVal: *mut *mut _MethodInfo

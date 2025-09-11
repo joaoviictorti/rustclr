@@ -85,52 +85,18 @@ impl Deref for ICLRuntimeHost {
     }
 }
 
+/// Raw COM vtable for the `ICLRuntimeHost` interface.
 #[repr(C)]
 pub struct ICLRuntimeHost_Vtbl {
-    /// Base vtable inherited from the `IUnknown` interface.
-    ///
-    /// This field contains the basic methods for reference management,
-    /// like `AddRef`, `Release`, and `QueryInterface`.
     pub base__: windows_core::IUnknown_Vtbl,
 
-    /// Starts the CLR runtime host.
-    ///
-    /// # Arguments
-    ///
-    /// * `this` - Pointer to the COM object.
-    ///
-    /// # Returns
-    ///
-    /// * Returns an HRESULT indicating success or failure.
+    // Methods specific to the COM interface
     pub Start: unsafe extern "system" fn(this: *mut c_void) -> HRESULT,
-
-    /// Stops the CLR runtime host.
-    ///
-    /// # Arguments
-    ///
-    /// * `this` - Pointer to the COM object.
-    ///
-    /// # Returns
-    ///
-    /// * Returns an HRESULT indicating success or failure.
     pub Stop: unsafe extern "system" fn(this: *mut c_void) -> HRESULT,
-
-    /// Assigns a custom `IHostControl` implementation.
-    ///
-    /// # Arguments
-    ///
-    /// * `this` - Pointer to the COM object.
-    /// * `phostcontrol` - Pointer to a COM object implementing `IHostControl`.
-    ///
-    /// # Returns
-    ///
-    /// * Returns an HRESULT indicating success or failure.
     pub SetHostControl: unsafe extern "system" fn(
         this: *mut c_void, 
         phostcontrol: *mut c_void
     ) -> HRESULT,
-
-    /// Placeholder for the methods. Not used directly.
     pub GetCLRControl: *const c_void,
     pub UnloadAppDomain: *const c_void,
     pub ExecuteInAppDomain: *const c_void,

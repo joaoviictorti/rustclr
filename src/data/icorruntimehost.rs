@@ -449,205 +449,56 @@ impl Deref for ICorRuntimeHost {
     }
 }
 
+/// Raw COM vtable for the `ICorRuntimeHost` interface.
 #[repr(C)]
 pub struct ICorRuntimeHost_Vtbl {
-    /// Base vtable inherited from the `IUnknown` interface.
-    ///
-    /// This field contains the basic methods for reference management,
-    /// like `AddRef`, `Release`, and `QueryInterface`.
     pub base__: windows_core::IUnknown_Vtbl,
 
-    /// Initializes a logical thread state.
     pub CreateLogicalThreadState: unsafe extern "system" fn(*mut c_void) -> HRESULT,
-
-    /// Deletes a logical thread state.
     pub DeleteLogicalThreadState: unsafe extern "system" fn(*mut c_void) -> HRESULT,
-
-    /// Switches into a logical thread state.
-    ///
-    /// # Arguments
-    ///
-    /// * `pFiberCookie` - Pointer to a `u32` used to track the fiber state.s
-    ///
-    /// # Returns
-    ///
-    /// * Returns an HRESULT indicating success or failure.
     pub SwitchInLogicalThreadState: unsafe extern "system" fn(
         this: *mut c_void, 
         pFiberCookie: *mut u32
     ) -> HRESULT,
-
-    /// Switches out of a logical thread state.
-    ///
-    /// # Arguments
-    ///
-    /// * `pFiberCookie` - Pointer to a `u32` that holds the fiber cookie to switch out.
-    ///
-    /// # Returns
-    ///
-    /// * Returns an HRESULT indicating success or failure.
     pub SwitchOutLogicalThreadState: unsafe extern "system" fn(
         this: *mut c_void, 
         pFiberCookie: *mut *mut u32
     ) -> HRESULT,
-
-    /// Retrieves the number of locks held by the logical thread.
-    ///
-    /// # Arguments
-    ///
-    /// * `pCount` - Pointer to a `u32` where the count is stored.
-    ///
-    /// # Returns
-    ///
-    /// * Returns an HRESULT indicating success or failure.
     pub LocksHeldByLogicalThread: unsafe extern "system" fn(
         this: *mut c_void, 
         pCount: *mut u32
     ) -> HRESULT,
-
-    /// Maps a file into memory.
-    ///
-    /// # Arguments
-    ///
-    /// * `hFile` - The handle to the file.
-    /// * `hMapAddress` - Pointer to an `HMODULE` where the mapped address is stored.
-    ///
-    /// # Returns
-    ///
-    /// * Returns an HRESULT indicating success or failure.
     pub MapFile: unsafe extern "system" fn(
         this: *mut c_void,
         hFile: HANDLE,
         hMapAddress: *mut HMODULE,
     ) -> HRESULT,
-
-    /// Retrieves configuration information for the runtime host.
-    ///
-    /// # Arguments
-    ///
-    /// * `pConfiguration` - Pointer to a configuration object.
-    ///
-    /// # Returns
-    ///
-    /// * Returns an HRESULT indicating success or failure.
     pub GetConfiguration: unsafe extern "system" fn(
         this: *mut c_void, 
         pConfiguration: *mut *mut c_void
     ) -> HRESULT,
-
-    /// Starts the CLR runtime host.
-    ///
-    /// # Arguments
-    ///
-    /// * `this` - Pointer to the COM object.
-    ///
-    /// # Returns
-    ///
-    /// * Returns an HRESULT indicating success or failure.
     pub Start: unsafe extern "system" fn(this: *mut c_void) -> HRESULT,
-
-    /// Stops the CLR runtime host.
-    ///
-    /// # Arguments
-    ///
-    /// * `this` - Pointer to the COM object.
-    ///
-    /// # Returns
-    ///
-    /// * Returns an HRESULT indicating success or failure.
     pub Stop: unsafe extern "system" fn(this: *mut c_void) -> HRESULT,
-
-    /// Creates a new application domain.
-    ///
-    /// # Arguments
-    ///
-    /// * `this` - Pointer to the COM object.
-    /// * `pwzFriendlyName` - The friendly name for the new domain.
-    /// * `pIdentityArray` - Pointer to an array of identities.
-    /// * `pAppDomain` - Pointer to where the created `AppDomain` is stored.
-    ///
-    /// # Returns
-    ///
-    /// * Returns an HRESULT indicating success or failure.
     pub CreateDomain: unsafe extern "system" fn(
         this: *mut c_void,
         pwzFriendlyName: PCWSTR,
         pIdentityArray: *mut IUnknown,
         pAppDomain: *mut *mut IUnknown,
     ) -> HRESULT,
-
-    /// Retrieves the default application domain.
-    ///
-    /// # Arguments
-    ///
-    /// * `this` - Pointer to the COM object.
-    /// * `pAppDomain` - Pointer to where the default application domain is stored.
-    ///
-    /// # Returns
-    ///
-    /// * Returns an HRESULT indicating success or failure.
     pub GetDefaultDomain: unsafe extern "system" fn(
         this: *mut c_void, 
         pAppDomain: *mut *mut IUnknown
     ) -> HRESULT,
-
-    /// Enumerates the application domains.
-    ///
-    /// # Arguments
-    ///
-    /// * `this` - Pointer to the COM object.
-    /// * `hEnum` - Pointer to the enumeration handle, where the results will be stored.
-    ///
-    /// # Returns
-    ///
-    /// * Returns an HRESULT indicating success or failure.
     pub EnumDomains: unsafe extern "system" fn(
         this: *mut c_void, 
         hEnum: *mut *mut c_void
     ) -> HRESULT,
-
-    /// Retrieves the next application domain in the enumeration.
-    ///
-    /// # Arguments
-    ///
-    /// * `this` - Pointer to the COM object.
-    /// * `hEnum` - Handle to the enumeration.
-    /// * `pAppDomain` - Pointer to the next application domain.
-    ///
-    /// # Returns
-    ///
-    /// * Returns an HRESULT indicating success or failure.
     pub NextDomain: unsafe extern "system" fn(
         this: *mut c_void,
         hEnum: *mut c_void,
         pAppDomain: *mut *mut IUnknown,
     ) -> HRESULT,
-
-    /// Closes the domain enumeration.
-    ///
-    /// # Arguments
-    ///
-    /// * `this` - Pointer to the COM object.
-    /// * `hEnum` - Handle to the enumeration.
-    ///
-    /// # Returns
-    ///
-    /// * Returns an HRESULT indicating success or failure.
     pub CloseEnum: unsafe extern "system" fn(this: *mut c_void, hEnum: *mut c_void) -> HRESULT,
-
-    /// Creates a new application domain with additional configuration.
-    ///
-    /// # Arguments
-    ///
-    /// * `this` - Pointer to the COM object.
-    /// * `pwzFriendlyName` - The friendly name for the new domain.
-    /// * `pSetup` - Pointer to the setup configuration.
-    /// * `pEvidence` - Pointer to the evidence object.
-    /// * `pAppDomain` - Pointer to where the created `AppDomain` is stored.
-    ///
-    /// # Returns
-    ///
-    /// * Returns an HRESULT indicating success or failure.
     pub CreateDomainEx: unsafe extern "system" fn(
         this: *mut c_void,
         pwzFriendlyName: PCWSTR,
@@ -655,62 +506,18 @@ pub struct ICorRuntimeHost_Vtbl {
         pEvidence: *mut IUnknown,
         pAppDomain: *mut *mut IUnknown,
     ) -> HRESULT,
-
-    /// Creates a setup configuration for an application domain.
-    ///
-    /// # Arguments
-    ///
-    /// * `this` - Pointer to the COM object.
-    /// * `pAppDomainSetup` - Pointer to where the setup configuration is stored.
-    ///
-    /// # Returns
-    ///
-    /// * Returns an HRESULT indicating success or failure.
     pub CreateDomainSetup: unsafe extern "system" fn(
         this: *mut c_void,
         pAppDomainSetup: *mut *mut IUnknown,
     ) -> HRESULT,
-
-    /// Creates an evidence object for an application domain.
-    ///
-    /// # Arguments
-    ///
-    /// * `this` - Pointer to the COM object.
-    /// * `pEvidence` - Pointer to where the evidence object is stored.
-    ///
-    /// # Returns
-    ///
-    /// * Returns an HRESULT indicating success or failure.
     pub CreateEvidence: unsafe extern "system" fn(
         this: *mut c_void, 
         pEvidence: *mut *mut IUnknown
     ) -> HRESULT,
-
-    /// Unloads the specified application domain.
-    ///
-    /// # Arguments
-    ///
-    /// * `this` - Pointer to the COM object.
-    /// * `pAppDomain` - Pointer to the application domain to unload.
-    ///
-    /// # Returns
-    ///
-    /// * Returns an HRESULT indicating success or failure.
     pub UnloadDomain: unsafe extern "system" fn(
         this: *mut c_void, 
         pAppDomain: *mut IUnknown
     ) -> HRESULT,
-
-    /// Retrieves the current application domain.
-    ///
-    /// # Arguments
-    ///
-    /// * `this` - Pointer to the COM object.
-    /// * `pAppDomain` - Pointer to where the current application domain is stored.
-    ///
-    /// # Returns
-    ///
-    /// * Returns an HRESULT indicating success or failure.
     pub CurrentDomain: unsafe extern "system" fn(
         this: *mut c_void, 
         pAppDomain: *mut *mut IUnknown

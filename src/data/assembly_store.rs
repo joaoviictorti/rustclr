@@ -169,27 +169,12 @@ impl Deref for IHostAssemblyStore {
     }
 }
 
+/// Raw COM vtable for the `IHostAssemblyStore` interface.
 #[repr(C)]
 pub struct IHostAssemblyStore_Vtbl {
-    /// The base virtual table inherited from the `IUnknown` interface.
-    ///
-    /// This contains the standard COM methods: `QueryInterface`, `AddRef`, and `Release`.
     pub base__: windows_core::IUnknown_Vtbl,
 
-    /// Provides the in-memory assembly image corresponding to a given bind request.
-    ///
-    /// # Arguments
-    ///
-    /// * `this` - Pointer to the COM object.
-    /// * `pbindinfo` - Pointer to an `AssemblyBindInfo` structure containing binding metadata.
-    /// * `passemblyid` - Output pointer that receives the assembly ID assigned by the host.
-    /// * `pcontext` - Output pointer that receives the context value associated with the bind.
-    /// * `ppstmassemblyimage` - Output pointer that receives the pointer to the assembly image in memory.
-    /// * `ppstmpdb` - Output pointer that receives the pointer to the PDB (debug symbols), if available.
-    ///
-    /// # Returns
-    ///
-    /// * Returns an HRESULT indicating success or failure of the operation.
+    // Methods specific to the COM interface
     pub ProvideAssembly: unsafe extern "system" fn(
         this: *mut c_void,
         pbindinfo: *const AssemblyBindInfo,
@@ -198,20 +183,6 @@ pub struct IHostAssemblyStore_Vtbl {
         ppstmassemblyimage: *mut *mut c_void,
         ppstmpdb: *mut *mut c_void,
     ) -> windows_core::HRESULT,
-
-    /// Provides the in-memory module image corresponding to a given module bind request.
-    ///
-    /// # Arguments
-    ///
-    /// * `this` - Pointer to the COM object.
-    /// * `pbindinfo` - Pointer to a `ModuleBindInfo` structure containing module metadata.
-    /// * `pdwmoduleid` - Output pointer that receives the module ID assigned by the host.
-    /// * `ppstmmoduleimage` - Output pointer that receives the pointer to the module image in memory.
-    /// * `ppstmpdb` - Output pointer that receives the pointer to the PDB (debug symbols), if available.
-    ///
-    /// # Returns
-    ///
-    /// * Returns an HRESULT indicating success or failure of the operation.
     pub ProvideModule: unsafe extern "system" fn(
         this: *mut c_void,
         pbindinfo: *const ModuleBindInfo,

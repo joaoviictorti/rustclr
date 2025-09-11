@@ -21,6 +21,8 @@ use crate::{
     error::ClrError
 };
 
+pub type PVOID = *const c_void;
+
 /// This struct represents the COM `_AppDomain` interface,
 /// a .NET assembly in the CLR environment.
 #[repr(C)]
@@ -269,161 +271,90 @@ impl Deref for _AppDomain {
     }
 }
 
+/// Raw COM vtable for the `_AppDomain` interface.
 #[repr(C)]
 pub struct _AppDomainVtbl {
-    /// Base vtable inherited from the `IUnknown` interface.
-    ///
-    /// This field contains the basic methods for reference management,
-    /// like `AddRef`, `Release`, and `QueryInterface`.
     pub base__: windows_core::IUnknown_Vtbl,
 
-    /// Placeholder for the methods. Not used directly.
-    GetTypeInfoCount: *const c_void,
-    GetTypeInfo: *const c_void,
-    GetIDsOfNames: *const c_void,
-    Invoke: *const c_void,
-    get_ToString: *const c_void,
-    Equals: *const c_void,
+    // IDispatch methods
+    GetTypeInfoCount: PVOID,
+    GetTypeInfo: PVOID,
+    GetIDsOfNames: PVOID,
+    Invoke: PVOID,
 
-    /// Implementation of the `GetHashCode` method.
-    ///
-    /// This method returns the hash code of the current application domain.
-    ///
-    /// # Arguments
-    ///
-    /// * `this` - Pointer to the COM object.
-    /// * `pRetVal` - Pointer to a variable that receives the hash code.
-    ///
-    /// # Returns
-    ///
-    /// * Returns an HRESULT indicating success or failure.
+    // Methods specific to the COM interface
+    get_ToString: PVOID,
+    Equals: PVOID,
     GetHashCode: unsafe extern "system" fn(this: *mut c_void, pRetVal: *mut u32) -> HRESULT,
-
-    /// Implementation of the `GetType` method.
-    ///
-    /// This method retrieves the type of the current application domain.
-    ///
-    /// # Arguments
-    ///
-    /// * `this` - Pointer to the COM object.
-    /// * `pRetVal` - Pointer to a variable that receives the `_Type` object.
-    ///
-    /// # Returns
-    ///
-    /// * Returns an HRESULT indicating success or failure.
     GetType: unsafe extern "system" fn(this: *mut c_void, pRetVal: *mut *mut _Type) -> HRESULT,
-
-    /// Placeholder for the methods. Not used directly.
-    InitializeLifetimeService: *const c_void,
-    GetLifetimeService: *const c_void,
-    get_Evidence: *const c_void,
-    add_DomainUnload: *const c_void,
-    remove_DomainUnload: *const c_void,
-    add_AssemblyLoad: *const c_void,
-    remove_AssemblyLoad: *const c_void,
-    add_ProcessExit: *const c_void,
-    remove_ProcessExit: *const c_void,
-    add_TypeResolve: *const c_void,
-    remove_TypeResolve: *const c_void,
-    add_ResourceResolve: *const c_void,
-    remove_ResourceResolve: *const c_void,
-    add_AssemblyResolve: *const c_void,
-    remove_AssemblyResolve: *const c_void,
-    add_UnhandledException: *const c_void,
-    remove_UnhandledException: *const c_void,
-    DefineDynamicAssembly: *const c_void,
-    DefineDynamicAssembly_2: *const c_void,
-    DefineDynamicAssembly_3: *const c_void,
-    DefineDynamicAssembly_4: *const c_void,
-    DefineDynamicAssembly_5: *const c_void,
-    DefineDynamicAssembly_6: *const c_void,
-    DefineDynamicAssembly_7: *const c_void,
-    DefineDynamicAssembly_8: *const c_void,
-    DefineDynamicAssembly_9: *const c_void,
-    CreateInstance: *const c_void,
-    CreateInstanceFrom: *const c_void,
-    CreateInstance_2: *const c_void,
-    CreateInstanceFrom_2: *const c_void,
-    CreateInstance_3: *const c_void,
-    CreateInstanceFrom_3: *const c_void,
-    Load: *const c_void,
-
-    /// Implementation of the `Load_2` method.
-    ///
-    /// This method loads an assembly into the current application domain by its name.
-    ///
-    /// # Arguments
-    ///
-    /// * `this` - Pointer to the COM object.
-    /// * `assemblyString` - The name of the assembly to load, as a `BSTR`.
-    /// * `pRetVal` - Pointer to a variable that receives the loaded `_Assembly`.
-    ///
-    /// # Returns
-    ///
-    /// * Returns an HRESULT indicating success or failure.
+    InitializeLifetimeService: PVOID,
+    GetLifetimeService: PVOID,
+    get_Evidence: PVOID,
+    add_DomainUnload: PVOID,
+    remove_DomainUnload: PVOID,
+    add_AssemblyLoad: PVOID,
+    remove_AssemblyLoad: PVOID,
+    add_ProcessExit: PVOID,
+    remove_ProcessExit: PVOID,
+    add_TypeResolve: PVOID,
+    remove_TypeResolve: PVOID,
+    add_ResourceResolve: PVOID,
+    remove_ResourceResolve: PVOID,
+    add_AssemblyResolve: PVOID,
+    remove_AssemblyResolve: PVOID,
+    add_UnhandledException: PVOID,
+    remove_UnhandledException: PVOID,
+    DefineDynamicAssembly: PVOID,
+    DefineDynamicAssembly_2: PVOID,
+    DefineDynamicAssembly_3: PVOID,
+    DefineDynamicAssembly_4: PVOID,
+    DefineDynamicAssembly_5: PVOID,
+    DefineDynamicAssembly_6: PVOID,
+    DefineDynamicAssembly_7: PVOID,
+    DefineDynamicAssembly_8: PVOID,
+    DefineDynamicAssembly_9: PVOID,
+    CreateInstance: PVOID,
+    CreateInstanceFrom: PVOID,
+    CreateInstance_2: PVOID,
+    CreateInstanceFrom_2: PVOID,
+    CreateInstance_3: PVOID,
+    CreateInstanceFrom_3: PVOID,
+    Load: PVOID,
     Load_2: unsafe extern "system" fn(
         this: *mut c_void,
         assemblyString: BSTR,
         pRetVal: *mut *mut _Assembly,
     ) -> HRESULT,
-
-    /// Implementation of the `Load_3` method.
-    ///
-    /// This method loads an assembly into the current application domain from raw byte data.
-    ///
-    /// # Arguments
-    ///
-    /// * `this` - Pointer to the COM object.
-    /// * `rawAssembly` - Pointer to a `SAFEARRAY` containing the raw assembly data.
-    /// * `pRetVal` - Pointer to a variable that receives the loaded `_Assembly`.
-    ///
-    /// # Returns
-    ///
-    /// * Returns an HRESULT indicating success or failure.
     Load_3: unsafe extern "system" fn(
         this: *mut c_void,
         rawAssembly: *mut SAFEARRAY,
         pRetVal: *mut *mut _Assembly,
     ) -> HRESULT,
-
-    /// Placeholder for the methods. Not used directly.
-    Load_4: *const c_void,
-    Load_5: *const c_void,
-    Load_6: *const c_void,
-    Load_7: *const c_void,
-    ExecuteAssembly: *const c_void,
-    ExecuteAssembly_2: *const c_void,
-    ExecuteAssembly_3: *const c_void,
-    get_FriendlyName: *const c_void,
-    get_BaseDirectory: *const c_void,
-    get_RelativeSearchPath: *const c_void,
-    get_ShadowCopyFiles: *const c_void,
-
-    /// Implementation of the `GetAssemblies` method.
-    ///
-    /// This method retrieves all assemblies currently loaded into the current application domain.
-    ///
-    /// # Arguments
-    ///
-    /// * `this` - Pointer to the COM object.
-    /// * `pRetVal` - Pointer to a variable that receives a `SAFEARRAY` of `_Assembly` references.
-    ///
-    /// # Returns
-    ///
-    /// * Returns an HRESULT indicating success or failure.
-    GetAssemblies:unsafe extern "system" fn(this: *mut c_void, pRetVal: *mut *mut SAFEARRAY) -> HRESULT,
-
-    /// Placeholder for the methods. Not used directly.
-    AppendPrivatePath: *const c_void,
-    ClearPrivatePath: *const c_void,
-    SetShadowCopyPath: *const c_void,
-    ClearShadowCopyPath: *const c_void,
-    SetCachePath: *const c_void,
-    SetData: *const c_void,
-    GetData: *const c_void,
-    SetAppDomainPolicy: *const c_void,
-    SetThreadPrincipal: *const c_void,
-    SetPrincipalPolicy: *const c_void,
-    DoCallBack: *const c_void,
-    get_DynamicDirectory: *const c_void,
+    Load_4: PVOID,
+    Load_5: PVOID,
+    Load_6: PVOID,
+    Load_7: PVOID,
+    ExecuteAssembly: PVOID,
+    ExecuteAssembly_2: PVOID,
+    ExecuteAssembly_3: PVOID,
+    get_FriendlyName: PVOID,
+    get_BaseDirectory: PVOID,
+    get_RelativeSearchPath: PVOID,
+    get_ShadowCopyFiles: PVOID,
+    GetAssemblies: unsafe extern "system" fn(
+        this: *mut c_void, 
+        pRetVal: *mut *mut SAFEARRAY
+    ) -> HRESULT,
+    AppendPrivatePath: PVOID,
+    ClearPrivatePath: PVOID,
+    SetShadowCopyPath: PVOID,
+    ClearShadowCopyPath: PVOID,
+    SetCachePath: PVOID,
+    SetData: PVOID,
+    GetData: PVOID,
+    SetAppDomainPolicy: PVOID,
+    SetThreadPrincipal: PVOID,
+    SetPrincipalPolicy: PVOID,
+    DoCallBack: PVOID,
+    get_DynamicDirectory: PVOID,
 }

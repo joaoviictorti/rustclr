@@ -126,42 +126,17 @@ impl Deref for IHostControl {
     }
 }
 
+/// Raw COM vtable for the `_Type` interface.
 #[repr(C)]
 pub struct IHostControl_Vtbl {
-    /// Base vtable inherited from the `IUnknown` interface.
-    ///
-    /// This field contains the basic methods for reference management,
-    /// like `AddRef`, `Release`, and `QueryInterface`.
     pub base__: windows_core::IUnknown_Vtbl,
 
-    /// Retrieves a host-provided manager for a requested interface.
-    ///
-    /// # Arguments
-    ///
-    /// * `this` - Pointer to the COM object.
-    /// * `riid` - Pointer to the requested interface ID (IID).
-    /// * `ppobject` - Output pointer to receive the interface pointer.
-    ///
-    /// # Returns
-    ///
-    /// * Returns an HRESULT indicating success or failure of the operation.
+    // Methods specific to the COM interface
     pub GetHostManager: unsafe extern "system" fn(
         this: *mut c_void,
         riid: *const GUID,
         ppobject: *mut *mut c_void,
     ) -> windows_core::HRESULT,
-
-    /// Sets the `AppDomainManager` for a specific application domain.
-    ///
-    /// # Arguments
-    ///
-    /// * `this` - Pointer to the COM object.
-    /// * `dwappdomainid` - The ID of the target AppDomain.
-    /// * `punkappdomainmanager` - A pointer to the manager object.
-    ///
-    /// # Returns
-    ///
-    /// * Returns an HRESULT indicating success or failure of the operation.
     pub SetAppDomainManager: unsafe extern "system" fn(
         this: *mut c_void,
         dwappdomainid: u32,

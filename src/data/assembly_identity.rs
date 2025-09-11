@@ -117,31 +117,14 @@ impl Deref for ICLRAssemblyIdentityManager {
     }
 }
 
+/// Raw COM vtable for the `ICLRAssemblyIdentityManager` interface.
 #[repr(C)]
 pub struct ICLRAssemblyIdentityManager_Vtbl {
-    /// Base vtable inherited from the `IUnknown` interface.
-    ///
-    /// This field contains the basic methods for reference management,
-    /// like `AddRef`, `Release`, and `QueryInterface`.
     base__: windows_core::IUnknown_Vtbl,
 
-    /// Placeholder for the method. Not used directly.
+    // Methods specific to the COM interface
     pub GetCLRAssemblyReferenceList: *const c_void,
     pub GetBindingIdentityFromFile: *const c_void,
-
-    /// Retrieves the textual identity of an assembly from a binary stream.
-    ///
-    /// # Arguments
-    ///
-    /// * `this` - Pointer to the COM object.
-    /// * `pstream` - Pointer to a `IStream` object.
-    /// * `dwFlags` - Optional flags for identity resolution.
-    /// * `pwzBuffer` - Wide string buffer that receives the identity.
-    /// * `pcchbuffersize` - Pointer to size of `pwzBuffer`; updated with actual size.
-    ///
-    /// # Returns
-    ///
-    /// * HRESULT indicating success or failure.
     pub GetBindingIdentityFromStream: unsafe extern "system" fn(
         this: *mut c_void,
         pstream: *mut c_void,
@@ -149,8 +132,6 @@ pub struct ICLRAssemblyIdentityManager_Vtbl {
         pwzBuffer: PWSTR,
         pcchbuffersize: *mut u32,
     ) -> HRESULT,
-
-    /// Placeholder for the method. Not used directly.
     pub GetReferencedAssembliesFromFile: *const c_void,
     pub GetReferencedAssembliesFromStream: *const c_void,
     pub GetProbingAssembliesFromReference: *const c_void,

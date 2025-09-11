@@ -457,172 +457,43 @@ impl Deref for _Assembly {
     }
 }
 
+/// Raw COM vtable for the `_Assembly` interface.
 #[repr(C)]
 pub struct _Assembly_Vtbl {
-    /// Base vtable inherited from the `IUnknown` interface.
-    ///
-    /// This field contains the basic methods for reference management,
-    /// like `AddRef`, `Release`, and `QueryInterface`.
     base__: windows_core::IUnknown_Vtbl,
 
-    /// Placeholder for the methods. Not used directly.
+    // IDispatch methods
     GetTypeInfoCount: *const c_void,
     GetTypeInfo: *const c_void,
     GetIDsOfNames: *const c_void,
     Invoke: *const c_void,
 
-    /// Retrieves the string representation of the assembly.
-    ///
-    /// # Arguments
-    ///
-    /// * `this` - Pointer to the COM object.
-    /// * `pRetVal` - Pointer to a `BSTR` that receives the string result.
-    ///
-    /// # Returns
-    ///
-    /// * Returns an HRESULT indicating success or failure.
+    // Methods specific to the COM interface
     get_ToString: unsafe extern "system" fn(this: *mut c_void, pRetVal: *mut BSTR) -> HRESULT,
-
-    /// Placeholder for the method. Not used directly.
     Equals: *const c_void,
-
-    /// Retrieves the hash code of the assembly.
-    ///
-    /// # Arguments
-    ///
-    /// * `this` - Pointer to the COM object.
-    /// * `pRetVal` - Pointer to a variable that receives the hash code.
-    ///
-    /// # Returns
-    ///
-    /// * Returns an HRESULT indicating success or failure.
     GetHashCode: unsafe extern "system" fn(this: *mut c_void, pRetVal: *mut u32) -> HRESULT,
-
-    /// Retrieves the type of the assembly.
-    ///
-    /// # Arguments
-    ///
-    /// * `this` - Pointer to the COM object.
-    /// * `pRetVal` - Pointer to a variable that receives the `_Type` object.
-    ///
-    /// # Returns
-    ///
-    /// * Returns an HRESULT indicating success or failure.
     GetType: unsafe extern "system" fn(this: *mut c_void, pRetVal: *mut *mut _Type) -> HRESULT,
-
-    /// Retrieves the codebase of the assembly.
-    ///
-    /// # Arguments
-    ///
-    /// * `this` - Pointer to the COM object.
-    /// * `pRetVal` - Pointer to a `BSTR` that receives the codebase string.
-    ///
-    /// # Returns
-    ///
-    /// * Returns an HRESULT indicating success or failure.
     get_CodeBase: unsafe extern "system" fn(this: *mut c_void, pRetVal: *mut BSTR) -> HRESULT,
-
-    /// Retrieves the escaped codebase of the assembly.
-    ///
-    /// # Arguments
-    ///
-    /// * `this` - Pointer to the COM object.
-    /// * `pRetVal` - Pointer to a `BSTR` that receives the escaped codebase string.
-    ///
-    /// # Returns
-    ///
-    /// * Returns an HRESULT indicating success or failure.
     get_EscapedCodeBase: unsafe extern "system" fn(this: *mut c_void, pRetVal: *mut BSTR) -> HRESULT,
-
-    /// Retrieves the name of the assembly.
-    ///
-    /// # Arguments
-    ///
-    /// * `this` - Pointer to the COM object.
-    /// * `pRetVal` - A pointer to receive the `_AssemblyName` instance.
-    ///
-    /// # Returns
-    ///
-    /// * Returns an HRESULT indicating success or failure.
     GetName: unsafe extern "system" fn(this: *mut c_void, pRetVal: *mut *mut c_void) -> HRESULT,
-
-    /// Retrieves the name of the assembly.
-    ///
-    /// # Arguments
-    ///
-    /// * `this` - Pointer to the COM object.
-    /// * `pRetVal` - A pointer to receive the `_AssemblyName` instance.
-    ///
-    /// # Returns
-    ///
-    /// * Returns an HRESULT indicating success or failure.
     GetName_2: unsafe extern "system" fn(
         this: *mut c_void,
         copiedName: VARIANT_BOOL,
         pRetVal: *mut *mut c_void,
     ) -> HRESULT,
-
-    /// Retrieves the name of the assembly, with an option to specify if a copy of the name is returned.
-    ///
-    /// # Arguments
-    ///
-    /// * `this` - Pointer to the COM object..
-    /// * `copiedName` - A `VARIANT_BOOL` indicating if a new copy of the name should be created.
-    /// * `pRetVal` - A pointer to receive the `_AssemblyName` instance.
-    ///
-    /// # Returns
-    ///
-    /// * Returns an HRESULT indicating success or failure.
     get_FullName: unsafe extern "system" fn(this: *mut c_void, pRetVal: *mut BSTR) -> HRESULT,
-
-    /// Retrieves the entry point method of the assembly.
-    ///
-    /// # Arguments
-    ///
-    /// * `this` - Pointer to the COM object.
-    /// * `pRetVal` - Pointer to a `_MethodInfo` object that receives the entry point.
-    ///
-    /// # Returns
-    ///
-    /// * Returns an HRESULT indicating success or failure.
-    get_EntryPoint: unsafe extern "system" fn(this: *mut c_void, pRetVal: *mut *mut _MethodInfo) -> HRESULT,
-
-    /// Retrieves a type by its name from the assembly.
-    ///
-    /// # Arguments
-    ///
-    /// * `this` - Pointer to the COM object.
-    /// * `name` - The name of the type as a `BSTR`.
-    /// * `pRetVal` - Pointer to the `_Type` object that receives the type.
-    ///
-    /// # Returns
-    ///
-    /// * Returns an HRESULT indicating success or failure.
+    get_EntryPoint: unsafe extern "system" fn(
+        this: *mut c_void, 
+        pRetVal: *mut *mut _MethodInfo
+    ) -> HRESULT,
     GetType_2: unsafe extern "system" fn(
         this: *mut c_void,
         name: BSTR,
         pRetVal: *mut *mut _Type,
     ) -> HRESULT,
-
-    /// Placeholder for the method. Not used directly.
     GetType_3: *const c_void,
-
-    /// Placeholder for the method. Not used directly.
     GetExportedTypes: *const c_void,
-
-    /// Retrieves all types defined within the assembly as a `SAFEARRAY`.
-    ///
-    /// # Arguments
-    ///
-    /// * `this` - Pointer to the COM object.
-    /// * `pRetVal` - Pointer to a `SAFEARRAY` that receives the types.
-    ///
-    /// # Returns
-    ///
-    /// * Returns an HRESULT indicating success or failure.
     GetTypes: unsafe extern "system" fn(this: *mut c_void, pRetVal: *mut *mut SAFEARRAY) -> HRESULT,
-
-    /// Placeholder for the methods. Not used directly.
     GetManifestResourceStream: *const c_void,
     GetManifestResourceStream_2: *const c_void,
     GetFile: *const c_void,
@@ -630,20 +501,7 @@ pub struct _Assembly_Vtbl {
     GetFiles_2: *const c_void,
     GetManifestResourceNames: *const c_void,
     GetManifestResourceInfo: *const c_void,
-
-    /// Retrieves the location of the assembly.
-    ///
-    /// # Arguments
-    ///
-    /// * `this` - Pointer to the COM object.
-    /// * `pRetVal` - Pointer to a `BSTR` that receives the location.
-    ///
-    /// # Returns
-    ///
-    /// * Returns an HRESULT indicating success or failure.
     get_Location: unsafe extern "system" fn(this: *mut c_void, pRetVal: *mut BSTR) -> HRESULT,
-
-    /// Placeholder for the methods. Not used directly.
     get_Evidence: *const c_void,
     GetCustomAttributes: *const c_void,
     GetCustomAttributes_2: *const c_void,
@@ -656,25 +514,11 @@ pub struct _Assembly_Vtbl {
     GetSatelliteAssembly_2: *const c_void,
     LoadModule: *const c_void,
     LoadModule_2: *const c_void,
-
-    /// Creates an instance of a type within the assembly.
-    ///
-    /// # Arguments
-    ///
-    /// * `this` - Pointer to the COM object.
-    /// * `typeName` - The name of the type as a `BSTR`.
-    /// * `pRetVal` - Pointer to a `VARIANT` that receives the created instance.
-    ///
-    /// # Returns
-    ///
-    /// * Returns an HRESULT indicating success or failure.
     CreateInstance: unsafe extern "system" fn(
         this: *mut c_void,
         typeName: BSTR,
         pRetVal: *mut VARIANT,
     ) -> HRESULT,
-
-    /// Placeholder for the methods. Not used directly.
     CreateInstance_2: *const c_void,
     CreateInstance_3: *const c_void,
     GetLoadedModules: *const c_void,

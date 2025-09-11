@@ -122,66 +122,20 @@ impl Deref for IEnumUnknown {
     }
 }
 
+/// Raw COM vtable for the `IEnumUnknown` interface.
 #[repr(C)]
 pub struct IEnumUnknown_Vtbl {
-    /// Base vtable inherited from the `IUnknown` interface.
-    ///
-    /// This field contains the basic methods for reference management,
-    /// like `AddRef`, `Release`, and `QueryInterface`.
     pub base__: windows_core::IUnknown_Vtbl,
 
-    /// Retrieves the next set of interfaces from the enumerator.
-    ///
-    /// # Arguments
-    ///
-    /// * `this` - Pointer to the COM object.
-    /// * `celt` - The number of elements to retrieve.
-    /// * `rgelt` - Pointer to an array receiving the retrieved interfaces.
-    /// * `pceltFetched` - Pointer to the actual number of elements retrieved.
-    ///
-    /// # Returns
-    ///
-    /// * Returns an HRESULT indicating success or failure.
+    // Methods specific to the COM interface
     pub Next: unsafe extern "system" fn(
         this: *mut c_void,
         celt: u32,
         rgelt: *mut *mut IUnknown,
         pceltFetched: *mut u32,
     ) -> HRESULT,
-
-    /// Skips the specified number of elements in the enumeration sequence.
-    ///
-    /// # Arguments
-    ///
-    /// * `this` - Pointer to the COM object.
-    /// * `celt` - The number of elements to skip.
-    ///
-    /// # Returns
-    ///
-    /// * Returns an HRESULT indicating success or failure.
     pub Skip: unsafe extern "system" fn(this: *mut c_void, celt: u32) -> HRESULT,
-
-    /// Resets the enumeration sequence to the beginning.
-    ///
-    /// # Arguments
-    ///
-    /// * `this` - Pointer to the COM object.
-    ///
-    /// # Returns
-    ///
-    /// * Returns an HRESULT indicating success or failure.
     pub Reset: unsafe extern "system" fn(this: *mut c_void) -> HRESULT,
-
-    /// Creates a new enumerator that contains the same state as the current one.
-    ///
-    /// # Arguments
-    ///
-    /// * `this` - Pointer to the COM object.
-    /// * `ppenum` - Pointer to the new `IEnumUnknown`.
-    ///
-    /// # Returns
-    ///
-    /// * Returns an HRESULT indicating success or failure.
     pub Clone: unsafe extern "system" fn(
         this: *mut c_void, 
         ppenum: *mut *mut IEnumUnknown

@@ -446,33 +446,19 @@ impl Deref for _Type {
     }
 }
 
+/// Raw COM vtable for the `_Type` interface.
 #[repr(C)]
 pub struct _Type_Vtbl {
-    /// Base vtable inherited from the `IUnknown` interface.
-    ///
-    /// This field contains the basic methods for reference management,
-    /// like `AddRef`, `Release`, and `QueryInterface`.
     pub base__: windows_core::IUnknown_Vtbl,
-
-    /// Placeholder for the methods. Not used directly.
+    
+    // IDispatch methods
     GetTypeInfoCount: *const c_void,
     GetTypeInfo: *const c_void,
     GetIDsOfNames: *const c_void,
     Invoke: *const c_void,
-
-    /// Retrieves the string representation of the Method.
-    ///
-    /// # Arguments
-    ///
-    /// * `this` - Pointer to the COM object.
-    /// * `pRetVal` - Pointer to a `BSTR` that receives the string result.
-    ///
-    /// # Returns
-    ///
-    /// * Returns an HRESULT indicating success or failure.
+    
+    // Methods specific to the COM interface
     get_ToString: unsafe extern "system" fn(this: *mut c_void, pRetVal: *mut BSTR) -> HRESULT,
-
-    /// Placeholder for the methods. Not used directly.
     Equals: *const c_void,
     GetHashCode: *const c_void,
     GetType: *const c_void,
@@ -511,87 +497,30 @@ pub struct _Type_Vtbl {
     GetInterfaceMap: *const c_void,
     GetMethod: *const c_void,
     GetMethod_2: *const c_void,
-
-    /// Retrieves methods matching the specified `BindingFlags`.
-    ///
-    /// # Arguments
-    ///
-    /// * `this` - Pointer to the COM object.
-    /// * `bindingAttr` - The `BindingFlags` specifying the methods to retrieve.
-    /// * `pRetVal` - A pointer to a `SAFEARRAY` that receives the retrieved methods.
-    ///
-    /// # Returns
-    ///
-    /// * Returns an HRESULT indicating success or failure.
     GetMethods: unsafe extern "system" fn(
         this: *mut c_void,
         bindingAttr: BindingFlags,
         pRetVal: *mut *mut SAFEARRAY,
     ) -> HRESULT,
-
-    /// Placeholder for the methods. Not used directly.
     GetField: *const c_void,
     GetFields: *const c_void,
-
-    /// Retrieves a property by name.
-    ///
-    /// # Arguments
-    ///
-    /// * `this` - Pointer to the COM object.
-    /// * `name` - The property name.
-    /// * `result` - Output pointer receiving the IPropertyInfo.
-    ///
-    /// # Returns
-    ///
-    /// * HRESULT indicating success or failure.
     pub GetProperty: unsafe extern "system" fn(
         this: *mut c_void,
         name: BSTR,
         bindingAttr: BindingFlags,
         result: *mut *mut c_void,
     ) -> HRESULT,
-
-    /// Placeholder for the methods. Not used directly.
     GetProperty_2: *const c_void,
-
-    /// Retrieves properties matching the specified `BindingFlags`.
-    ///
-    /// # Arguments
-    ///
-    /// * `this` - Pointer to the COM object.
-    /// * `bindingAttr` - The `BindingFlags` specifying the properties to retrieve.
-    /// * `pRetVal` - A pointer to a `SAFEARRAY` that receives the retrieved properties.
-    ///
-    /// # Returns
-    ///
-    /// * Returns an HRESULT indicating success or failure.
     GetProperties: unsafe extern "system" fn(
         this: *mut c_void,
         bindingAttr: BindingFlags,
         pRetVal: *mut *mut SAFEARRAY,
     ) -> HRESULT,
-
     GetMember_2: *const c_void,
     GetMembers: *const c_void,
     InvokeMember: *const c_void,
     get_UnderlyingSystemType: *const c_void,
     InvokeMember_2: *const c_void,
-
-    /// Invokes a method (static or instance) by name on the specified type or object.
-    ///
-    /// # Arguments
-    ///
-    /// * `this` - Pointer to the COM object.
-    /// * `name` - The name of the member to invoke as a `BSTR`.
-    /// * `invokeAttr` - Flags controlling invocation behavior.
-    /// * `Binder` - Pointer to binder; typically `null`.
-    /// * `Target` - The instance of the type for invocation.
-    /// * `args` - Pointer to a `SAFEARRAY` of arguments.
-    /// * `pRetVal` - Pointer to receive the invocation result.
-    ///
-    /// # Returns
-    ///
-    /// * Returns an HRESULT indicating success or failure.
     InvokeMember_3: unsafe extern "system" fn(
         this: *mut c_void,
         name: BSTR,
@@ -601,8 +530,6 @@ pub struct _Type_Vtbl {
         args: *mut SAFEARRAY,
         pRetVal: *mut VARIANT,
     ) -> HRESULT,
-
-    /// Placeholder for the methods. Not used directly.
     GetConstructor: *const c_void,
     GetConstructor_2: *const c_void,
     GetConstructor_3: *const c_void,
@@ -611,25 +538,11 @@ pub struct _Type_Vtbl {
     GetMethod_3: *const c_void,
     GetMethod_4: *const c_void,
     GetMethod_5: *const c_void,
-
-    /// Retrieves a method by name.
-    ///
-    /// # Arguments
-    ///
-    /// * `this` - Pointer to the COM object.
-    /// * `name` - A `BSTR` representing the method name.
-    /// * `pRetVal` - Pointer that receives the `_MethodInfo` object.
-    ///
-    /// # Returns
-    ///
-    /// * Returns an HRESULT indicating success or failure.
     GetMethod_6: unsafe extern "system" fn(
         this: *mut c_void,
         name: BSTR,
         pRetVal: *mut *mut _MethodInfo,
     ) -> HRESULT,
-
-    /// Placeholder for the methods. Not used directly.
     GetMethods_2: *const c_void,
     GetField_2: *const c_void,
     GetFields_2: *const c_void,
@@ -680,10 +593,6 @@ pub struct _Type_Vtbl {
 }
 
 /// Specifies flags that control binding and the way in which members are searched and invoked.
-///
-/// These flags can be combined using bitwise operations to refine the scope of the invocation or search.
-/// `BindingFlags` are commonly used in .NET reflection to determine if a method or property is
-/// public, static, instance-based, and more.
 #[repr(C)]
 pub enum BindingFlags {
     /// Default binding, no special options.

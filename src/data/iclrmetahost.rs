@@ -286,125 +286,41 @@ impl Deref for ICLRMetaHost {
     }
 }
 
-/// Vtable structure for the `ICLRMetaHost` interface, defining the available methods.
-///
-/// These methods provide functionality such as retrieving runtime information, enumerating installed
-/// and loaded runtimes, and requesting runtime notifications.
+/// Raw COM vtable for the `ICLRMetaHost` interface.
 #[repr(C)]
 pub struct ICLRMetaHost_Vtbl {
-    /// Base vtable inherited from the `IUnknown` interface.
-    ///
-    /// This field contains the basic methods for reference management,
-    /// like `AddRef`, `Release`, and `QueryInterface`.
     pub base__: windows_core::IUnknown_Vtbl,
 
-    /// Retrieves a runtime based on the specified version.
-    ///
-    /// # Arguments
-    ///
-    /// * `this` - Pointer to the COM object.
-    /// * `pwzVersion` - Version of the runtime.
-    /// * `riid` - GUID of the requested interface.
-    /// * `ppRuntime` - Pointer to the interface.
+    // Methods specific to the COM interface
     pub GetRuntime: unsafe extern "system" fn(
         this: *mut c_void,
         pwzVersion: PCWSTR,
         riid: *const GUID,
         ppRuntime: *mut *mut c_void,
     ) -> HRESULT,
-
-    /// Retrieves the version of the CLR from a file.
-    ///
-    /// # Arguments
-    ///
-    /// * `this` - Pointer to the COM object.
-    /// * `pwzFilePath` - Path to the file.
-    /// * `pwzBuffer` - Buffer for the version string.
-    /// * `pcchBuffer` - Length of the buffer.
-    ///
-    /// # Returns
-    ///
-    /// * Returns an HRESULT indicating success or failure.
     pub GetVersionFromFile: unsafe extern "system" fn(
         this: *mut c_void,
         pwzFilePath: PCWSTR,
         pwzBuffer: PWSTR,
         pcchBuffer: *mut u32,
     ) -> HRESULT,
-
-    /// Enumerates all installed runtimes on the system.
-    ///
-    /// # Arguments
-    ///
-    /// * `this` - Pointer to the COM object.
-    /// * `ppEnumerator` - Pointer to the enumerator.
-    ///
-    /// # Returns
-    ///
-    /// * Returns an HRESULT indicating success or failure.
     pub EnumerateInstalledRuntimes: unsafe extern "system" fn(
         this: *mut c_void, 
         ppEnumerator: *mut *mut c_void
     ) -> HRESULT,
-
-    /// Enumerates all loaded runtimes in the specified process.
-    ///
-    /// # Arguments
-    ///
-    /// * `this` - Pointer to the COM object.
-    /// * `hndProcess` - Handle to the process.
-    /// * `ppEnumerator` - Pointer to the enumerator.
-    ///
-    /// # Returns
-    ///
-    /// * Returns an HRESULT indicating success or failure.
     pub EnumerateLoadedRuntimes: unsafe extern "system" fn(
         this: *mut c_void,
         hndProcess: HANDLE,
         ppEnumerator: *mut *mut c_void,
     ) -> HRESULT,
-
-    /// Registers a notification callback for when a runtime is loaded.
-    ///
-    /// # Arguments
-    ///
-    /// * `this` - Pointer to the COM object.
-    /// * `pCallbackFunction` - Callback function to be invoked.
-    ///
-    /// # Returns
-    ///
-    /// * Returns an HRESULT indicating success or failure.
     pub RequestRuntimeLoadedNotification: unsafe extern "system" fn(
         this: *mut c_void,
         pCallbackFunction: RuntimeLoadedCallbackFnPtr,
     ) -> HRESULT,
-
-    /// Queries for a legacy runtime binding.
-    ///
-    /// # Arguments
-    ///
-    /// * `this` - Pointer to the COM object.
-    /// * `riid` - GUID of the legacy runtime binding.
-    /// * `ppUnk` - Pointer to the resulting binding.
-    ///
-    /// # Returns
-    ///
-    /// * Returns an HRESULT indicating success or failure.
     pub QueryLegacyV2RuntimeBinding: unsafe extern "system" fn(
         this: *mut c_void,
         riid: *const GUID,
         ppUnk: *mut *mut c_void,
     ) -> HRESULT,
-
-    /// Terminates the process by calling the CLR's `ExitProcess` method.
-    ///
-    /// # Arguments
-    ///
-    /// * `this` - Pointer to the COM object.
-    /// * `iExitCode` - Exit code.
-    ///
-    /// # Returns
-    ///
-    /// * Returns an HRESULT indicating success or failure.
     pub ExitProcess: unsafe extern "system" fn(this: *mut c_void, iExitCode: i32) -> HRESULT,
 }
