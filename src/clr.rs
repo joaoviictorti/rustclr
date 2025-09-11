@@ -71,11 +71,6 @@ pub struct RustClr<'a> {
 }
 
 impl Default for RustClr<'_> {
-    /// Provides a default-initialized `RustClr`.
-    ///
-    /// # Returns
-    ///
-    /// * A default-initialized `RustClr`.
     fn default() -> Self {
         Self {
             buffer: &[],
@@ -674,14 +669,6 @@ pub enum ClrSource<'a> {
 
 impl<'a> From<&'a str> for ClrSource<'a> {
     /// Converts a file path (`&'a str`) into a [`ClrSource::File`].
-    ///
-    /// # Arguments
-    ///
-    /// * `file` - Path to the file on disk.
-    ///
-    /// # Returns
-    ///
-    /// A [`ClrSource`] representing a file path.
     fn from(file: &'a str) -> Self {
         ClrSource::File(file)
     }
@@ -689,14 +676,6 @@ impl<'a> From<&'a str> for ClrSource<'a> {
 
 impl<'a, const N: usize> From<&'a [u8; N]> for ClrSource<'a> {
     /// Converts a fixed-size byte array into a [`ClrSource::Buffer`].
-    ///
-    /// # Arguments
-    ///
-    /// * `buffer` - Fixed-size byte array with the data.
-    ///
-    /// # Returns
-    ///
-    /// A [`ClrSource`] representing an in-memory buffer.
     fn from(buffer: &'a [u8; N]) -> Self {
         ClrSource::Buffer(buffer)
     }
@@ -704,14 +683,6 @@ impl<'a, const N: usize> From<&'a [u8; N]> for ClrSource<'a> {
 
 impl<'a> From<&'a [u8]> for ClrSource<'a> {
     /// Converts a byte slice into a [`ClrSource::Buffer`].
-    ///
-    /// # Arguments
-    ///
-    /// * `buffer` - Byte slice with the data.
-    ///
-    /// # Returns
-    ///
-    /// A [`ClrSource`] representing an in-memory buffer.
     fn from(buffer: &'a [u8]) -> Self {
         ClrSource::Buffer(buffer)
     }
@@ -719,14 +690,6 @@ impl<'a> From<&'a [u8]> for ClrSource<'a> {
 
 impl<'a> From<&'a Vec<u8>> for ClrSource<'a> {
     /// Converts a [`Vec<u8>`] reference into a [`ClrSource::Buffer`].
-    ///
-    /// # Arguments
-    ///
-    /// * `buffer` - A reference to a vector with the data.
-    ///
-    /// # Returns
-    ///
-    /// A [`ClrSource`] representing an in-memory buffer.
     fn from(buffer: &'a Vec<u8>) -> Self {
         ClrSource::Buffer(buffer.as_slice())
     }
