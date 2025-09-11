@@ -6,14 +6,13 @@ use super::{
     Invocation,
     Result,
     Variant,
-    WinStr,
+    ComString,
     RustClrEnv
 };
 
-/// Provides a persistent interface for executing PowerShell commands
-/// from a .NET runtime hosted inside a Rust application.
+/// Provides a persistent interface for executing PowerShell commands.
 pub struct PowerShell {
-    /// The loaded .NET automation assembly (`System.Management.Automation`).
+    /// The loaded .NET automation assembly.
     automation: _Assembly,
 
     /// CLR environment used to host the .NET runtime.

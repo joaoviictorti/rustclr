@@ -24,7 +24,7 @@ use windows_sys::{
 };
 
 use super::{_MethodInfo, _Type};
-use crate::{Result, WinStr, error::ClrError};
+use crate::{Result, ComString, error::ClrError};
 
 /// This struct represents the COM `_Assembly` interface,
 /// a .NET assembly in the CLR environment.

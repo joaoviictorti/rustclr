@@ -23,7 +23,7 @@ use super::create_safe_array_args;
 use super::{
     Result, 
     Variant,
-    WinStr,
+    ComString,
 };
 
 mod hosting;

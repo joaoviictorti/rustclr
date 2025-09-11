@@ -1,8 +1,8 @@
 use alloc::{string::String, vec::Vec};
 use windows_sys::Win32::Foundation::{SysAllocString, SysStringLen};
 
-/// The `WinStr` trait provides methods for working with BSTRs.
-pub trait WinStr {
+/// The `ComString` trait provides methods for working with BSTRs.
+pub trait ComString {
     /// Converts a Rust string into a BSTR.
     fn to_bstr(&self) -> *const u16;
 
@@ -12,21 +12,21 @@ pub trait WinStr {
     }
 }
 
-impl WinStr for &str {
+impl ComString for &str {
     fn to_bstr(&self) -> *const u16 {
         let utf16_str = self.encode_utf16().chain(Some(0)).collect::<Vec<u16>>();
         unsafe { SysAllocString(utf16_str.as_ptr()) }
     }
 }
 
-impl WinStr for String {
+impl ComString for String {
     fn to_bstr(&self) -> *const u16 {
         let utf16_str = self.encode_utf16().chain(Some(0)).collect::<Vec<u16>>();
         unsafe { SysAllocString(utf16_str.as_ptr()) }
     }
 }
 
-impl WinStr for *const u16 {
+impl ComString for *const u16 {
     fn to_bstr(&self) -> *const u16 {
         *self
     }

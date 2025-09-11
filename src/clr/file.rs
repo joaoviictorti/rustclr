@@ -14,14 +14,16 @@ use windows_sys::Win32::{
     },
 };
 
-use crate::{
-    Result, 
-    error::ClrError
-};
+use crate::{Result, error::ClrError};
 
-/// Validates whether the given PE buffer represents a .NET executable.
+/// Validates whether the given PE buffer represents a valid .NET executable.
+///
+/// # Errors
+/// 
+/// * Returns a [`ClrError`] variant if the file is not valid or not a .NET assembly.
 pub fn validate_file(buffer: &[u8]) -> Result<()> {
     let pe = PE::parse(buffer.as_ptr().cast_mut().cast());
+
     let Some(nt_header) = pe.nt_header() else {
         return Err(ClrError::InvalidNtHeader);
     };
@@ -37,10 +39,19 @@ pub fn validate_file(buffer: &[u8]) -> Result<()> {
     Ok(())
 }
 
-/// Reads the entire contents of a file into memory using the Windows API.
+/// Reads the entire contents of a file from disk into memory using the Win32 API.
+///
+/// # Arguments
+/// 
+/// * `name` - Path to the file to read.
+///
+/// # Returns
+/// 
+/// * A `Vec<u8>` containing the file's contents on success, or a [`ClrError`] on failure.
 pub fn read_file(name: &str) -> Result<Vec<u8>> {
     let file_name = CString::new(name)
         .map_err(|_| ClrError::GenericError("Invalid cstring"))?;
+
     let h_file = unsafe {
         CreateFileA(
             file_name.as_ptr().cast(),
@@ -64,6 +75,7 @@ pub fn read_file(name: &str) -> Result<Vec<u8>> {
 
     let mut out = vec![0; size as usize];
     let mut bytes = 0;
+
     unsafe {
         ReadFile(
             h_file,
@@ -77,7 +89,7 @@ pub fn read_file(name: &str) -> Result<Vec<u8>> {
     Ok(out)
 }
 
-/// Checks if the PE headers indicate a valid Windows executable.
+/// Checks whether the PE headers represent a valid Windows executable.
 fn is_valid_executable(nt_header: *const IMAGE_NT_HEADERS) -> bool {
     unsafe {
         let characteristics = (*nt_header).FileHeader.Characteristics;
@@ -87,7 +99,9 @@ fn is_valid_executable(nt_header: *const IMAGE_NT_HEADERS) -> bool {
     }
 }
 
-/// Checks if the PE contains a COM Descriptor directory (i.e., is a .NET assembly).
+/// Checks if the PE includes a COM Descriptor directory, indicating a .NET assembly.
+///
+/// The COM descriptor is required for the CLR to recognize and load the assembly.
 fn is_dotnet(nt_header: *const IMAGE_NT_HEADERS) -> bool {
     unsafe {
         let com_dir = (*nt_header).OptionalHeader.DataDirectory

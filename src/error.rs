@@ -3,8 +3,7 @@
 use alloc::string::String;
 use thiserror::Error;
 
-/// Represents errors that can occur when interacting with the .NET runtime
-/// or while handling .NET-related operations within an unmanaged application.
+/// Represents errors that can occur when interacting with the .NET runtime.
 #[derive(Debug, Error)]
 pub enum ClrError {
     /// Raised when a .NET file cannot be read correctly.

@@ -20,7 +20,7 @@ use windows_sys::{
 };
 
 use crate::{
-    Invocation, Result, WinStr, create_safe_args,
+    Invocation, Result, ComString, create_safe_args,
     data::{_MethodInfo, _PropertyInfo},
     error::ClrError,
 };

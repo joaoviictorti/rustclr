@@ -16,7 +16,7 @@ use windows_sys::{
 
 use super::{_Assembly, _Type};
 use crate::{
-    Result, WinStr, 
+    Result, ComString, 
     create_safe_array_buffer, 
     error::ClrError
 };

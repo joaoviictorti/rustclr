@@ -22,8 +22,11 @@ use windows_sys::Win32::{
     },
 };
 
-use super::WinStr;
-use crate::{Result, error::ClrError};
+use super::{
+    ComString,
+    Result, 
+    error::ClrError
+};
 
 /// Trait to convert various Rust types to Windows COM-compatible `VARIANT` types.
 pub trait Variant {

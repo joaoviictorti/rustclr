@@ -202,21 +202,6 @@ impl<'a> RustClrRuntime<'a> {
     }
 }
 
-/// Generates a uuid used to create the AppDomain
-pub fn uuid() -> uuid::Uuid {
-    let mut buf = [0u8; 16];
-
-    for i in 0..4 {
-        let ticks = unsafe { core::arch::x86_64::_rdtsc() };
-        buf[i * 4] = ticks as u8;
-        buf[i * 4 + 1] = (ticks >> 8) as u8;
-        buf[i * 4 + 2] = (ticks >> 16) as u8;
-        buf[i * 4 + 3] = (ticks >> 24) as u8;
-    }
-
-    uuid::Uuid::from_bytes(buf)
-}
-
 /// Represents the .NET runtime versions supported by RustClr.
 #[derive(Debug, Clone, Copy)]
 pub enum RuntimeVersion {
@@ -248,6 +233,21 @@ impl RuntimeVersion {
             .chain(Some(0))
             .collect::<Vec<u16>>()
     }
+}
+
+/// Generates a uuid used to create the AppDomain
+pub fn uuid() -> uuid::Uuid {
+    let mut buf = [0u8; 16];
+
+    for i in 0..4 {
+        let ticks = unsafe { core::arch::x86_64::_rdtsc() };
+        buf[i * 4] = ticks as u8;
+        buf[i * 4 + 1] = (ticks >> 8) as u8;
+        buf[i * 4 + 2] = (ticks >> 16) as u8;
+        buf[i * 4 + 3] = (ticks >> 24) as u8;
+    }
+
+    uuid::Uuid::from_bytes(buf)
 }
 
 /// Patches `System.Environment.Exit` to prevent the .NET process from terminating.
