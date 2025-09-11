@@ -40,7 +40,7 @@ use super::{
 };
 
 /// Represents a Rust interface to the Common Language Runtime (CLR).
-#[derive(Debug, Clone)]
+#[derive(Default, Debug, Clone)]
 pub struct RustClr<'a> {
     /// Buffer containing the .NET assembly in bytes.
     buffer: &'a [u8],
@@ -68,22 +68,6 @@ pub struct RustClr<'a> {
 
     /// Host for the CLR runtime.
     cor_runtime_host: Option<ICorRuntimeHost>,
-}
-
-impl Default for RustClr<'_> {
-    fn default() -> Self {
-        Self {
-            buffer: &[],
-            runtime_version: None,
-            redirect_output: false,
-            patch_exit: false,
-            identity_assembly: String::new(),
-            domain_name: None,
-            args: None,
-            app_domain: None,
-            cor_runtime_host: None,
-        }
-    }
 }
 
 impl<'a> RustClr<'a> {
