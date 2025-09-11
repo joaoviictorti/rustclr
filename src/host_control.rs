@@ -7,7 +7,7 @@ use windows_sys::Win32::UI::Shell::SHCreateMemStream;
 
 use super::data::*;
 
-/// Implements `IHostControl`. Exposes a custom `IHostAssemblyManager` to the CLR.
+/// Implements `IHostControl`.
 #[implement(IHostControl)]
 pub struct RustClrControl {
     /// Host manager responsible for resolving assemblies.
@@ -15,16 +15,7 @@ pub struct RustClrControl {
 }
 
 impl RustClrControl {
-    /// Creates a new `RustClrControl` with the target assembly and buffer.
-    ///
-    /// # Arguments
-    ///
-    /// * `buffer` - raw .NET assembly bytes
-    /// * `assembly` - full identity of the target assembly
-    ///
-    /// # Returns
-    ///
-    /// * `Self` - initialized `RustClrControl`
+    /// Creates a new [`RustClrControl`] with the target assembly and buffer.
     pub fn new(buffer: &[u8], assembly: &str) -> Self {
         Self {
             manager: RustClrManager::new(buffer, assembly.to_string()).into(),
@@ -76,7 +67,7 @@ impl IHostControl_Impl for RustClrControl_Impl {
     }
 }
 
-/// Implements `IHostAssemblyManager`. Supplies a custom `IHostAssemblyStore`.
+/// Implements `IHostAssemblyManager`.
 #[implement(IHostAssemblyManager)]
 pub struct RustClrManager {
     /// Store responsible for resolving and serving assemblies.
@@ -84,16 +75,7 @@ pub struct RustClrManager {
 }
 
 impl RustClrManager {
-    /// Creates a new `RustClrManager`.
-    ///
-    /// # Arguments
-    ///
-    /// * `buffer` - .NET assembly bytes
-    /// * `assembly` - target identity string
-    ///
-    /// # Returns
-    ///
-    /// * `Self` - initialized manager
+    /// Creates a new [`RustClrManager`].
     pub fn new(buffer: &[u8], assembly: String) -> Self {
         Self {
             store: RustClrStore::new(buffer, assembly).into(),
@@ -108,16 +90,12 @@ impl IHostAssemblyManager_Impl for RustClrManager_Impl {
     }
 
     /// Returns the custom `IHostAssemblyStore`.
-    ///
-    /// # Returns
-    ///
-    /// * `Ok(store)` - reference to internal store
     fn GetAssemblyStore(&self) -> Result<IHostAssemblyStore> {
         Ok(self.store.clone())
     }
 }
 
-/// Implements `IHostAssemblyStore`. Serves in-memory assemblies.
+/// Implements `IHostAssemblyStore`
 #[implement(IHostAssemblyStore)]
 pub struct RustClrStore<'a> {
     /// Assembly bytes.
@@ -128,16 +106,7 @@ pub struct RustClrStore<'a> {
 }
 
 impl<'a> RustClrStore<'a> {
-    /// Creates a new `RustClrStore`.
-    ///
-    /// # Arguments
-    ///
-    /// * `buffer` - .NET assembly in bytes
-    /// * `assembly` - identity name
-    ///
-    /// # Returns
-    ///
-    /// * `Self`
+    /// Creates a new [`RustClrStore`].
     pub fn new(buffer: &'a [u8], assembly: String) -> Self {
         Self { buffer, assembly }
     }
