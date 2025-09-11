@@ -40,9 +40,6 @@ use super::{
 };
 
 /// Represents a Rust interface to the Common Language Runtime (CLR).
-///
-/// This structure allows loading and executing .NET assemblies with specific runtime versions,
-/// application domains, and arguments.
 #[derive(Debug, Clone)]
 pub struct RustClr<'a> {
     /// Buffer containing the .NET assembly in bytes.
@@ -142,73 +139,105 @@ impl<'a> RustClr<'a> {
     }
 
     /// Sets the .NET runtime version to use.
-    ///
-    /// # Example
-    ///
-    /// ```rust,ignore
-    /// use rustclr::RustClr;
-    /// 
-    /// let clr = RustClr::new("app.exe")?.runtime_version(RuntimeVersion::V4);
-    /// ```
     pub fn runtime_version(mut self, version: RuntimeVersion) -> Self {
         self.runtime_version = Some(version);
         self
     }
 
     /// Sets the application domain name to use.
-    ///
-    /// # Example
-    ///
-    /// ```rust,ignore
-    /// use rustclr::RustClr;
-    /// 
-    /// let clr = RustClr::new("app.exe")?.domain("CustomDomain");
-    /// ```
     pub fn domain(mut self, domain_name: &str) -> Self {
         self.domain_name = Some(domain_name.to_string());
         self
     }
 
     /// Sets the arguments to pass to the .NET assembly's entry point.
-    ///
-    /// # Example
-    ///
-    /// ```rust,ignore
-    /// use rustclr::RustClr;
-    /// 
-    /// let clr = RustClr::new("app.exe")?.args(vec!["arg1", "arg2"]);
-    /// ```
     pub fn args(mut self, args: Vec<&str>) -> Self {
         self.args = Some(args.iter().map(|&s| s.to_string()).collect());
         self
     }
 
     /// Enables or disables output redirection.
-    ///
-    /// # Example
-    ///
-    /// ```rust,ignore
-    /// use rustclr::RustClr;
-    /// 
-    /// let clr = RustClr::new("app.exe")?.output();
-    /// ```
     pub fn output(mut self) -> Self {
         self.redirect_output = true;
         self
     }
 
     /// Enables patching of the `System.Environment.Exit` method in `mscorlib`.
-    ///
-    /// # Example
-    ///
-    /// ```rust,ignore
-    /// use rustclr::RustClr;
-    /// 
-    /// let clr = RustClr::new("app.exe")?.exit();
-    /// ```
     pub fn exit(mut self) -> Self {
         self.patch_exit = true;
         self
+    }
+
+    /// Runs the .NET assembly by loading it into the application domain and invoking its entry point.
+    ///
+    /// # Returns
+    ///
+    /// * `Ok(String)` - The output from the .NET assembly if executed successfully.
+    /// * `Err(ClrError)` - If an error occurs during execution.
+    ///
+    /// # Examples
+    ///
+    /// ```rust,ignore
+    /// use rustclr::{RustClr, RuntimeVersion};
+    /// use std::fs;
+    ///
+    /// fn main() -> Result<(), Box<dyn std::error::Error>> {
+    ///     let buffer = fs::read("examples/sample.exe")?;
+    ///
+    ///     // Create and configure a RustClr instance
+    ///     let mut clr = RustClr::new(&buffer)?
+    ///         .runtime_version(RuntimeVersion::V4)
+    ///         .domain("CustomDomain")
+    ///         .args(vec!["arg1", "arg2"])
+    ///         .output();
+    ///
+    ///     // Run the .NET assembly and capture the output
+    ///     let output = clr.run()?;
+    ///     println!("Output: {}", output);
+    ///
+    ///     Ok(())
+    /// }
+    /// ```
+    pub fn run(&mut self) -> Result<String> {
+        // Prepare the CLR environment
+        self.prepare()?;
+
+        // Gets the current application domain
+        let domain = self.get_app_domain()?;
+
+        // Loads the .NET assembly specified by name
+        let assembly = domain.load_name(&self.identity_assembly)?;
+
+        // Prepares the parameters for the `Main` method
+        let parameters = self.args.as_ref().map_or_else(
+            || Ok(null_mut()),
+            |args| create_safe_array_args(args.to_vec()),
+        )?;
+
+        // Retrieves the mscorlib library
+        let mscorlib = domain.get_assembly(s!("mscorlib"))?;
+
+        // Perform the patch in System.Environment.Exit (If Enabled)
+        if self.patch_exit {
+            self.patch_exit(&mscorlib)?;
+        }
+
+        let output = if self.redirect_output {
+            // Redirecting output
+            let mut output_manager = ClrOutput::new(&mscorlib);
+            output_manager.redirect()?;
+
+            // Invokes the `Main` method of the assembly
+            assembly.run(parameters)?;
+            output_manager.capture()?
+        } else {
+            // Invokes the `Main` method of the assembly
+            assembly.run(parameters)?;
+            String::new()
+        };
+
+        self.unload_domain()?;
+        Ok(output)
     }
 
     /// Prepares the CLR environment by initializing the runtime and application domain.
@@ -261,94 +290,7 @@ impl<'a> RustClr<'a> {
         Ok(())
     }
 
-    /// Runs the .NET assembly by loading it into the application domain and invoking its entry point.
-    ///
-    /// # Returns
-    ///
-    /// * `Ok(String)` - The output from the .NET assembly if executed successfully.
-    /// * `Err(ClrError)` - If an error occurs during execution.
-    ///
-    /// # Examples
-    ///
-    /// ```rust,ignore
-    /// use rustclr::{RustClr, RuntimeVersion};
-    /// use std::fs;
-    ///
-    /// fn main() -> Result<(), Box<dyn std::error::Error>> {
-    ///     let buffer = fs::read("examples/sample.exe")?;
-    ///
-    ///     // Create and configure a RustClr instance
-    ///     let mut clr = RustClr::new(&buffer)?
-    ///         .runtime_version(RuntimeVersion::V4)
-    ///         .domain("CustomDomain")
-    ///         .args(vec!["arg1", "arg2"])
-    ///         .output();
-    ///
-    ///     // Run the .NET assembly and capture the output
-    ///     let output = clr.run()?;
-    ///     println!("Output: {}", output);
-    ///
-    ///     Ok(())
-    /// }
-    /// ```
-    pub fn run(&mut self) -> Result<String> {
-        // Prepare the CLR environment
-        self.prepare()?;
-
-        // Gets the current application domain
-        let domain = self.get_app_domain()?;
-
-        // Loads the .NET assembly specified by the buffer
-        let assembly = domain.load_name(&self.identity_assembly)?;
-
-        // Prepares the parameters for the `Main` method
-        let parameters = self.args.as_ref().map_or_else(
-            || Ok(null_mut()),
-            |args| create_safe_array_args(args.to_vec()),
-        )?;
-
-        // Loads the mscorlib library
-        let mscorlib = domain.get_assembly(s!("mscorlib"))?;
-
-        // If the exit patch is enabled, perform the patch in System.Environment.Exit
-        if self.patch_exit {
-            self.patch_exit(&mscorlib)?;
-        }
-
-        // Redirects output if enabled
-        let output = if self.redirect_output {
-            // Redirecting output
-            let mut output_manager = ClrOutput::new(&mscorlib);
-            output_manager.redirect()?;
-
-            // Invokes the `Main` method of the assembly
-            assembly.run(parameters)?;
-
-            // Capture the output
-            output_manager.capture()?
-        } else {
-            // Invokes the `Main` method of the assembly
-            assembly.run(parameters)?;
-
-            // Empty output
-            String::new()
-        };
-
-        // Unload Domain
-        self.unload_domain()?;
-        Ok(output)
-    }
-
     /// Patches the `System.Environment.Exit` method in `mscorlib` to avoid process termination.
-    ///
-    /// # Arguments
-    ///
-    /// * `mscorlib` - The `_Assembly` object representing the loaded `mscorlib.dll`.
-    ///
-    /// # Returns
-    ///
-    /// * `Ok(())` - If the patch was applied successfully.
-    /// * `Err(ClrError)` - If any COM error or memory protection error occurs during the process.
     fn patch_exit(&self, mscorlib: &_Assembly) -> Result<()> {
         // Resolve System.Environment type and the Exit method
         let env = mscorlib.resolve_type(s!("System.Environment"))?;
@@ -358,19 +300,17 @@ impl<'a> RustClr<'a> {
         let method_info = mscorlib.resolve_type(s!("System.Reflection.MethodInfo"))?;
         let method_handle = method_info.property(s!("MethodHandle"))?;
 
-        // Convert the Exit method into a COM IUnknown pointer to pass into MethodHandle
+        // Convert the Exit method into a COM IUnknown pointer
         let instance = exit
             .cast::<IUnknown>()
             .map_err(|_| ClrError::GenericError("Failed to cast to IUnknown"))?;
 
-        // Call MethodHandle.get_Value(instance) to retrieve the RuntimeMethodHandle
+        // Call to retrieve the RuntimeMethodHandle
         let method_handle_exit = method_handle.value(Some(instance.to_variant()), None)?;
 
-        // Resolve System.RuntimeMethodHandle.GetFunctionPointer
+        // Get the native address of Environment.Exit
         let runtime_method = mscorlib.resolve_type(s!("System.RuntimeMethodHandle"))?;
         let get_function_pointer = runtime_method.method(s!("GetFunctionPointer"))?;
-
-        // Invoke GetFunctionPointer(handle) to get the native address of Environment.Exit
         let ptr = get_function_pointer.invoke(Some(method_handle_exit), None)?;
 
         // Extract pointer from VARIANT
@@ -391,7 +331,7 @@ impl<'a> RustClr<'a> {
             ));
         }
 
-        // Overwrite first byte with RET (0xC3) to effectively no-op the function
+        // Overwrite first byte with RET (0xC3)
         unsafe { *(ptr.Anonymous.Anonymous.Anonymous.byref as *mut u8) = 0xC3 };
 
         // Restore original protection
@@ -411,36 +351,17 @@ impl<'a> RustClr<'a> {
     }
 
     /// Retrieves the current application domain.
-    ///
-    /// # Returns
-    ///
-    /// * `Ok(_AppDomain)` - If the application domain is available.
-    /// * `Err(ClrError)` - If no application domain is available.
     fn get_app_domain(&mut self) -> Result<_AppDomain> {
         self.app_domain.clone().ok_or(ClrError::NoDomainAvailable)
     }
 
     /// Creates an instance of `ICLRMetaHost`.
-    ///
-    /// # Returns
-    ///
-    /// * `Ok(ICLRMetaHost)` - If the instance is created successfully.
-    /// * `Err(ClrError)` - If the instance creation fails.
     fn create_meta_host(&self) -> Result<ICLRMetaHost> {
         CLRCreateInstance::<ICLRMetaHost>(&CLSID_CLRMETAHOST)
             .map_err(|e| ClrError::MetaHostCreationError(format!("{e}")))
     }
 
     /// Retrieves runtime information based on the selected .NET version.
-    ///
-    /// # Arguments
-    ///
-    /// * `meta_host` - Reference to the `ICLRMetaHost` instance.
-    ///
-    /// # Returns
-    ///
-    /// * `Ok(ICLRRuntimeInfo)` - If runtime information is retrieved successfully.
-    /// * `Err(ClrError)` - If the retrieval fails.
     fn get_runtime_info(&self, meta_host: &ICLRMetaHost) -> Result<ICLRRuntimeInfo> {
         let runtime_version = self.runtime_version.unwrap_or(RuntimeVersion::V4);
         let version_wide = runtime_version.to_vec();
@@ -451,15 +372,6 @@ impl<'a> RustClr<'a> {
     }
 
     /// Gets the runtime host interface from the provided runtime information.
-    ///
-    /// # Arguments
-    ///
-    /// * `runtime_info` - Reference to the `ICLRRuntimeInfo` instance.
-    ///
-    /// # Returns
-    ///
-    /// * `Ok(ICorRuntimeHost)` - If the interface is obtained successfully.
-    /// * `Err(ClrError)` - If the retrieval fails.
     fn get_icor_runtime_host(&self, runtime_info: &ICLRRuntimeInfo) -> Result<ICorRuntimeHost> {
         runtime_info
             .GetInterface::<ICorRuntimeHost>(&CLSID_COR_RUNTIME_HOST)
@@ -467,15 +379,6 @@ impl<'a> RustClr<'a> {
     }
 
     /// Gets the runtime host interface from the provided runtime information.
-    ///
-    /// # Arguments
-    ///
-    /// * `runtime_info` - Reference to the `ICLRRuntimeInfo` instance.
-    ///
-    /// # Returns
-    ///
-    /// * `Ok(ICorRuntimeHost)` - If the interface is obtained successfully.
-    /// * `Err(ClrError)` - If the retrieval fails.
     fn get_clr_runtime_host(&self, runtime_info: &ICLRRuntimeInfo) -> Result<ICLRuntimeHost> {
         runtime_info
             .GetInterface::<ICLRuntimeHost>(&CLSID_ICLR_RUNTIME_HOST)
@@ -483,33 +386,14 @@ impl<'a> RustClr<'a> {
     }
 
     /// Starts the CLR runtime using the provided runtime host.
-    ///
-    /// # Arguments
-    ///
-    /// * `iclr_runtime_host` - Reference to the `ICorRuntimeHost` instance.
-    ///
-    /// # Returns
-    ///
-    /// * `Ok(())` - If the runtime starts successfully.
-    /// * `Err(ClrError)` - If the runtime fails to start.
     fn start_runtime(&self, iclr_runtime_host: &ICLRuntimeHost) -> Result<()> {
         if iclr_runtime_host.Start() != 0 {
             return Err(ClrError::RuntimeStartError);
         }
-
         Ok(())
     }
 
     /// Initializes the application domain with the specified name or uses the default domain.
-    ///
-    /// # Arguments
-    ///
-    /// * `cor_runtime_host` - Reference to the `ICorRuntimeHost` instance.
-    ///
-    /// # Returns
-    ///
-    /// * `Ok(())` - If the application domain is successfully initialized.
-    /// * `Err(ClrError)` - If the initialization fails.
     fn init_app_domain(&mut self, cor_runtime_host: &ICorRuntimeHost) -> Result<()> {
         // Creates the application domain based on the specified name or uses the default domain
         let app_domain = if let Some(domain_name) = &self.domain_name {
@@ -535,13 +419,6 @@ impl<'a> RustClr<'a> {
     }
 
     /// Unloads the current application domain.
-    ///
-    /// This method is used to properly unload a custom AppDomain created by `RustClr`.
-    ///
-    /// # Returns
-    ///
-    /// * `Ok(())` - If the AppDomain is unloaded or not present.
-    /// * `Err(ClrError)` - If unloading the domain fails.
     fn unload_domain(&self) -> Result<()> {
         if let (Some(cor_runtime_host), Some(app_domain)) =
             (&self.cor_runtime_host, &self.app_domain)
@@ -559,17 +436,15 @@ impl<'a> RustClr<'a> {
     }
 }
 
-/// Implements the `Drop` trait to release memory when `RustClr` goes out of scope.
 impl Drop for RustClr<'_> {
     fn drop(&mut self) {
         if let Some(cor_runtime_host) = &self.cor_runtime_host {
-            // Attempt to stop the CLR runtime
             cor_runtime_host.Stop();
         }
     }
 }
 
-/// Manages output redirection in the CLR by using a `StringWriter`.
+/// Manages output redirection in the CLR.
 pub struct ClrOutput<'a> {
     /// The `StringWriter` instance used to capture output.
     string_writer: Option<VARIANT>,
@@ -579,7 +454,7 @@ pub struct ClrOutput<'a> {
 }
 
 impl<'a> ClrOutput<'a> {
-    /// Creates a new `ClrOutput`.
+    /// Creates a new [`ClrOutput`].
     ///
     /// # Arguments
     ///
@@ -587,7 +462,7 @@ impl<'a> ClrOutput<'a> {
     ///
     /// # Returns
     ///
-    /// * A new instance of `ClrOutput`.
+    /// * A new instance of [`ClrOutput`].
     pub fn new(mscorlib: &'a _Assembly) -> Self {
         Self {
             string_writer: None,
@@ -599,8 +474,8 @@ impl<'a> ClrOutput<'a> {
     ///
     /// # Returns
     ///
-    /// * `Ok(())` - If the redirection is successful.
-    /// * `Err(ClrError)` - If an error occurs while attempting to redirect the streams.
+    /// * `Ok(())` – If redirection succeeds.
+    /// * `Err(ClrError)` – If an error occurs while setting the redirection.
     pub fn redirect(&mut self) -> Result<()> {
         let console = self.mscorlib.resolve_type(s!("System.Console"))?;
         let string_writer = self.mscorlib.create_instance(s!("System.IO.StringWriter"))?;
@@ -744,7 +619,6 @@ impl RustClrEnv {
 
 impl Drop for RustClrEnv {
     fn drop(&mut self) {
-        // Attempt to unload the AppDomain, log error if it fails
         if let Err(e) = self.cor_runtime_host.UnloadDomain(
             self.app_domain
                 .cast::<windows_core::IUnknown>()
@@ -754,7 +628,6 @@ impl Drop for RustClrEnv {
             dinvk::println!("Failed to unload AppDomain: {:?}", e);
         }
 
-        // Attempt to stop the CLR runtime
         self.cor_runtime_host.Stop();
     }
 }
