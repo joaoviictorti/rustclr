@@ -250,9 +250,6 @@ pub fn uuid() -> uuid::Uuid {
 }
 
 /// Patches `System.Environment.Exit` to prevent the .NET process from terminating.
-///
-/// This overwrites the `Exit` method with a `RET` instruction (0xC3),
-/// effectively neutralizing its behavior.
 pub fn patch_exit(mscorlib: &_Assembly) -> Result<()> {
     // Resolve System.Environment type and the Exit method
     let env = mscorlib.resolve_type(s!("System.Environment"))?;

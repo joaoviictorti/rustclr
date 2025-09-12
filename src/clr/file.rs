@@ -51,7 +51,6 @@ pub fn validate_file(buffer: &[u8]) -> Result<()> {
 pub fn read_file(name: &str) -> Result<Vec<u8>> {
     let file_name = CString::new(name)
         .map_err(|_| ClrError::GenericError("Invalid cstring"))?;
-
     let h_file = unsafe {
         CreateFileA(
             file_name.as_ptr().cast(),
@@ -75,7 +74,6 @@ pub fn read_file(name: &str) -> Result<Vec<u8>> {
 
     let mut out = vec![0; size as usize];
     let mut bytes = 0;
-
     unsafe {
         ReadFile(
             h_file,

@@ -39,12 +39,16 @@ impl PowerShell {
         let reflection_assembly = mscorlib.resolve_type(s!("System.Reflection.Assembly"))?;
 
         // Resolve and invoke `LoadWithPartialName` method.
-        let load_partial_name = reflection_assembly.method_signature(s!("System.Reflection.Assembly LoadWithPartialName(System.String)"))?;
+        let load_partial_name = reflection_assembly.method_signature(s!(
+            "System.Reflection.Assembly LoadWithPartialName(System.String)"
+        ))?;
         let param = create_safe_args(vec![s!("System.Management.Automation").to_variant()])?;
         let result = load_partial_name.invoke(None, Some(param))?;
 
         // Convert result to `_Assembly`.
-        let automation = _Assembly::from_raw(unsafe { result.Anonymous.Anonymous.Anonymous.byref })?;
+        let automation =
+            _Assembly::from_raw(unsafe { result.Anonymous.Anonymous.Anonymous.byref })?;
+
         Ok(Self { automation, clr })
     }
 
@@ -59,37 +63,75 @@ impl PowerShell {
     /// * Returns the textual output of the PowerShell command.
     pub fn execute(&self, command: &str) -> Result<String> {
         // Invoke `CreateRunspace` method.
-        let runspace_factory = self.automation.resolve_type(s!("System.Management.Automation.Runspaces.RunspaceFactory"))?;
-        let create_runspace = runspace_factory.method_signature(s!("System.Management.Automation.Runspaces.Runspace CreateRunspace()"))?;
+        let runspace_factory = self.automation.resolve_type(
+            s!("System.Management.Automation.Runspaces.RunspaceFactory")
+        )?;
+        let create_runspace = runspace_factory.method_signature(s!(
+            "System.Management.Automation.Runspaces.Runspace CreateRunspace()"
+        ))?;
         let runspace = create_runspace.invoke(None, None)?;
 
         // Invoke `CreatePipeline` method.
-        let assembly_runspace = self.automation.resolve_type(s!("System.Management.Automation.Runspaces.Runspace"))?;
-        assembly_runspace.invoke(s!("Open"), Some(runspace), None, Invocation::Instance)?;
+        let assembly_runspace = self.automation.resolve_type(
+            s!("System.Management.Automation.Runspaces.Runspace"),
+        )?;
+        assembly_runspace.invoke(
+            s!("Open"),
+            Some(runspace),
+            None,
+            Invocation::Instance,
+        )?;
         
-        let create_pipeline = assembly_runspace.method_signature(s!("System.Management.Automation.Runspaces.Pipeline CreatePipeline()"))?;
+        let create_pipeline = assembly_runspace.method_signature(s!(
+            "System.Management.Automation.Runspaces.Pipeline CreatePipeline()"
+        ))?;
         let pipe = create_pipeline.invoke(Some(runspace), None)?;
 
         // Invoke `get_Commands` method.
-        let pipeline = self.automation.resolve_type(s!("System.Management.Automation.Runspaces.Pipeline"))?;
-        let get_command = pipeline.invoke(s!("get_Commands"), Some(pipe), None, Invocation::Instance)?;
+        let pipeline = self.automation.resolve_type(
+            s!("System.Management.Automation.Runspaces.Pipeline"),
+        )?;
+        let get_command = pipeline.invoke(
+            s!("get_Commands"),
+            Some(pipe),
+            None,
+            Invocation::Instance,
+        )?;
 
         // Invoke `AddScript` method.
-        let command_collection = self.automation.resolve_type(s!("System.Management.Automation.Runspaces.CommandCollection"))?;
         let cmd = vec![format!("{} | {}", command, s!("Out-String")).to_variant()];
-
-        let add_script = command_collection.method_signature(s!("Void AddScript(System.String)"))?;
+        let command_collection = self.automation.resolve_type(
+            s!("System.Management.Automation.Runspaces.CommandCollection"),
+        )?;
+        let add_script = command_collection.method_signature(s!(
+            "Void AddScript(System.String)"
+        ))?;
+        
         add_script.invoke(Some(get_command), Some(create_safe_args(cmd)?))?;
 
         // Invoke `InvokeAsync` method.
-        pipeline.invoke(s!("InvokeAsync"), Some(pipe), None, Invocation::Instance)?;
+        pipeline.invoke(
+            s!("InvokeAsync"),
+            Some(pipe),
+            None,
+            Invocation::Instance,
+        )?;
 
         // Invoke `get_Output` method.
-        let get_output = pipeline.invoke(s!("get_Output"), Some(pipe), None, Invocation::Instance)?;
+        let get_output = pipeline.invoke(
+            s!("get_Output"),
+            Some(pipe),
+            None,
+            Invocation::Instance,
+        )?;
 
         // Invoke `Read` method.
-        let pipeline_reader = self.automation.resolve_type(s!("System.Management.Automation.Runspaces.PipelineReader`1[System.Management.Automation.PSObject]"))?;
-        let read = pipeline_reader.method_signature(s!("System.Management.Automation.PSObject Read()"))?;
+        let pipeline_reader = self.automation.resolve_type(s!(
+            "System.Management.Automation.Runspaces.PipelineReader`1[System.Management.Automation.PSObject]"
+        ))?;
+        let read = pipeline_reader.method_signature(s!(
+            "System.Management.Automation.PSObject Read()"
+        ))?;
         let ps_object_instance = read.invoke(Some(get_output), None)?;
 
         // Invoke `ToString` method.
@@ -97,7 +139,14 @@ impl PowerShell {
         let to_string = ps_object.method_signature(s!("System.String ToString()"))?;
         let output = to_string.invoke(Some(ps_object_instance), None)?;
 
-        assembly_runspace.invoke(s!("Close"), Some(runspace), None, Invocation::Instance)?;
+        // Close runspace
+        assembly_runspace.invoke(
+            s!("Close"),
+            Some(runspace),
+            None,
+            Invocation::Instance,
+        )?;
+
         Ok(unsafe {
             output
                 .Anonymous
