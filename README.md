@@ -32,11 +32,11 @@ cargo add rustclr
 
 The following flags provide full control over your CLR environment and the execution of your .NET assemblies:
 
-- **`.runtime_version(RuntimeVersion::V4)`**: Sets the .NET runtime version (e.g., RuntimeVersion::V2, RuntimeVersion::V3, RuntimeVersion::V4). This flag ensures that the assembly runs with the specified CLR version.
-- **`.output`**: Redirects the output from the .NET assembly's console to the Rust environment, capturing all console output.
-- **`.domain("DomainName")`**: Sets a custom AppDomain name, which is useful for isolating different .NET assemblies.
-- **`.args(vec!["arg1", "arg2"])`**: Passes arguments to the .NET application, useful for parameterized entry points in the assembly.
-- **`.exit`**: This prevents calls to `System.Environment.Exit()` within the .NET assembly from terminating the host process (your Rust program). Instead, control is maintained on the Rust side, and the .run() method returns normally even if the assembly attempts to terminate the process.
+- **`with_runtime_version(RuntimeVersion::V4)`**: Sets the .NET runtime version. This flag ensures that the assembly runs with the specified CLR version.
+- **`with_output`**: Redirects the output from the .NET assembly's console to the Rust environment, capturing all console output.
+- **`with_domain("DomainName")`**: Sets a custom AppDomain name, which is useful for isolating different .NET assemblies.
+- **`with_args(vec!["arg1", "arg2"])`**: Passes arguments to the .NET application, useful for parameterized entry points in the assembly.
+- **`with_patch_exit`**: This prevents calls to `System.Environment.Exit()` within the .NET assembly from terminating the host process (your Rust program).
   
 Using `rustclr` to load and execute a .NET assembly, redirect its output and customize the CLR runtime environment.
 
@@ -50,11 +50,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // Create and configure a RustClr instance with runtime version and output redirection
     let output = RustClr::new(&buffer)?
-        .runtime_version(RuntimeVersion::V4)
-        .output()
-        .domain("CustomDomain")
-        .exit()
-        .args(vec!["arg1", "arg2"])
+        .with_runtime_version(RuntimeVersion::V4)
+        .with_output()
+        .with_domain("CustomDomain")
+        .with_patch_exit()
+        .with_args(vec!["arg1", "arg2"])
         .run()?;
 
     println!("Captured output: {}", output);
