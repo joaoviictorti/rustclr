@@ -68,10 +68,10 @@ impl<'a> RustClr<'a> {
     /// // Load a sample .NET assembly into a buffer
     /// let buffer = fs::read("examples/sample.exe")?;
     /// let mut clr = RustClr::new(&buffer)?
-    ///     .runtime_version(RuntimeVersion::V4)
-    ///     .domain("CustomDomain")
-    ///     .args(vec!["arg1", "arg2"])
-    ///     .output();
+    ///     .with_runtime_version(RuntimeVersion::V4)
+    ///     .with_domain("CustomDomain")
+    ///     .with_args(vec!["arg1", "arg2"])
+    ///     .with_output();
     /// 
     /// let output = clr.run()?;
     /// println!("Output: {}", output);
@@ -142,10 +142,10 @@ impl<'a> RustClr<'a> {
     /// // Load a sample .NET assembly into a buffer
     /// let buffer = fs::read("examples/sample.exe")?;
     /// let mut clr = RustClr::new(&buffer)?
-    ///     .runtime_version(RuntimeVersion::V4)
-    ///     .domain("CustomDomain")
-    ///     .args(vec!["arg1", "arg2"])
-    ///     .output();
+    ///     .with_runtime_version(RuntimeVersion::V4)
+    ///     .with_domain("CustomDomain")
+    ///     .with_args(vec!["arg1", "arg2"])
+    ///     .with_output();
     ///
     /// let output = clr.run()?;
     /// println!("Output: {}", output);
