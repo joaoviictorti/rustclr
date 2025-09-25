@@ -26,9 +26,9 @@ use super::variant::{
 };
 
 mod hosting;
-mod runtime;
 mod file;
 
+mod runtime;
 pub use runtime::RuntimeVersion;
 
 /// Represents a Rust interface to the Common Language Runtime (CLR).
@@ -97,31 +97,31 @@ impl<'a> RustClr<'a> {
     }
 
     /// Sets the .NET runtime version to use.
-    pub fn runtime_version(mut self, version: RuntimeVersion) -> Self {
+    pub fn with_runtime_version(mut self, version: RuntimeVersion) -> Self {
         self.runtime.runtime_version = Some(version);
         self
     }
 
     /// Sets the application domain name to use.
-    pub fn domain(mut self, domain_name: &str) -> Self {
+    pub fn with_domain(mut self, domain_name: &str) -> Self {
         self.runtime.domain_name = Some(domain_name.to_string());
         self
     }
 
     /// Sets the arguments to pass to the .NET assembly's entry point.
-    pub fn args(mut self, args: Vec<&str>) -> Self {
+    pub fn with_args(mut self, args: Vec<&str>) -> Self {
         self.args = Some(args.iter().map(|&s| s.to_string()).collect());
         self
     }
 
     /// Enables or disables output redirection.
-    pub fn output(mut self) -> Self {
+    pub fn with_output(mut self) -> Self {
         self.redirect_output = true;
         self
     }
 
     /// Enables patching of the `System.Environment.Exit` method in `mscorlib`.
-    pub fn exit(mut self) -> Self {
+    pub fn with_patch_exit(mut self) -> Self {
         self.patch_exit = true;
         self
     }
@@ -169,7 +169,7 @@ impl<'a> RustClr<'a> {
         // Retrieves the mscorlib library
         let mscorlib = domain.get_assembly(s!("mscorlib"))?;
 
-        // Disables Environment.Exit if patching is enabled.
+        // Disables Environment.Exit if patching is enabled
         if self.patch_exit {
             runtime::patch_exit(&mscorlib)?;
         }
