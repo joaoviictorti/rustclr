@@ -45,11 +45,3 @@ features = [
 [package.metadata.docs.rs]
 default-target = "x86_64-pc-windows-msvc"
 targets = ["x86_64-pc-windows-gnu", "x86_64-pc-windows-msvc"]
-
-[[example]]
-name = "powershell"
-path = "examples/Powershell/main.rs"
-
-[[example]]
-name = "writeline"
-path = "examples/WriteLine/main.rs"
