@@ -45,21 +45,19 @@ fn main() -> Result<(), ClrError> {
 
     // Initialize and configure the RustClr instance
     let mut clr = RustClr::new(data.as_slice())?
-        .runtime_version(runtime_version)
-        .output();
+        .with_runtime_version(runtime_version)
+        .with_output();
 
     // Set the custom application domain if provided
     if let Some(domain_name) = cli.domain {
-        clr = clr.domain(&domain_name);
+        clr = clr.with_domain(&domain_name);
     }
 
     // Set the string arguments for the .NET assembly if provided
     if let Some(inputs) = cli.inputs {
         // Convert Vec<String> to Vec<&str>
         let args = inputs.iter().map(|s| s.as_str()).collect::<Vec<&str>>();
-        clr = clr.args(args);
-    } else {
-        clr = clr.args(vec![]);
+        clr = clr.with_args(args);
     }
 
     // Run the .NET assembly
