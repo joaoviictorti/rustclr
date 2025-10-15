@@ -25,10 +25,7 @@ use windows_sys::{
 
 use super::{_MethodInfo, _Type};
 use crate::string::ComString;
-use crate::{
-    Result,
-    error::ClrError
-};
+use crate::error::{ClrError, ClrResult};
 
 /// This struct represents the COM `_Assembly` interface.
 #[repr(C)]
@@ -44,9 +41,8 @@ impl _Assembly {
     ///
     /// # Returns
     ///
-    /// * `Ok(_Type)` - On success, returns the `_Type` instance.
-    /// * `Err(ClrError)` - On failure, returns an appropriate `ClrError`.
-    pub fn resolve_type(&self, name: &str) -> Result<_Type> {
+    /// The `_Type` instance.
+    pub fn resolve_type(&self, name: &str) -> ClrResult<_Type> {
         let type_name = name.to_bstr();
         self.GetType_2(type_name)
     }
@@ -64,9 +60,8 @@ impl _Assembly {
     ///
     /// # Returns
     ///
-    /// * `Ok(VARIANT)` - On successful invocation, returns the result as a `VARIANT`.
-    /// * `Err(ClrError)` - Returns an error if the entry point cannot be resolved or invoked.
-    pub fn run(&self, args: *mut SAFEARRAY) -> Result<VARIANT> {
+    /// On successful invocation, returns the result as a `VARIANT`.
+    pub fn run(&self, args: *mut SAFEARRAY) -> ClrResult<VARIANT> {
         let entrypoint = self.get_EntryPoint()?;
         let str = entrypoint.ToString()?;
         match str.as_str() {
@@ -90,9 +85,8 @@ impl _Assembly {
     ///
     /// # Returns
     ///
-    /// * `Ok(VARIANT)` - If successful, returns a `VARIANT` containing the created instance.
-    /// * `Err(ClrError)` - If creation fails, returns a `ClrError`.
-    pub fn create_instance(&self, name: &str) -> Result<VARIANT> {
+    /// If successful, returns a `VARIANT` containing the created instance.
+    pub fn create_instance(&self, name: &str) -> ClrResult<VARIANT> {
         let type_name = name.to_bstr();
         self.CreateInstance(type_name)
     }
@@ -101,9 +95,8 @@ impl _Assembly {
     ///
     /// # Returns
     ///
-    /// * `Ok(Vec<String>)` - On success, returns a vector of type names as `String`.
-    /// * `Err(ClrError)` - On failure, returns an appropriate `ClrError`.
-    pub fn types(&self) -> Result<Vec<String>> {
+    /// On success, returns a vector of type names as `String`.
+    pub fn types(&self) -> ClrResult<Vec<String>> {
         let sa_types = self.GetTypes()?;
         if sa_types.is_null() {
             return Err(ClrError::NullPointerError("GetTypes"));
@@ -140,10 +133,9 @@ impl _Assembly {
     ///
     /// # Returns
     ///
-    /// * `Ok(_Assembly)` - Wraps the given COM interface as `_Assembly`.
-    /// * `Err(ClrError)` - If casting fails, returns a `ClrError`.
+    /// Wraps the given COM interface as `_Assembly`.
     #[inline(always)]
-    pub fn from_raw(raw: *mut c_void) -> Result<_Assembly> {
+    pub fn from_raw(raw: *mut c_void) -> ClrResult<_Assembly> {
         let iunknown = unsafe { IUnknown::from_raw(raw) };
         iunknown
             .cast::<_Assembly>()
@@ -154,9 +146,8 @@ impl _Assembly {
     ///
     /// # Returns
     ///
-    /// * `Ok(String)` - On success, returns the assembly's name as a `String`.
-    /// * `Err(ClrError)` - On failure, returns a `ClrError`.
-    pub fn ToString(&self) -> Result<String> {
+    /// The assembly's name as a `String`.
+    pub fn ToString(&self) -> ClrResult<String> {
         unsafe {
             let mut result = null::<u16>();
             let hr = (Interface::vtable(self).get_ToString)(Interface::as_raw(self), &mut result);
@@ -178,9 +169,8 @@ impl _Assembly {
     ///
     /// # Returns
     ///
-    /// * `Ok(u32)` - On success, returns the hash code as a 32-bit unsigned integer.
-    /// * `Err(ClrError)` - If retrieval fails, returns a `ClrError`.
-    pub fn GetHashCode(&self) -> Result<u32> {
+    /// The hash code as a 32-bit unsigned integer.
+    pub fn GetHashCode(&self) -> ClrResult<u32> {
         let mut result = 0;
         let hr =
             unsafe { (Interface::vtable(self).GetHashCode)(Interface::as_raw(self), &mut result) };
@@ -195,9 +185,8 @@ impl _Assembly {
     ///
     /// # Returns
     ///
-    /// * `Ok(_MethodInfo)` - If successful, returns the entry point as `_MethodInfo`.
-    /// * `Err(ClrError)` - If retrieval fails, returns a `ClrError`.
-    pub fn get_EntryPoint(&self) -> Result<_MethodInfo> {
+    /// The entry point as `_MethodInfo`.
+    pub fn get_EntryPoint(&self) -> ClrResult<_MethodInfo> {
         let mut result = null_mut();
         let hr = unsafe {
             (Interface::vtable(self).get_EntryPoint)(Interface::as_raw(self), &mut result)
@@ -217,9 +206,8 @@ impl _Assembly {
     ///
     /// # Returns
     ///
-    /// * `Ok(_Type)` - If successful, returns the `_Type` instance.
-    /// * `Err(ClrError)` - If retrieval fails, returns a `ClrError`.
-    pub fn GetType_2(&self, name: BSTR) -> Result<_Type> {
+    /// The `_Type` instance.
+    pub fn GetType_2(&self, name: BSTR) -> ClrResult<_Type> {
         let mut result = null_mut();
         let hr = unsafe {
             (Interface::vtable(self).GetType_2)(Interface::as_raw(self), name, &mut result)
@@ -235,9 +223,8 @@ impl _Assembly {
     ///
     /// # Returns
     ///
-    /// * `Ok(*mut SAFEARRAY)` - If successful, returns a pointer to the `SAFEARRAY`.
-    /// * `Err(ClrError)` - If retrieval fails, returns a `ClrError`.
-    pub fn GetTypes(&self) -> Result<*mut SAFEARRAY> {
+    /// Pointer to the `SAFEARRAY`.
+    pub fn GetTypes(&self) -> ClrResult<*mut SAFEARRAY> {
         let mut result = null_mut();
         let hr =
             unsafe { (Interface::vtable(self).GetTypes)(Interface::as_raw(self), &mut result) };
@@ -256,9 +243,8 @@ impl _Assembly {
     ///
     /// # Returns
     ///
-    /// * `Ok(VARIANT)` - If successful, returns the created instance as a `VARIANT`.
-    /// * `Err(ClrError)` - If creation fails, returns a `ClrError`.
-    pub fn CreateInstance(&self, typeName: BSTR) -> Result<VARIANT> {
+    /// The created instance as a `VARIANT`.
+    pub fn CreateInstance(&self, typeName: BSTR) -> ClrResult<VARIANT> {
         let mut result = unsafe { core::mem::zeroed::<VARIANT>() };
         let hr = unsafe {
             (Interface::vtable(self).CreateInstance)(Interface::as_raw(self), typeName, &mut result)
@@ -274,9 +260,8 @@ impl _Assembly {
     ///
     /// # Returns
     ///
-    /// * `Ok(_Type)` - On success, returns the `_Type` associated with the assembly.
-    /// * `Err(ClrError)` - If retrieval fails, returns a `ClrError`.
-    pub fn GetType(&self) -> Result<_Type> {
+    /// The `_Type` associated with the assembly.
+    pub fn GetType(&self) -> ClrResult<_Type> {
         let mut result = null_mut();
         let hr = unsafe { (Interface::vtable(self).GetType)(Interface::as_raw(self), &mut result) };
         if hr == 0 {
@@ -290,9 +275,8 @@ impl _Assembly {
     ///
     /// # Returns
     ///
-    /// * `Ok(String)` - On success, returns the codebase as a `String`.
-    /// * `Err(ClrError)` - If the codebase cannot be retrieved, returns a `ClrError`.
-    pub fn get_CodeBase(&self) -> Result<String> {
+    /// The codebase as a `String`.
+    pub fn get_CodeBase(&self) -> ClrResult<String> {
         unsafe {
             let mut result = null::<u16>();
             let hr = (Interface::vtable(self).get_CodeBase)(Interface::as_raw(self), &mut result);
@@ -314,9 +298,8 @@ impl _Assembly {
     ///
     /// # Returns
     ///
-    /// * `Ok(String)` - On success, returns the escaped codebase as a `String`.
-    /// * `Err(ClrError)` - If the escaped codebase cannot be retrieved, returns a `ClrError`.
-    pub fn get_EscapedCodeBase(&self) -> Result<String> {
+    /// The escaped codebase as a `String`.
+    pub fn get_EscapedCodeBase(&self) -> ClrResult<String> {
         unsafe {
             let mut result = null::<u16>();
             let hr =
@@ -339,9 +322,8 @@ impl _Assembly {
     ///
     /// # Returns
     ///
-    /// * `Ok(*mut c_void)` - On success, returns a pointer to the assembly's name.
-    /// * `Err(ClrError)` - If the name cannot be retrieved, returns a `ClrError`.
-    pub fn GetName(&self) -> Result<*mut c_void> {
+    /// Pointer to the assembly's name.
+    pub fn GetName(&self) -> ClrResult<*mut c_void> {
         unsafe {
             let mut result = null_mut();
             let hr = (Interface::vtable(self).GetName)(Interface::as_raw(self), &mut result);
@@ -361,9 +343,8 @@ impl _Assembly {
     ///
     /// # Returns
     ///
-    /// * `Ok(*mut c_void)` - On success, returns a pointer to the name.
-    /// * `Err(ClrError)` - If the name cannot be retrieved, returns a `ClrError`.
-    pub fn GetName_2(&self, copiedName: VARIANT_BOOL) -> Result<*mut c_void> {
+    /// Pointer to the name.
+    pub fn GetName_2(&self, copiedName: VARIANT_BOOL) -> ClrResult<*mut c_void> {
         unsafe {
             let mut result = null_mut();
             let hr = (Interface::vtable(self).GetName_2)(
@@ -383,9 +364,8 @@ impl _Assembly {
     ///
     /// # Returns
     ///
-    /// * `Ok(String)` - On success, returns the full name as a `String`.
-    /// * `Err(ClrError)` - If the full name cannot be retrieved, returns a `ClrError`.
-    pub fn get_FullName(&self) -> Result<String> {
+    /// The full name as a `String`.
+    pub fn get_FullName(&self) -> ClrResult<String> {
         unsafe {
             let mut result = null::<u16>();
             let hr = (Interface::vtable(self).get_FullName)(Interface::as_raw(self), &mut result);
@@ -407,9 +387,8 @@ impl _Assembly {
     ///
     /// # Returns
     ///
-    /// * `Ok(String)` - On success, returns the location as a `String`.
-    /// * `Err(ClrError)` - If the location cannot be retrieved, returns a `ClrError`.
-    pub fn get_Location(&self) -> Result<String> {
+    /// The location as a `String`.
+    pub fn get_Location(&self) -> ClrResult<String> {
         unsafe {
             let mut result = null::<u16>();
             let hr = (Interface::vtable(self).get_Location)(Interface::as_raw(self), &mut result);

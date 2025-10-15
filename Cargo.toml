@@ -1,6 +1,6 @@
 [package]
 name = "rustclr"
-version = "0.3.2"
+version = "0.3.3"
 edition = "2024"
 license = "MIT"
 readme = "README.md"
@@ -8,17 +8,18 @@ authors = ["João Victor"]
 description = "Host CLR and run .NET binaries using Rust"
 repository = "https://github.com/joaoviictorti/rustclr"
 homepage = "https://github.com/joaoviictorti/rustclr"
+documentation = "https://docs.rs/rustclr/latest"
 keywords = ["dotnet", "clr", "windows", "rust", "redteam"]
 categories = ["os", "security", "api-bindings"]
 include = [
-  "src/**", 
-  "Cargo.toml", 
-  "README.md", 
+  "src/**",
+  "Cargo.toml",
+  "README.md",
   "LICENSE"
 ]
 
 [dependencies]
-dinvk = "0.2.7"
+dinvk = "0.3.1"
 obfstr = "0.4.4"
 thiserror = { version = "2.0.12", default-features = false }
 windows-core = { version = "0.61.2", default-features = false }

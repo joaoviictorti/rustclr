@@ -14,10 +14,6 @@ pub trait IHostControl_Impl: windows_core::IUnknownImpl {
     ///
     /// * `riid` - The interface identifier (IID) of the requested manager.
     /// * `ppobject` - Output pointer that receives the interface pointer.
-    ///
-    /// # Returns
-    ///
-    /// * Returns `Ok(())` on success or an error if the manager could not be provided.
     fn GetHostManager(
         &self,
         riid: *const GUID,
@@ -30,10 +26,6 @@ pub trait IHostControl_Impl: windows_core::IUnknownImpl {
     ///
     /// * `dwappdomainid` - The ID of the AppDomain.
     /// * `punkappdomainmanager` - A pointer to the AppDomainManager COM object.
-    ///
-    /// # Returns
-    ///
-    /// * Returns `Ok(())` on success or an error if the notification failed.
     fn SetAppDomainManager(
         &self,
         dwappdomainid: u32,

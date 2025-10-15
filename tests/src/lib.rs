@@ -3,7 +3,7 @@
 use rustclr::{RustClr, RuntimeVersion};
 
 #[test]
-fn test_create_domain() -> Result<(), Box<dyn std::error::Error>> {
+fn test_create_domain() -> ClrResult<(), Box<dyn std::error::Error>> {
     let buffer = std::fs::read("file").expect("Error reading file");
     let output = RustClr::new(&buffer)?
         .with_domain("CustomDomain")
@@ -16,7 +16,7 @@ fn test_create_domain() -> Result<(), Box<dyn std::error::Error>> {
 }
 
 #[test]
-fn test_with_args() -> Result<(), Box<dyn std::error::Error>> {
+fn test_with_args() -> ClrResult<(), Box<dyn std::error::Error>> {
     let buffer = std::fs::read("file").expect("Error reading file");
     let output = RustClr::new(&buffer)?
         .with_args(vec!["test"])
@@ -29,7 +29,7 @@ fn test_with_args() -> Result<(), Box<dyn std::error::Error>> {
 }
 
 #[test]
-fn test_with_runtime() -> Result<(), Box<dyn std::error::Error>> {
+fn test_with_runtime() -> ClrResult<(), Box<dyn std::error::Error>> {
     let buffer = std::fs::read("file").expect("Error reading file");
     let output = RustClr::new(&buffer)?
         .with_runtime_version(RuntimeVersion::V4)
@@ -42,7 +42,7 @@ fn test_with_runtime() -> Result<(), Box<dyn std::error::Error>> {
 }
 
 #[test]
-fn test_without_args() -> Result<(), Box<dyn std::error::Error>> {
+fn test_without_args() -> ClrResult<(), Box<dyn std::error::Error>> {
     let buffer = std::fs::read("file").expect("Error reading file");
     let output = RustClr::new(&buffer)?
         .with_output_redirection(true)

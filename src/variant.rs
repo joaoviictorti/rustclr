@@ -25,7 +25,7 @@ use windows_sys::Win32::{
 };
 
 use super::string::ComString;
-use super::{Result, error::ClrError};
+use super::error::{ClrError, ClrResult};
 
 /// Trait to convert various Rust types to Windows COM-compatible `VARIANT` types.
 pub trait Variant {
@@ -142,9 +142,8 @@ impl Variant for windows_core::IUnknown {
 ///
 /// # Returns
 ///
-/// * `Ok(*mut SAFEARRAY)` - The created `SAFEARRAY`.
-/// * `Err(ClrError)` - If the creation or element insertion into the `SAFEARRAY` fails.
-pub fn create_safe_array_args<T: Variant>(args: Vec<T>) -> Result<*mut SAFEARRAY> {
+/// The created `SAFEARRAY`.
+pub fn create_safe_array_args<T: Variant>(args: Vec<T>) -> ClrResult<*mut SAFEARRAY> {
     unsafe {
         let vartype = T::var_type();
         let psa = SafeArrayCreateVector(vartype, 0, args.len() as u32);
@@ -201,9 +200,8 @@ pub fn create_safe_array_args<T: Variant>(args: Vec<T>) -> Result<*mut SAFEARRAY
 ///
 /// # Returns
 ///
-/// * `Ok(*mut SAFEARRAY)` - The created `SAFEARRAY`.
-/// * `Err(ClrError)` - If the creation or element insertion into the `SAFEARRAY` fails.
-pub fn create_safe_args(args: Vec<VARIANT>) -> Result<*mut SAFEARRAY> {
+/// The created `SAFEARRAY`.
+pub fn create_safe_args(args: Vec<VARIANT>) -> ClrResult<*mut SAFEARRAY> {
     unsafe {
         let arg = SafeArrayCreateVector(VT_VARIANT, 0, args.len() as u32);
         for (i, var) in args.iter().enumerate() {
@@ -231,9 +229,8 @@ pub fn create_safe_args(args: Vec<VARIANT>) -> Result<*mut SAFEARRAY> {
 ///
 /// # Returns
 ///
-/// * `Ok(*mut SAFEARRAY)` - The created `SAFEARRAY`.
-/// * `Err(ClrError)` - If the creation or data copying into the `SAFEARRAY` fails.
-pub fn create_safe_array_buffer(data: &[u8]) -> Result<*mut SAFEARRAY> {
+/// The created `SAFEARRAY`.
+pub fn create_safe_array_buffer(data: &[u8]) -> ClrResult<*mut SAFEARRAY> {
     let len: u32 = data.len() as u32;
     let bounds = SAFEARRAYBOUND {
         cElements: data.len() as _,

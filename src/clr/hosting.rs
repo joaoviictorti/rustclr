@@ -31,8 +31,7 @@ impl IHostControl_Impl for RustClrControl_Impl {
     ///
     /// # Returns
     ///
-    /// * `Ok(())` - if IID matches `IHostAssemblyManager`
-    /// * `Err(E_NOINTERFACE)` - otherwise
+    /// If IID matches `IHostAssemblyManager`
     fn GetHostManager(&self, riid: *const GUID, ppobject: *mut *mut c_void) -> Result<()> {
         unsafe {
             if *riid == IHostAssemblyManager::IID {
@@ -55,7 +54,6 @@ impl IHostControl_Impl for RustClrControl_Impl {
         }
     }
 
-    /// Not implemented.
     fn SetAppDomainManager(
         &self,
         _dwappdomainid: u32,
@@ -82,7 +80,6 @@ impl RustClrManager {
 }
 
 impl IHostAssemblyManager_Impl for RustClrManager_Impl {
-    /// Not implemented.
     fn GetNonHostStoreAssemblies(&self) -> Result<()> {
         Ok(())
     }
@@ -122,8 +119,7 @@ impl IHostAssemblyStore_Impl for RustClrStore_Impl<'_> {
     ///
     /// # Returns
     ///
-    /// * `Ok(())` - if identity matches
-    /// * `Err(0x80070002)` - if unknown
+    /// If identity matches.
     fn ProvideAssembly(
         &self,
         pbindinfo: *const AssemblyBindInfo,
@@ -149,7 +145,6 @@ impl IHostAssemblyStore_Impl for RustClrStore_Impl<'_> {
         ))
     }
 
-    /// Not implemented.
     fn ProvideModule(
         &self,
         _pbindinfo: *const ModuleBindInfo,

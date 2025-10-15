@@ -44,7 +44,7 @@ Using `rustclr` to load and execute a .NET assembly, redirect its output and cus
 use std::fs;
 use rustclr::{RustClr, RuntimeVersion};
 
-fn main() -> Result<(), Box<dyn std::error::Error>> {
+fn main() -> ClrResult<(), Box<dyn std::error::Error>> {
     // Load a sample .NET assembly into a buffer
     let buffer = fs::read("examples/sample.exe")?;
 
@@ -71,7 +71,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 use std::error::Error;
 use rustclr::PowerShell;
 
-fn main() -> Result<(), Box<dyn Error>> {
+fn main() -> ClrResult<(), Box<dyn Error>> {
     let pwsh = PowerShell::new()?;
     print!("{}", pwsh.execute("Get-Process | Select-Object -First 3")?);
     print!("{}", pwsh.execute("whoami")?);
@@ -88,7 +88,7 @@ For more fine-grained control, rustclr provides the `RustClrEnv` and `ClrOutput`
 ```rust
 use rustclr::{RustClrEnv, RuntimeVersion};
 
-fn main() -> Result<(), Box<dyn std::error::Error>> {
+fn main() -> ClrResult<(), Box<dyn std::error::Error>> {
     // Create a new environment for .NET with a specific runtime version
     let clr_env = RustClrEnv::new(Some(RuntimeVersion::V4))?;
     println!("CLR environment initialized successfully with version {:?}", clr_env.runtime_version);
@@ -102,7 +102,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 use rustclr::variant::Variant;
 use rustclr::{ClrOutput, Invocation, RustClrEnv};
 
-fn main() -> Result<(), Box<dyn std::error::Error>> {
+fn main() -> ClrResult<(), Box<dyn std::error::Error>> {
     // Initialize the CLR environment
     let clr = RustClrEnv::new(None)?;
     let mscorlib = clr.app_domain.get_assembly("mscorlib")?;

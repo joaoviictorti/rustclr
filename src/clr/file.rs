@@ -14,14 +14,14 @@ use windows_sys::Win32::{
     },
 };
 
-use crate::{Result, error::ClrError};
+use crate::error::{ClrError, ClrResult};
 
 /// Validates whether the given PE buffer represents a valid .NET executable.
 ///
 /// # Errors
 /// 
-/// * Returns a [`ClrError`] variant if the file is not valid or not a .NET assembly.
-pub fn validate_file(buffer: &[u8]) -> Result<()> {
+/// Returns a [`ClrError`] variant if the file is not valid or not a .NET assembly.
+pub fn validate_file(buffer: &[u8]) -> ClrResult<()> {
     let pe = PE::parse(buffer.as_ptr().cast_mut().cast());
 
     let Some(nt_header) = pe.nt_header() else {
@@ -47,8 +47,8 @@ pub fn validate_file(buffer: &[u8]) -> Result<()> {
 ///
 /// # Returns
 /// 
-/// * A `Vec<u8>` containing the file's contents on success, or a [`ClrError`] on failure.
-pub fn read_file(name: &str) -> Result<Vec<u8>> {
+/// Containing the file's contents on success.
+pub fn read_file(name: &str) -> ClrResult<Vec<u8>> {
     let file_name = CString::new(name)
         .map_err(|_| ClrError::GenericError("Invalid cstring"))?;
     let h_file = unsafe {

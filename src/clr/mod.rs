@@ -17,8 +17,7 @@ use windows_sys::Win32::System::Variant::{
 use self::file::{read_file, validate_file};
 use self::runtime::{RustClrRuntime, uuid};
 use super::com::*;
-use super::Result;
-use super::error::ClrError;
+use super::error::{ClrError, ClrResult};
 use super::string::ComString;
 use super::variant::{
     Variant, 
@@ -48,20 +47,15 @@ pub struct RustClr<'a> {
 }
 
 impl<'a> RustClr<'a> {
-    /// Creates a new [`RustClr`] instance with the specified assembly buffer.
+    /// Creates a new `RustClr`.
     ///
     /// # Arguments
     ///
     /// * `source` - A value convertible into [`ClrSource`], representing either a file path or a byte buffer.
     ///
-    /// # Returns
-    ///
-    /// * `Ok(Self)` - If the buffer is valid and the [`RustClr`] instance is created successfully.
-    /// * `Err(ClrError)` - If the buffer validation fails.
-    ///
     /// # Example
     ///
-    /// ```rust,ignore
+    /// ```
     /// use rustclr::{RustClr, RuntimeVersion};
     /// use std::fs;
     /// 
@@ -76,7 +70,7 @@ impl<'a> RustClr<'a> {
     /// let output = clr.run()?;
     /// println!("Output: {}", output);
     /// ```
-    pub fn new<T: Into<ClrSource<'a>>>(source: T) -> Result<Self> {
+    pub fn new<T: Into<ClrSource<'a>>>(source: T) -> ClrResult<Self> {
         let buffer = match source.into() {
             // Try reading the file
             ClrSource::File(path) => Box::leak(read_file(path)?.into_boxed_slice()),
@@ -130,12 +124,11 @@ impl<'a> RustClr<'a> {
     ///
     /// # Returns
     ///
-    /// * `Ok(String)` - The output from the .NET assembly if executed successfully.
-    /// * `Err(ClrError)` - If an error occurs during execution.
+    /// The output from the .NET assembly if executed successfully.
     /// 
     /// # Example
     /// 
-    /// ```rust,ignore
+    /// ```
     /// use rustclr::{RustClr, RuntimeVersion};
     /// use std::fs;
     ///
@@ -150,7 +143,7 @@ impl<'a> RustClr<'a> {
     /// let output = clr.run()?;
     /// println!("Output: {}", output);
     /// ```
-    pub fn run(&mut self) -> Result<String> {
+    pub fn run(&mut self) -> ClrResult<String> {
         // Prepare the CLR environment
         self.runtime.prepare()?;
 
@@ -215,29 +208,17 @@ pub struct ClrOutput<'a> {
 }
 
 impl<'a> ClrOutput<'a> {
-    /// Creates a new [`ClrOutput`].
+    /// Creates a new `ClrOutput`.
     ///
     /// # Arguments
     ///
     /// * `mscorlib` - An instance of the `_Assembly` representing `mscorlib`.
-    ///
-    /// # Returns
-    ///
-    /// * A new instance of [`ClrOutput`].
     pub fn new(mscorlib: &'a _Assembly) -> Self {
-        Self {
-            string_writer: None,
-            mscorlib,
-        }
+        Self { string_writer: None, mscorlib }
     }
 
     /// Redirects standard output and error streams to a `StringWriter`.
-    ///
-    /// # Returns
-    ///
-    /// * `Ok(())` – If redirection succeeds.
-    /// * `Err(ClrError)` – If an error occurs while setting the redirection.
-    pub fn redirect(&mut self) -> Result<()> {
+    pub fn redirect(&mut self) -> ClrResult<()> {
         let console = self.mscorlib.resolve_type(s!("System.Console"))?;
         let string_writer = self.mscorlib.create_instance(s!("System.IO.StringWriter"))?;
 
@@ -265,9 +246,8 @@ impl<'a> ClrOutput<'a> {
     ///
     /// # Returns
     ///
-    /// * `Ok(String)` - The captured output as a string if successful.
-    /// * `Err(ClrError)` - If an error occurs while capturing the output.
-    pub fn capture(&self) -> Result<String> {
+    /// The captured output as a string if successful.
+    pub fn capture(&self) -> ClrResult<String> {
         // Ensure that the StringWriter instance is available
         let mut instance = self.string_writer
             .ok_or(ClrError::GenericError("No StringWriter instance found"))?;
@@ -310,17 +290,12 @@ pub struct RustClrEnv {
 }
 
 impl RustClrEnv {
-    /// Creates a new `RustClrEnv` instance with the specified runtime version.
+    /// Creates a new `RustClrEnv`.
     ///
     /// # Arguments
     ///
     /// * `runtime_version` - The .NET runtime version to use.
-    ///
-    /// # Returns
-    ///
-    /// * `Ok(Self)` - If the components are initialized successfully.
-    /// * `Err(ClrError)` - If initialization fails at any step.
-    pub fn new(runtime_version: Option<RuntimeVersion>) -> Result<Self> {
+    pub fn new(runtime_version: Option<RuntimeVersion>) -> ClrResult<Self> {
         // Initialize MetaHost
         let meta_host = CLRCreateInstance::<ICLRMetaHost>(&CLSID_CLRMETAHOST)
             .map_err(|e| ClrError::MetaHostCreationError(format!("{e}")))?;

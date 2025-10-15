@@ -1,5 +1,11 @@
 //! Raw COM interface bindings for interacting with the .NET CLR runtime.
 
+use core::ffi::c_void;
+use dinvk::{GetProcAddress, LoadLibraryA};
+use windows_core::{GUID, Interface};
+use windows_sys::core::HRESULT;
+use crate::error::{ClrError, ClrResult};
+
 mod appdomain;
 mod assembly;
 mod assembly_identity;
@@ -30,12 +36,6 @@ pub use ipropertyinfo::*;
 pub use itype::*;
 pub use methodinfo::*;
 
-use core::ffi::c_void;
-use dinvk::{GetProcAddress, LoadLibraryA};
-use windows_core::{GUID, Interface};
-use windows_sys::core::HRESULT;
-use crate::{Result, error::ClrError};
-
 /// Caches the address of the `CLRCreateInstance` function on first use.
 static CLR_CREATE_INSTANCE: spin::Once<Option<CLRCreateInstanceType>> = spin::Once::new();
 
@@ -62,7 +62,7 @@ type CLRCreateInstanceType = fn(
 ) -> HRESULT;
 
 /// Dynamically loads and invokes the `CLRCreateInstance`.
-pub fn CLRCreateInstance<T>(clsid: *const GUID) -> Result<T>
+pub fn CLRCreateInstance<T>(clsid: *const GUID) -> ClrResult<T>
 where
     T: Interface,
 {

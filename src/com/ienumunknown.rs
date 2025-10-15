@@ -8,8 +8,7 @@ use core::{
 use windows_core::{GUID, IUnknown, Interface};
 use windows_sys::core::HRESULT;
 
-use crate::Result;
-use crate::error::ClrError;
+use crate::error::{ClrError, ClrResult};
 
 /// This struct represents the COM `IEnumUnknown` interface.
 #[repr(C)]
@@ -26,7 +25,7 @@ impl IEnumUnknown {
     ///
     /// # Returns
     ///
-    /// * Returns an HRESULT indicating success or failure.
+    /// An HRESULT indicating success or failure.
     #[inline]
     pub fn Next(
         &self,
@@ -48,13 +47,8 @@ impl IEnumUnknown {
     /// # Arguments
     ///
     /// * `celt` - The number of elements to skip.
-    ///
-    /// # Returns
-    ///
-    /// * `Ok(())` - If successful, returns an empty `Ok`.
-    /// * `Err(ClrError)` - If skipping fails, returns a `ClrError`.
     #[inline]
-    pub fn Skip(&self, celt: u32) -> Result<()> {
+    pub fn Skip(&self, celt: u32) -> ClrResult<()> {
         let hr = unsafe { (Interface::vtable(self).Skip)(Interface::as_raw(self), celt) };
         if hr == 0 {
             Ok(())
@@ -64,13 +58,8 @@ impl IEnumUnknown {
     }
 
     /// Resets the enumeration sequence to the beginning.
-    ///
-    /// # Returns
-    ///
-    /// * `Ok(())` - If successful, returns an empty `Ok`.
-    /// * `Err(ClrError)` - If resetting fails, returns a `ClrError`.
     #[inline]
-    pub fn Reset(&self) -> Result<()> {
+    pub fn Reset(&self) -> ClrResult<()> {
         let hr = unsafe { (Interface::vtable(self).Reset)(Interface::as_raw(self)) };
         if hr == 0 {
             Ok(())
@@ -83,10 +72,9 @@ impl IEnumUnknown {
     ///
     /// # Returns
     ///
-    /// * `Ok(*mut IEnumUnknown)` - If successful, returns a pointer to the new `IEnumUnknown`.
-    /// * `Err(ClrError)` - If cloning fails, returns a `ClrError`.
+    /// A pointer to the new `IEnumUnknown`.
     #[inline]
-    pub fn Clone(&self) -> Result<*mut IEnumUnknown> {
+    pub fn Clone(&self) -> ClrResult<*mut IEnumUnknown> {
         let mut result = null_mut();
         let hr = unsafe { (Interface::vtable(self).Clone)(Interface::as_raw(self), &mut result) };
         if hr == 0 {

@@ -19,5 +19,3 @@ mod pwsh;
 
 pub use clr::*;
 pub use pwsh::PowerShell;
-
-type Result<T> = core::result::Result<T, error::ClrError>;

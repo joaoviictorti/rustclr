@@ -1,7 +1,10 @@
 use core::{ffi::c_void, ops::Deref};
 use windows_core::{GUID, Interface};
 use windows_sys::core::HRESULT;
-use crate::{Result, com::IHostControl, error::ClrError};
+use crate::{
+    com::IHostControl, 
+    error::{ClrError, ClrResult}
+};
 
 /// This struct represents the COM `ICLRuntimeHost` interface.
 #[repr(C)]
@@ -13,7 +16,7 @@ impl ICLRuntimeHost {
     ///
     /// # Returns
     ///
-    /// * Returns an HRESULT indicating success or failure.
+    /// An HRESULT indicating success or failure.
     #[inline]
     pub fn Start(&self) -> HRESULT {
         unsafe { (Interface::vtable(self).Start)(Interface::as_raw(self)) }
@@ -23,7 +26,7 @@ impl ICLRuntimeHost {
     ///
     /// # Returns
     ///
-    /// * Returns an HRESULT indicating success or failure.
+    /// An HRESULT indicating success or failure.
     #[inline]
     pub fn Stop(&self) -> HRESULT {
         unsafe { (Interface::vtable(self).Stop)(Interface::as_raw(self)) }
@@ -37,10 +40,9 @@ impl ICLRuntimeHost {
     ///
     /// # Returns
     ///
-    /// * `Ok(())` - If the call succeeded.
-    /// * `Err(ClrError)` - If the underlying COM call failed.
+    /// If the call succeeded.
     #[inline]
-    pub fn SetHostControl<T>(&self, phostcontrol: T) -> Result<()>
+    pub fn SetHostControl<T>(&self, phostcontrol: T) -> ClrResult<()>
     where
         T: windows_core::Param<IHostControl>,
     {

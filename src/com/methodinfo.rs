@@ -15,8 +15,7 @@ use windows_sys::{
 };
 
 use super::_Type;
-use crate::Result;
-use crate::error::ClrError;
+use crate::error::{ClrError, ClrResult};
 
 /// This struct represents the COM `_MethodInfo` interface.
 #[repr(C)]
@@ -33,14 +32,13 @@ impl _MethodInfo {
     ///
     /// # Returns
     ///
-    /// * `Ok(VARIANT)` - On successful invocation, returns the result as a `VARIANT`.
-    /// * `Err(ClrError)` - Returns an error if the entry point cannot be resolved or invoked.
+    /// The result as a `VARIANT`.
     #[inline]
     pub fn invoke(
         &self,
         obj: Option<VARIANT>,
         parameters: Option<*mut SAFEARRAY>,
-    ) -> Result<VARIANT> {
+    ) -> ClrResult<VARIANT> {
         let variant_obj = unsafe { obj.unwrap_or(core::mem::zeroed::<VARIANT>()) };
         self.Invoke_3(variant_obj, parameters.unwrap_or(null_mut()))
     }
@@ -53,10 +51,9 @@ impl _MethodInfo {
     ///
     /// # Returns
     ///
-    /// * `Ok(_MethodInfo)` - Wraps the given COM interface as `_MethodInfo`.
-    /// * `Err(ClrError)` - If casting fails, returns a `ClrError`.
+    /// Wraps the given COM interface as `_MethodInfo`.
     #[inline]
-    pub fn from_raw(raw: *mut c_void) -> Result<_MethodInfo> {
+    pub fn from_raw(raw: *mut c_void) -> ClrResult<_MethodInfo> {
         let iunknown = unsafe { IUnknown::from_raw(raw) };
         iunknown
             .cast::<_MethodInfo>()
@@ -67,9 +64,8 @@ impl _MethodInfo {
     ///
     /// # Returns
     ///
-    /// * `Ok(String)` - The string representation of the method.
-    /// * `Err(ClrError)` - Returns an error if the method retrieval fails.
-    pub fn ToString(&self) -> Result<String> {
+    /// The string representation of the method.
+    pub fn ToString(&self) -> ClrResult<String> {
         unsafe {
             let mut result = null::<u16>();
             let hr = (Interface::vtable(self).get_ToString)(Interface::as_raw(self), &mut result);
@@ -91,9 +87,8 @@ impl _MethodInfo {
     ///
     /// # Returns
     ///
-    /// * `Ok(String)` - The name of the method.
-    /// * `Err(ClrError)` - Returns an error if the method name retrieval fails.
-    pub fn get_name(&self) -> Result<String> {
+    /// The name of the method.
+    pub fn get_name(&self) -> ClrResult<String> {
         unsafe {
             let mut result = null::<u16>();
             let hr = (Interface::vtable(self).get_name)(Interface::as_raw(self), &mut result);
@@ -120,9 +115,8 @@ impl _MethodInfo {
     ///
     /// # Returns
     ///
-    /// * `Ok(VARIANT)` - The result of the method invocation.
-    /// * `Err(ClrError)` - Returns an error if the invocation fails.
-    pub fn Invoke_3(&self, obj: VARIANT, parameters: *mut SAFEARRAY) -> Result<VARIANT> {
+    /// The result of the method invocation.
+    pub fn Invoke_3(&self, obj: VARIANT, parameters: *mut SAFEARRAY) -> ClrResult<VARIANT> {
         unsafe {
             let mut result = core::mem::zeroed();
             let hr = (Interface::vtable(self).Invoke_3)(
@@ -144,9 +138,8 @@ impl _MethodInfo {
     ///
     /// # Returns
     ///
-    /// * `Ok(*mut SAFEARRAY)` - A pointer to the `SAFEARRAY` containing the method's parameters.
-    /// * `Err(ClrError)` - Returns an error if the parameters cannot be retrieved.
-    pub fn GetParameters(&self) -> Result<*mut SAFEARRAY> {
+    /// Pointer to the `SAFEARRAY` containing the method's parameters.
+    pub fn GetParameters(&self) -> ClrResult<*mut SAFEARRAY> {
         let mut result = null_mut();
         let hr = unsafe {
             (Interface::vtable(self).GetParameters)(Interface::as_raw(self), &mut result)
@@ -162,9 +155,8 @@ impl _MethodInfo {
     ///
     /// # Returns
     ///
-    /// * `Ok(u32)` - Returns a 32-bit unsigned integer representing the hash code.
-    /// * `Err(ClrError)` - If the call fails, returns a `ClrError`.
-    pub fn GetHashCode(&self) -> Result<u32> {
+    /// The hash code as a 32-bit unsigned integer.
+    pub fn GetHashCode(&self) -> ClrResult<u32> {
         let mut result = 0;
         let hr = unsafe { 
             (Interface::vtable(self).GetHashCode)(
@@ -186,9 +178,8 @@ impl _MethodInfo {
     ///
     /// # Returns
     ///
-    /// * `Ok(_MethodInfo)` - Returns an instance of `_MethodInfo`, representing the base method.
-    /// * `Err(ClrError)` - Returns a `ClrError` if the call to `GetBaseDefinition` fails.
-    pub fn GetBaseDefinition(&self) -> Result<_MethodInfo> {
+    /// Instance of `_MethodInfo`, representing the base method.
+    pub fn GetBaseDefinition(&self) -> ClrResult<_MethodInfo> {
         let mut result = null_mut();
         let hr = unsafe {
             (Interface::vtable(self).GetBaseDefinition)(Interface::as_raw(self), &mut result)
@@ -204,9 +195,8 @@ impl _MethodInfo {
     ///
     /// # Returns
     ///
-    /// * `Ok(_Type)` - On success, returns the `_Type` associated with the method.
-    /// * `Err(ClrError)` - If retrieval fails, returns a `ClrError`.
-    pub fn GetType(&self) -> Result<_Type> {
+    /// The `_Type` associated with the method.
+    pub fn GetType(&self) -> ClrResult<_Type> {
         let mut result = null_mut();
         let hr = unsafe { (Interface::vtable(self).GetType)(Interface::as_raw(self), &mut result) };
         if hr == 0 {

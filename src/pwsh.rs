@@ -1,16 +1,13 @@
 use alloc::{format, string::String, vec};
 use obfstr::obfstr as s;
 
+use super::error::ClrResult;
 use super::com::_Assembly;
 use super::string::ComString;
+use super::{Invocation, RustClrEnv};
 use super::variant::{
     Variant,
     create_safe_args
-};
-use super::{
-    Invocation,
-    Result,
-    RustClrEnv
 };
 
 /// Provides a persistent interface for executing PowerShell commands.
@@ -24,13 +21,8 @@ pub struct PowerShell {
 }
 
 impl PowerShell {
-    /// Creates a new PowerShell session by initializing the .NET CLR
-    /// and loading the `System.Management.Automation` assembly.
-    ///
-    /// # Returns
-    ///
-    /// * A new [`PowerShell`] instance ready to execute commands.
-    pub fn new() -> Result<Self> {
+    /// Creates a new `PowerShell`.
+    pub fn new() -> ClrResult<Self> {
         // Initialize .NET runtime (v4.0).
         let clr = RustClrEnv::new(None)?;
 
@@ -60,8 +52,8 @@ impl PowerShell {
     ///
     /// # Returns
     ///
-    /// * Returns the textual output of the PowerShell command.
-    pub fn execute(&self, command: &str) -> Result<String> {
+    /// The textual output of the PowerShell command.
+    pub fn execute(&self, command: &str) -> ClrResult<String> {
         // Invoke `CreateRunspace` method.
         let runspace_factory = self.automation.resolve_type(
             s!("System.Management.Automation.Runspaces.RunspaceFactory")

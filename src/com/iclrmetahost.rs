@@ -4,8 +4,7 @@ use core::{ffi::c_void, ops::Deref, ptr::null_mut};
 use windows_core::{GUID, Interface, PCWSTR, PWSTR};
 use windows_sys::{Win32::Foundation::HANDLE, core::HRESULT};
 
-use crate::Result;
-use crate::error::ClrError;
+use crate::error::{ClrError, ClrResult};
 use super::{ICLRRuntimeInfo, IEnumUnknown};
 
 /// Function pointer for setting the callback thread in the CLR.
@@ -33,10 +32,9 @@ impl ICLRMetaHost {
     ///
     /// # Returns
     ///
-    /// * `Ok(BTreeMap<String, ICLRRuntimeInfo>)` - A map where keys are runtime versions.
-    /// * `Err(ClrError)` - If casting to `ICLRRuntimeInfo` fails.
+    /// A map where keys are runtime versions.
     #[inline]
-    pub fn runtimes(&self) -> Result<BTreeMap<String, ICLRRuntimeInfo>> {
+    pub fn runtimes(&self) -> ClrResult<BTreeMap<String, ICLRRuntimeInfo>> {
         let enum_unknown = self.EnumerateInstalledRuntimes()?;
         let mut fetched = 0;
         let mut rgelt = [None];
@@ -70,10 +68,9 @@ impl ICLRMetaHost {
     ///
     /// # Returns
     ///
-    /// * `Ok(T)` - Returns the requested runtime as the generic type `T` if successful.
-    /// * `Err(ClrError)` - If the runtime could not be retrieved.
+    /// The requested runtime as the generic type `T` if successful.
     #[inline]
-    pub fn GetRuntime<T>(&self, pwzversion: PCWSTR) -> Result<T>
+    pub fn GetRuntime<T>(&self, pwzversion: PCWSTR) -> ClrResult<T>
     where
         T: Interface,
     {
@@ -97,9 +94,8 @@ impl ICLRMetaHost {
     ///
     /// # Returns
     ///
-    /// * `Ok(IEnumUnknown)` - An enumerator containing all installed CLR runtimes.
-    /// * `Err(ClrError)` - Returns a `ClrError::ApiError` if enumeration fails.
-    pub fn EnumerateInstalledRuntimes(&self) -> Result<IEnumUnknown> {
+    /// An enumerator containing all installed CLR runtimes.
+    pub fn EnumerateInstalledRuntimes(&self) -> ClrResult<IEnumUnknown> {
         unsafe {
             let mut result = core::mem::zeroed();
             let hr = (Interface::vtable(self).EnumerateInstalledRuntimes)(
@@ -121,17 +117,12 @@ impl ICLRMetaHost {
     /// * `pwzfilepath` - A `PCWSTR` pointing to the file path.
     /// * `pwzbuffer` - A mutable `PWSTR` buffer to store the version string.
     /// * `pcchbuffer` - A pointer to an unsigned integer representing the buffer size.
-    ///
-    /// # Returns
-    ///
-    /// * `Ok(())` - On success, the version string is written to `pwzbuffer`.
-    /// * `Err(ClrError)` - If the operation fails, returns a `ClrError`.
     pub fn GetVersionFromFile(
         &self,
         pwzfilepath: PCWSTR,
         pwzbuffer: PWSTR,
         pcchbuffer: *mut u32,
-    ) -> Result<()> {
+    ) -> ClrResult<()> {
         unsafe {
             let hr = (Interface::vtable(self).GetVersionFromFile)(
                 Interface::as_raw(self),
@@ -155,9 +146,8 @@ impl ICLRMetaHost {
     ///
     /// # Returns
     ///
-    /// * `Ok(IEnumUnknown)` - On success, returns an enumerator for loaded runtimes.
-    /// * `Err(ClrError)` - If enumeration fails, returns a `ClrError`.
-    pub fn EnumerateLoadedRuntimes(&self, hndprocess: HANDLE) -> Result<IEnumUnknown> {
+    /// An enumerator for loaded runtimes.
+    pub fn EnumerateLoadedRuntimes(&self, hndprocess: HANDLE) -> ClrResult<IEnumUnknown> {
         unsafe {
             let mut result = core::mem::zeroed();
             let hr = (Interface::vtable(self).EnumerateLoadedRuntimes)(
@@ -178,15 +168,10 @@ impl ICLRMetaHost {
     /// # Arguments
     ///
     /// * `pcallbackfunction` - A pointer to the callback function.
-    ///
-    /// # Returns
-    ///
-    /// * `Ok(())` - On success, the callback is registered.
-    /// * `Err(ClrError)` - If registration fails, returns a `ClrError`.
     pub fn RequestRuntimeLoadedNotification(
         &self,
         pcallbackfunction: RuntimeLoadedCallbackFnPtr,
-    ) -> Result<()> {
+    ) -> ClrResult<()> {
         unsafe {
             let hr = (Interface::vtable(self).RequestRuntimeLoadedNotification)(
                 Interface::as_raw(self),
@@ -204,9 +189,8 @@ impl ICLRMetaHost {
     ///
     /// # Returns
     ///
-    /// * `Ok(T)` - On success, returns an instance of the requested legacy binding as type `T`.
-    /// * `Err(ClrError)` - If the operation fails, returns a `ClrError`.
-    pub fn QueryLegacyV2RuntimeBinding<T>(&self) -> Result<T>
+    /// An instance of the requested legacy binding as type `T`.
+    pub fn QueryLegacyV2RuntimeBinding<T>(&self) -> ClrResult<T>
     where
         T: Interface,
     {
@@ -230,12 +214,7 @@ impl ICLRMetaHost {
     /// # Arguments
     ///
     /// * `iexitcode` - An integer specifying the process exit code.
-    ///
-    /// # Returns
-    ///
-    /// * `Ok(())` - On success, the process is terminated.
-    /// * `Err(ClrError)` - If the operation fails, returns a `ClrError`.
-    pub fn ExitProcess(&self, iexitcode: i32) -> Result<()> {
+    pub fn ExitProcess(&self, iexitcode: i32) -> ClrResult<()> {
         unsafe {
             let hr = (Interface::vtable(self).ExitProcess)(Interface::as_raw(self), iexitcode);
             if hr == 0 {
