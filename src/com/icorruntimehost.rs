@@ -8,7 +8,7 @@ use windows_sys::{
 };
 
 use super::_AppDomain;
-use crate::error::{ClrError, ClrResult};
+use crate::error::{ClrError, Result};
 
 /// This struct represents the COM `ICorRuntimeHost` interface.
 #[repr(C)]
@@ -26,7 +26,7 @@ impl ICorRuntimeHost {
     ///
     /// An instance of `_AppDomain`.
     #[inline]
-    pub fn create_domain(&self, name: &str) -> ClrResult<_AppDomain> {
+    pub fn create_domain(&self, name: &str) -> Result<_AppDomain> {
         let name = name.encode_utf16().chain(Some(0)).collect::<Vec<u16>>();
         let domain_name = PCWSTR(name.as_ptr());
         self.CreateDomain(domain_name, null_mut())
@@ -57,7 +57,7 @@ impl ICorRuntimeHost {
     /// # Returns
     ///
     /// The default application domain.
-    pub fn GetDefaultDomain(&self) -> ClrResult<_AppDomain> {
+    pub fn GetDefaultDomain(&self) -> Result<_AppDomain> {
         unsafe {
             let mut result = null_mut();
             let hr =
@@ -84,7 +84,7 @@ impl ICorRuntimeHost {
         &self,
         pwzFriendlyName: PCWSTR,
         pIdentityArray: *mut IUnknown,
-    ) -> ClrResult<_AppDomain> {
+    ) -> Result<_AppDomain> {
         unsafe {
             let mut result = null_mut();
             let hr = (Interface::vtable(self).CreateDomain)(
@@ -102,7 +102,7 @@ impl ICorRuntimeHost {
     }
 
     /// Creates a logical thread state within the runtime host.
-    pub fn CreateLogicalThreadState(&self) -> ClrResult<()> {
+    pub fn CreateLogicalThreadState(&self) -> Result<()> {
         unsafe {
             let hr = (Interface::vtable(self).CreateLogicalThreadState)(Interface::as_raw(self));
             if hr == 0 {
@@ -114,7 +114,7 @@ impl ICorRuntimeHost {
     }
 
     /// Deletes the current logical thread state.
-    pub fn DeleteLogicalThreadState(&self) -> ClrResult<()> {
+    pub fn DeleteLogicalThreadState(&self) -> Result<()> {
         unsafe {
             let hr = (Interface::vtable(self).DeleteLogicalThreadState)(Interface::as_raw(self));
             if hr == 0 {
@@ -130,7 +130,7 @@ impl ICorRuntimeHost {
     /// # Returns
     ///
     /// The fiber cookie.
-    pub fn SwitchInLogicalThreadState(&self) -> ClrResult<u32> {
+    pub fn SwitchInLogicalThreadState(&self) -> Result<u32> {
         unsafe {
             let mut result = 0;
             let hr = (Interface::vtable(self).SwitchInLogicalThreadState)(
@@ -150,7 +150,7 @@ impl ICorRuntimeHost {
     /// # Returns
     ///
     /// A pointer to the fiber cookie.
-    pub fn SwitchOutLogicalThreadState(&self) -> ClrResult<*mut u32> {
+    pub fn SwitchOutLogicalThreadState(&self) -> Result<*mut u32> {
         unsafe {
             let mut result = null_mut();
             let hr = (Interface::vtable(self).SwitchOutLogicalThreadState)(
@@ -170,7 +170,7 @@ impl ICorRuntimeHost {
     /// # Returns
     ///
     /// The count of locks.
-    pub fn LocksHeldByLogicalThread(&self) -> ClrResult<u32> {
+    pub fn LocksHeldByLogicalThread(&self) -> Result<u32> {
         unsafe {
             let mut result = 0;
             let hr = (Interface::vtable(self).LocksHeldByLogicalThread)(
@@ -194,7 +194,7 @@ impl ICorRuntimeHost {
     /// # Returns
     ///
     /// An `HMODULE` for the mapped file.
-    pub fn MapFile(&self, h_file: HANDLE) -> ClrResult<HMODULE> {
+    pub fn MapFile(&self, h_file: HANDLE) -> Result<HMODULE> {
         unsafe {
             let mut result = null_mut();
             let hr =
@@ -212,7 +212,7 @@ impl ICorRuntimeHost {
     /// # Returns
     ///
     /// A pointer to the configuration object.
-    pub fn GetConfiguration(&self) -> ClrResult<*mut c_void> {
+    pub fn GetConfiguration(&self) -> Result<*mut c_void> {
         unsafe {
             let mut result = null_mut();
             let hr =
@@ -230,7 +230,7 @@ impl ICorRuntimeHost {
     /// # Returns
     ///
     /// An enumeration handle.
-    pub fn EnumDomains(&self) -> ClrResult<*mut c_void> {
+    pub fn EnumDomains(&self) -> Result<*mut c_void> {
         unsafe {
             let mut result = null_mut();
             let hr = (Interface::vtable(self).EnumDomains)(Interface::as_raw(self), &mut result);
@@ -251,7 +251,7 @@ impl ICorRuntimeHost {
     /// # Returns
     ///
     /// The next app domain.
-    pub fn NextDomain(&self, hEnum: *mut c_void) -> ClrResult<IUnknown> {
+    pub fn NextDomain(&self, hEnum: *mut c_void) -> Result<IUnknown> {
         unsafe {
             let mut result = null_mut();
             let hr = (Interface::vtable(self).NextDomain)(Interface::as_raw(self), hEnum, &mut result);
@@ -268,7 +268,7 @@ impl ICorRuntimeHost {
     /// # Arguments
     ///
     /// * `hEnum` - Handle to the enumeration to be closed.
-    pub fn CloseEnum(&self, hEnum: *mut c_void) -> ClrResult<()> {
+    pub fn CloseEnum(&self, hEnum: *mut c_void) -> Result<()> {
         unsafe {
             let hr = (Interface::vtable(self).CloseEnum)(Interface::as_raw(self), hEnum);
             if hr == 0 {
@@ -295,7 +295,7 @@ impl ICorRuntimeHost {
         pwzFriendlyName: PCWSTR,
         psSetup: *mut IUnknown,
         pEvidence: *mut IUnknown,
-    ) -> ClrResult<_AppDomain> {
+    ) -> Result<_AppDomain> {
         unsafe {
             let mut result = null_mut();
             let hr = (Interface::vtable(self).CreateDomainEx)(
@@ -318,7 +318,7 @@ impl ICorRuntimeHost {
     /// # Returns
     ///
     /// The setup configuration object.
-    pub fn CreateDomainSetup(&self) -> ClrResult<IUnknown> {
+    pub fn CreateDomainSetup(&self) -> Result<IUnknown> {
         unsafe {
             let mut result = null_mut();
             let hr =
@@ -336,7 +336,7 @@ impl ICorRuntimeHost {
     /// # Returns
     ///
     /// The evidence object.
-    pub fn CreateEvidence(&self) -> ClrResult<IUnknown> {
+    pub fn CreateEvidence(&self) -> Result<IUnknown> {
         unsafe {
             let mut result = null_mut();
             let hr = (Interface::vtable(self).CreateEvidence)(Interface::as_raw(self), &mut result);
@@ -353,7 +353,7 @@ impl ICorRuntimeHost {
     /// # Arguments
     ///
     /// * `pAppDomain` - Pointer to the app domain to unload.
-    pub fn UnloadDomain(&self, pAppDomain: *mut IUnknown) -> ClrResult<()> {
+    pub fn UnloadDomain(&self, pAppDomain: *mut IUnknown) -> Result<()> {
         unsafe {
             let hr = (Interface::vtable(self).UnloadDomain)(Interface::as_raw(self), pAppDomain);
             if hr == 0 {
@@ -369,7 +369,7 @@ impl ICorRuntimeHost {
     /// # Returns
     ///
     /// The current app domain.
-    pub fn CurrentDomain(&self) -> ClrResult<_AppDomain> {
+    pub fn CurrentDomain(&self) -> Result<_AppDomain> {
         unsafe {
             let mut result = null_mut();
             let hr = (Interface::vtable(self).CurrentDomain)(Interface::as_raw(self), &mut result);

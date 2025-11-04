@@ -17,7 +17,7 @@ use windows_sys::Win32::System::Variant::{
 use self::file::{read_file, validate_file};
 use self::runtime::{RustClrRuntime, uuid};
 use super::com::*;
-use super::error::{ClrError, ClrResult};
+use super::error::{ClrError, Result};
 use super::string::ComString;
 use super::variant::{
     Variant, 
@@ -70,7 +70,7 @@ impl<'a> RustClr<'a> {
     /// let output = clr.run()?;
     /// println!("Output: {}", output);
     /// ```
-    pub fn new<T: Into<ClrSource<'a>>>(source: T) -> ClrResult<Self> {
+    pub fn new<T: Into<ClrSource<'a>>>(source: T) -> Result<Self> {
         let buffer = match source.into() {
             // Try reading the file
             ClrSource::File(path) => Box::leak(read_file(path)?.into_boxed_slice()),
@@ -143,7 +143,7 @@ impl<'a> RustClr<'a> {
     /// let output = clr.run()?;
     /// println!("Output: {}", output);
     /// ```
-    pub fn run(&mut self) -> ClrResult<String> {
+    pub fn run(&mut self) -> Result<String> {
         // Prepare the CLR environment
         self.runtime.prepare()?;
 
@@ -218,7 +218,7 @@ impl<'a> ClrOutput<'a> {
     }
 
     /// Redirects standard output and error streams to a `StringWriter`.
-    pub fn redirect(&mut self) -> ClrResult<()> {
+    pub fn redirect(&mut self) -> Result<()> {
         let console = self.mscorlib.resolve_type(s!("System.Console"))?;
         let string_writer = self.mscorlib.create_instance(s!("System.IO.StringWriter"))?;
 
@@ -247,7 +247,7 @@ impl<'a> ClrOutput<'a> {
     /// # Returns
     ///
     /// The captured output as a string if successful.
-    pub fn capture(&self) -> ClrResult<String> {
+    pub fn capture(&self) -> Result<String> {
         // Ensure that the StringWriter instance is available
         let mut instance = self.string_writer
             .ok_or(ClrError::GenericError("No StringWriter instance found"))?;
@@ -295,7 +295,7 @@ impl RustClrEnv {
     /// # Arguments
     ///
     /// * `runtime_version` - The .NET runtime version to use.
-    pub fn new(runtime_version: Option<RuntimeVersion>) -> ClrResult<Self> {
+    pub fn new(runtime_version: Option<RuntimeVersion>) -> Result<Self> {
         // Initialize MetaHost
         let meta_host = CLRCreateInstance::<ICLRMetaHost>(&CLSID_CLRMETAHOST)
             .map_err(|e| ClrError::MetaHostCreationError(format!("{e}")))?;

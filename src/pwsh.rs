@@ -1,7 +1,7 @@
 use alloc::{format, string::String, vec};
 use obfstr::obfstr as s;
 
-use super::error::ClrResult;
+use super::error::Result;
 use super::com::_Assembly;
 use super::string::ComString;
 use super::{Invocation, RustClrEnv};
@@ -22,7 +22,7 @@ pub struct PowerShell {
 
 impl PowerShell {
     /// Creates a new `PowerShell`.
-    pub fn new() -> ClrResult<Self> {
+    pub fn new() -> Result<Self> {
         // Initialize .NET runtime (v4.0).
         let clr = RustClrEnv::new(None)?;
 
@@ -53,7 +53,7 @@ impl PowerShell {
     /// # Returns
     ///
     /// The textual output of the PowerShell command.
-    pub fn execute(&self, command: &str) -> ClrResult<String> {
+    pub fn execute(&self, command: &str) -> Result<String> {
         // Invoke `CreateRunspace` method.
         let runspace_factory = self.automation.resolve_type(
             s!("System.Management.Automation.Runspaces.RunspaceFactory")

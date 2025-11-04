@@ -4,7 +4,7 @@ use core::{ffi::c_void, ops::Deref, ptr::null_mut};
 use windows_core::{GUID, Interface, PCWSTR, PWSTR};
 use windows_sys::{Win32::Foundation::HANDLE, core::HRESULT};
 
-use crate::error::{ClrError, ClrResult};
+use crate::error::{ClrError, Result};
 use super::{ICLRRuntimeInfo, IEnumUnknown};
 
 /// Function pointer for setting the callback thread in the CLR.
@@ -34,7 +34,7 @@ impl ICLRMetaHost {
     ///
     /// A map where keys are runtime versions.
     #[inline]
-    pub fn runtimes(&self) -> ClrResult<BTreeMap<String, ICLRRuntimeInfo>> {
+    pub fn runtimes(&self) -> Result<BTreeMap<String, ICLRRuntimeInfo>> {
         let enum_unknown = self.EnumerateInstalledRuntimes()?;
         let mut fetched = 0;
         let mut rgelt = [None];
@@ -70,7 +70,7 @@ impl ICLRMetaHost {
     ///
     /// The requested runtime as the generic type `T` if successful.
     #[inline]
-    pub fn GetRuntime<T>(&self, pwzversion: PCWSTR) -> ClrResult<T>
+    pub fn GetRuntime<T>(&self, pwzversion: PCWSTR) -> Result<T>
     where
         T: Interface,
     {
@@ -95,7 +95,7 @@ impl ICLRMetaHost {
     /// # Returns
     ///
     /// An enumerator containing all installed CLR runtimes.
-    pub fn EnumerateInstalledRuntimes(&self) -> ClrResult<IEnumUnknown> {
+    pub fn EnumerateInstalledRuntimes(&self) -> Result<IEnumUnknown> {
         unsafe {
             let mut result = core::mem::zeroed();
             let hr = (Interface::vtable(self).EnumerateInstalledRuntimes)(
@@ -122,7 +122,7 @@ impl ICLRMetaHost {
         pwzfilepath: PCWSTR,
         pwzbuffer: PWSTR,
         pcchbuffer: *mut u32,
-    ) -> ClrResult<()> {
+    ) -> Result<()> {
         unsafe {
             let hr = (Interface::vtable(self).GetVersionFromFile)(
                 Interface::as_raw(self),
@@ -147,7 +147,7 @@ impl ICLRMetaHost {
     /// # Returns
     ///
     /// An enumerator for loaded runtimes.
-    pub fn EnumerateLoadedRuntimes(&self, hndprocess: HANDLE) -> ClrResult<IEnumUnknown> {
+    pub fn EnumerateLoadedRuntimes(&self, hndprocess: HANDLE) -> Result<IEnumUnknown> {
         unsafe {
             let mut result = core::mem::zeroed();
             let hr = (Interface::vtable(self).EnumerateLoadedRuntimes)(
@@ -171,7 +171,7 @@ impl ICLRMetaHost {
     pub fn RequestRuntimeLoadedNotification(
         &self,
         pcallbackfunction: RuntimeLoadedCallbackFnPtr,
-    ) -> ClrResult<()> {
+    ) -> Result<()> {
         unsafe {
             let hr = (Interface::vtable(self).RequestRuntimeLoadedNotification)(
                 Interface::as_raw(self),
@@ -190,7 +190,7 @@ impl ICLRMetaHost {
     /// # Returns
     ///
     /// An instance of the requested legacy binding as type `T`.
-    pub fn QueryLegacyV2RuntimeBinding<T>(&self) -> ClrResult<T>
+    pub fn QueryLegacyV2RuntimeBinding<T>(&self) -> Result<T>
     where
         T: Interface,
     {
@@ -214,7 +214,7 @@ impl ICLRMetaHost {
     /// # Arguments
     ///
     /// * `iexitcode` - An integer specifying the process exit code.
-    pub fn ExitProcess(&self, iexitcode: i32) -> ClrResult<()> {
+    pub fn ExitProcess(&self, iexitcode: i32) -> Result<()> {
         unsafe {
             let hr = (Interface::vtable(self).ExitProcess)(Interface::as_raw(self), iexitcode);
             if hr == 0 {

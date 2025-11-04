@@ -3,7 +3,7 @@ use windows_core::{GUID, Interface};
 use windows_sys::core::HRESULT;
 use crate::{
     com::IHostControl, 
-    error::{ClrError, ClrResult}
+    error::{ClrError, Result}
 };
 
 /// This struct represents the COM `ICLRuntimeHost` interface.
@@ -42,7 +42,7 @@ impl ICLRuntimeHost {
     ///
     /// If the call succeeded.
     #[inline]
-    pub fn SetHostControl<T>(&self, phostcontrol: T) -> ClrResult<()>
+    pub fn SetHostControl<T>(&self, phostcontrol: T) -> Result<()>
     where
         T: windows_core::Param<IHostControl>,
     {

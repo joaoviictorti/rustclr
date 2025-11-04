@@ -8,7 +8,7 @@ use core::{
 use windows_core::{GUID, IUnknown, Interface};
 use windows_sys::core::HRESULT;
 
-use crate::error::{ClrError, ClrResult};
+use crate::error::{ClrError, Result};
 
 /// This struct represents the COM `IEnumUnknown` interface.
 #[repr(C)]
@@ -48,7 +48,7 @@ impl IEnumUnknown {
     ///
     /// * `celt` - The number of elements to skip.
     #[inline]
-    pub fn Skip(&self, celt: u32) -> ClrResult<()> {
+    pub fn Skip(&self, celt: u32) -> Result<()> {
         let hr = unsafe { (Interface::vtable(self).Skip)(Interface::as_raw(self), celt) };
         if hr == 0 {
             Ok(())
@@ -59,7 +59,7 @@ impl IEnumUnknown {
 
     /// Resets the enumeration sequence to the beginning.
     #[inline]
-    pub fn Reset(&self) -> ClrResult<()> {
+    pub fn Reset(&self) -> Result<()> {
         let hr = unsafe { (Interface::vtable(self).Reset)(Interface::as_raw(self)) };
         if hr == 0 {
             Ok(())
@@ -74,7 +74,7 @@ impl IEnumUnknown {
     ///
     /// A pointer to the new `IEnumUnknown`.
     #[inline]
-    pub fn Clone(&self) -> ClrResult<*mut IEnumUnknown> {
+    pub fn Clone(&self) -> Result<*mut IEnumUnknown> {
         let mut result = null_mut();
         let hr = unsafe { (Interface::vtable(self).Clone)(Interface::as_raw(self), &mut result) };
         if hr == 0 {

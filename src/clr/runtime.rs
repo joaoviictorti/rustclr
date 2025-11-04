@@ -25,7 +25,7 @@ use super::hosting::RustClrControl;
 use crate::com::*;
 use crate::error::ClrError;
 use super::{ 
-    ClrResult, 
+    Result, 
     Variant,
 };
 
@@ -65,7 +65,7 @@ impl<'a> RustClrRuntime<'a> {
     }
 
     /// Initializes the CLR environment and prepares it for execution.
-    pub fn prepare(&mut self) -> ClrResult<()> {
+    pub fn prepare(&mut self) -> Result<()> {
         // Creates the MetaHost to access the available CLR versions
         let meta_host = self.create_meta_host()?;
 
@@ -108,20 +108,20 @@ impl<'a> RustClrRuntime<'a> {
     }
 
     /// Returns the currently active AppDomain.
-    pub fn get_app_domain(&mut self) -> ClrResult<_AppDomain> {
+    pub fn get_app_domain(&mut self) -> Result<_AppDomain> {
         self.app_domain
             .clone()
             .ok_or(ClrError::NoDomainAvailable)
     }
 
     /// Creates an instance of `ICLRMetaHost`.
-    fn create_meta_host(&self) -> ClrResult<ICLRMetaHost> {
+    fn create_meta_host(&self) -> Result<ICLRMetaHost> {
         CLRCreateInstance::<ICLRMetaHost>(&CLSID_CLRMETAHOST)
             .map_err(|e| ClrError::MetaHostCreationError(format!("{e}")))
     }
 
     /// Retrieves runtime information based on the selected .NET version.
-    fn get_runtime_info(&self, meta_host: &ICLRMetaHost) -> ClrResult<ICLRRuntimeInfo> {
+    fn get_runtime_info(&self, meta_host: &ICLRMetaHost) -> Result<ICLRRuntimeInfo> {
         let runtime_version = &self.runtime_version.unwrap_or(RuntimeVersion::V4);
         let version_wide = runtime_version.to_vec();
         let version = PCWSTR(version_wide.as_ptr());
@@ -131,21 +131,21 @@ impl<'a> RustClrRuntime<'a> {
     }
 
     /// Gets the runtime host interface from the provided runtime information.
-    fn get_icor_runtime_host(&self, runtime_info: &ICLRRuntimeInfo) -> ClrResult<ICorRuntimeHost> {
+    fn get_icor_runtime_host(&self, runtime_info: &ICLRRuntimeInfo) -> Result<ICorRuntimeHost> {
         runtime_info
             .GetInterface::<ICorRuntimeHost>(&CLSID_COR_RUNTIME_HOST)
             .map_err(|error| ClrError::RuntimeHostError(format!("{error}")))
     }
 
     /// Gets the runtime host interface from the provided runtime information.
-    fn get_clr_runtime_host(&self, runtime_info: &ICLRRuntimeInfo) -> ClrResult<ICLRuntimeHost> {
+    fn get_clr_runtime_host(&self, runtime_info: &ICLRRuntimeInfo) -> Result<ICLRuntimeHost> {
         runtime_info
             .GetInterface::<ICLRuntimeHost>(&CLSID_ICLR_RUNTIME_HOST)
             .map_err(|error| ClrError::RuntimeHostError(format!("{error}")))
     }
 
     /// Starts the CLR runtime using the provided runtime host.
-    fn start_runtime(&self, iclr_runtime_host: &ICLRuntimeHost) -> ClrResult<()> {
+    fn start_runtime(&self, iclr_runtime_host: &ICLRuntimeHost) -> Result<()> {
         if iclr_runtime_host.Start() != 0 {
             return Err(ClrError::RuntimeStartError);
         }
@@ -153,7 +153,7 @@ impl<'a> RustClrRuntime<'a> {
     }
 
     /// Initializes the application domain with the specified name or uses the default domain.
-    fn init_app_domain(&mut self, cor_runtime_host: &ICorRuntimeHost) -> ClrResult<()> {
+    fn init_app_domain(&mut self, cor_runtime_host: &ICorRuntimeHost) -> Result<()> {
         let app_domain = if let Some(domain_name) = &self.domain_name {
             let wide_domain_name = domain_name
                 .encode_utf16()
@@ -177,7 +177,7 @@ impl<'a> RustClrRuntime<'a> {
     }
 
     /// Unloads the current application domain.
-    pub fn unload_domain(&self) -> ClrResult<()> {
+    pub fn unload_domain(&self) -> Result<()> {
         if let (Some(cor_runtime_host), Some(app_domain)) =
             (&self.cor_runtime_host, &self.app_domain)
         {
@@ -242,7 +242,7 @@ pub fn uuid() -> uuid::Uuid {
 }
 
 /// Patches `System.Environment.Exit` to prevent the .NET process from terminating.
-pub fn patch_exit(mscorlib: &_Assembly) -> ClrResult<()> {
+pub fn patch_exit(mscorlib: &_Assembly) -> Result<()> {
     // Resolve System.Environment type and the Exit method
     let env = mscorlib.resolve_type(s!("System.Environment"))?;
     let exit = env.method(s!("Exit"))?;

@@ -12,7 +12,7 @@ use windows_sys::{
 };
 
 use crate::variant::create_safe_args;
-use crate::error::{ClrError, ClrResult};
+use crate::error::{ClrError, Result};
 
 /// This struct represents the COM `_PropertyInfo` interface.
 #[repr(C)]
@@ -31,7 +31,7 @@ impl _PropertyInfo {
     /// # Returns
     ///
     /// The value of the property if successfully retrieved.
-    pub fn value(&self, instance: Option<VARIANT>, args: Option<Vec<VARIANT>>) -> ClrResult<VARIANT> {
+    pub fn value(&self, instance: Option<VARIANT>, args: Option<Vec<VARIANT>>) -> Result<VARIANT> {
         let args = args
             .as_ref()
             .map_or_else(|| Ok(null_mut()), |args| create_safe_args(args.to_vec()))?;
@@ -50,7 +50,7 @@ impl _PropertyInfo {
     ///
     /// Wraps the given COM interface as `_PropertyInfo`.
     #[inline(always)]
-    pub fn from_raw(raw: *mut c_void) -> ClrResult<_PropertyInfo> {
+    pub fn from_raw(raw: *mut c_void) -> Result<_PropertyInfo> {
         let iunknown = unsafe { IUnknown::from_raw(raw) };
         iunknown
             .cast::<_PropertyInfo>()
@@ -62,7 +62,7 @@ impl _PropertyInfo {
     /// # Returns
     ///
     /// The string representation of the method.
-    pub fn ToString(&self) -> ClrResult<String> {
+    pub fn ToString(&self) -> Result<String> {
         unsafe {
             let mut result = null::<u16>();
             let hr = (Interface::vtable(self).get_ToString)(Interface::as_raw(self), &mut result);
@@ -89,7 +89,7 @@ impl _PropertyInfo {
     /// # Returns
     ///
     /// The `_MethodInfo` for the method.
-    pub fn GetValue(&self, instance: VARIANT, args: *mut SAFEARRAY) -> ClrResult<VARIANT> {
+    pub fn GetValue(&self, instance: VARIANT, args: *mut SAFEARRAY) -> Result<VARIANT> {
         unsafe {
             let mut result = core::mem::zeroed();
             let hr = (Interface::vtable(self).GetValue)(

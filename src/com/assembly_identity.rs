@@ -2,7 +2,7 @@ use alloc::{string::String, vec};
 use core::{ffi::c_void, ops::Deref};
 use windows_core::{GUID, IUnknown, Interface, PWSTR};
 use windows_sys::core::HRESULT;
-use crate::error::{ClrError, ClrResult};
+use crate::error::{ClrError, Result};
 
 /// This struct represents the COM `ICLRAssemblyIdentityManager` interface.
 #[repr(C)]
@@ -20,7 +20,7 @@ impl ICLRAssemblyIdentityManager {
     /// # Returns
     ///
     /// The string representation of the assembly's identity.
-    pub fn get_identity_stream(&self, pstream: *mut c_void, dwFlags: u32) -> ClrResult<String> {
+    pub fn get_identity_stream(&self, pstream: *mut c_void, dwFlags: u32) -> Result<String> {
         let mut buffer = vec![0; 2048];
         let mut size = buffer.len() as u32;
 
@@ -38,7 +38,7 @@ impl ICLRAssemblyIdentityManager {
     ///
     /// Wraps the given COM interface as `ICLRAssemblyIdentityManager`.
     #[inline(always)]
-    pub fn from_raw(raw: *mut c_void) -> ClrResult<ICLRAssemblyIdentityManager> {
+    pub fn from_raw(raw: *mut c_void) -> Result<ICLRAssemblyIdentityManager> {
         let iunknown = unsafe { IUnknown::from_raw(raw) };
         iunknown
             .cast::<ICLRAssemblyIdentityManager>()
@@ -59,7 +59,7 @@ impl ICLRAssemblyIdentityManager {
         dwFlags: u32,
         pwzBuffer: PWSTR,
         pcchbuffersize: *mut u32,
-    ) -> ClrResult<()> {
+    ) -> Result<()> {
         let hr = unsafe {
             (Interface::vtable(self).GetBindingIdentityFromStream)(
                 Interface::as_raw(self),

@@ -4,7 +4,7 @@ use core::ffi::c_void;
 use dinvk::{GetProcAddress, LoadLibraryA};
 use windows_core::{GUID, Interface};
 use windows_sys::core::HRESULT;
-use crate::error::{ClrError, ClrResult};
+use crate::error::{ClrError, Result};
 
 mod appdomain;
 mod assembly;
@@ -62,7 +62,7 @@ type CLRCreateInstanceType = fn(
 ) -> HRESULT;
 
 /// Dynamically loads and invokes the `CLRCreateInstance`.
-pub fn CLRCreateInstance<T>(clsid: *const GUID) -> ClrResult<T>
+pub fn CLRCreateInstance<T>(clsid: *const GUID) -> Result<T>
 where
     T: Interface,
 {

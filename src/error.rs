@@ -3,7 +3,8 @@
 use alloc::string::String;
 use thiserror::Error;
 
-pub type ClrResult<T> = core::result::Result<T, ClrError>;
+/// Result alias for CLR-related operations.
+pub type Result<T> = core::result::Result<T, ClrError>;
 
 /// Represents errors that can occur when interacting with the .NET runtime.
 #[derive(Debug, Error)]

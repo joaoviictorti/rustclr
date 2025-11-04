@@ -22,7 +22,7 @@ use windows_sys::{
 use crate::Invocation;
 use crate::string::ComString;
 use crate::variant::create_safe_args;
-use crate::error::{ClrError, ClrResult};
+use crate::error::{ClrError, Result};
 use crate::com::{_MethodInfo, _PropertyInfo};
 
 /// This struct represents the COM `_Type` interface.
@@ -40,7 +40,7 @@ impl _Type {
     /// # Returns
     ///
     /// The method's `_MethodInfo`.
-    pub fn method(&self, name: &str) -> ClrResult<_MethodInfo> {
+    pub fn method(&self, name: &str) -> Result<_MethodInfo> {
         let method_name = name.to_bstr();
         self.GetMethod_6(method_name)
     }
@@ -54,7 +54,7 @@ impl _Type {
     /// # Returns
     ///
     /// The matching `_MethodInfo`.
-    pub fn method_signature(&self, name: &str) -> ClrResult<_MethodInfo> {
+    pub fn method_signature(&self, name: &str) -> Result<_MethodInfo> {
         let methods = self.methods();
         if let Ok(methods) = methods {
             for (method_name, method_info) in methods {
@@ -76,7 +76,7 @@ impl _Type {
     /// # Returns
     ///
     /// The matching `_PropertyInfo`.
-    pub fn property_signature(&self, name: &str) -> ClrResult<_PropertyInfo> {
+    pub fn property_signature(&self, name: &str) -> Result<_PropertyInfo> {
         let properties = self.properties();
         if let Ok(properties) = properties {
             for (property_name, property_info) in properties {
@@ -98,7 +98,7 @@ impl _Type {
     /// # Returns
     ///
     /// The COM pointer to the property.
-    pub fn property(&self, name: &str) -> ClrResult<_PropertyInfo> {
+    pub fn property(&self, name: &str) -> Result<_PropertyInfo> {
         unsafe {
             let binding_flags = BindingFlags::Public
                 | BindingFlags::Instance
@@ -141,7 +141,7 @@ impl _Type {
         instance: Option<VARIANT>,
         args: Option<Vec<VARIANT>>,
         invocation_type: Invocation,
-    ) -> ClrResult<VARIANT> {
+    ) -> Result<VARIANT> {
         let flags = match invocation_type {
             Invocation::Static => {
                 BindingFlags::NonPublic
@@ -171,7 +171,7 @@ impl _Type {
     /// # Returns
     ///
     /// A vector of method names and `_MethodInfo`.
-    pub fn methods(&self) -> ClrResult<Vec<(String, _MethodInfo)>> {
+    pub fn methods(&self) -> Result<Vec<(String, _MethodInfo)>> {
         let binding_flags = BindingFlags::Public
             | BindingFlags::Instance
             | BindingFlags::Static
@@ -211,7 +211,7 @@ impl _Type {
     /// # Returns
     ///
     /// A vector of property names and `_PropertyInfo`.
-    pub fn properties(&self) -> ClrResult<Vec<(String, _PropertyInfo)>> {
+    pub fn properties(&self) -> Result<Vec<(String, _PropertyInfo)>> {
         let binding_flags = BindingFlags::Public
             | BindingFlags::Instance
             | BindingFlags::Static
@@ -257,7 +257,7 @@ impl _Type {
     ///
     /// The `_Type` wrapping the COM interface.
     #[inline(always)]
-    pub fn from_raw(raw: *mut c_void) -> ClrResult<_Type> {
+    pub fn from_raw(raw: *mut c_void) -> Result<_Type> {
         let iunknown = unsafe { IUnknown::from_raw(raw) };
         iunknown
             .cast::<_Type>()
@@ -269,7 +269,7 @@ impl _Type {
     /// # Returns
     ///
     /// The type's name as a `String`.
-    pub fn ToString(&self) -> ClrResult<String> {
+    pub fn ToString(&self) -> Result<String> {
         unsafe {
             let mut result = null::<u16>();
             let hr = (Interface::vtable(self).get_ToString)(Interface::as_raw(self), &mut result);
@@ -296,7 +296,7 @@ impl _Type {
     /// # Returns
     ///
     /// Pointer to SAFEARRAY of properties.
-    pub fn GetProperties(&self, bindingAttr: BindingFlags) -> ClrResult<*mut SAFEARRAY> {
+    pub fn GetProperties(&self, bindingAttr: BindingFlags) -> Result<*mut SAFEARRAY> {
         unsafe {
             let mut result = null_mut();
             let hr = (Interface::vtable(self).GetProperties)(
@@ -322,7 +322,7 @@ impl _Type {
     /// # Returns
     ///
     /// Pointer to a `SAFEARRAY` of methods.
-    pub fn GetMethods(&self, bindingAttr: BindingFlags) -> ClrResult<*mut SAFEARRAY> {
+    pub fn GetMethods(&self, bindingAttr: BindingFlags) -> Result<*mut SAFEARRAY> {
         unsafe {
             let mut result = null_mut();
             let hr = (Interface::vtable(self).GetMethods)(
@@ -347,7 +347,7 @@ impl _Type {
     /// # Returns
     ///
     /// The `_MethodInfo` for the method.
-    pub fn GetMethod_6(&self, name: BSTR) -> ClrResult<_MethodInfo> {
+    pub fn GetMethod_6(&self, name: BSTR) -> Result<_MethodInfo> {
         unsafe {
             let mut result = core::mem::zeroed();
             let hr = (Interface::vtable(self).GetMethod_6)(Interface::as_raw(self), name, &mut result);
@@ -378,7 +378,7 @@ impl _Type {
         invoke_attr: BindingFlags,
         instance: VARIANT,
         args: *mut SAFEARRAY,
-    ) -> ClrResult<VARIANT> {
+    ) -> Result<VARIANT> {
         unsafe {
             let mut result = core::mem::zeroed();
             let hr = (Interface::vtable(self).InvokeMember_3)(
