@@ -91,7 +91,7 @@ where
             Err(ClrError::ApiError("CLRCreateInstance", hr))
         }
     } else {
-        Err(ClrError::GenericError(
+        Err(ClrError::Msg(
             "CLRCreateInstance function not found",
         ))
     }

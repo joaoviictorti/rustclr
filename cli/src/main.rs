@@ -33,7 +33,7 @@ fn main() -> Result<(), ClrError> {
 
     // Read the .NET assembly file
     let data = fs::read(&cli.file)
-        .map_err(|_| ClrError::GenericError("Failed to read file"))?;
+        .map_err(|_| ClrError::Msg("failed to read file"))?;
 
     // Convert version string to RuntimeVersion enum
     let runtime_version = match cli.runtime_version.as_str() {

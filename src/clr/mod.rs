@@ -253,7 +253,7 @@ impl<'a> ClrOutput<'a> {
     pub fn capture(&self) -> Result<String> {
         // Ensure that the StringWriter instance is available
         let mut instance = self.string_writer
-            .ok_or(ClrError::GenericError("No StringWriter instance found"))?;
+            .ok_or(ClrError::Msg("No StringWriter instance found"))?;
 
         // Resolve the 'ToString' method on the StringWriter type
         let string_writer = self.mscorlib.resolve_type(s!("System.IO.StringWriter"))?;

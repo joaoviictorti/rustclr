@@ -257,7 +257,7 @@ pub fn patch_exit(mscorlib: &_Assembly) -> Result<()> {
     // Convert the Exit method into a COM IUnknown pointer
     let instance = exit
         .cast::<IUnknown>()
-        .map_err(|_| ClrError::GenericError("Failed to cast to IUnknown"))?;
+        .map_err(|_| ClrError::Msg("Failed to cast to IUnknown"))?;
 
     // Call to retrieve the RuntimeMethodHandle
     let method_handle_exit = method_handle.value(Some(instance.to_variant()), None)?;
@@ -280,8 +280,8 @@ pub fn patch_exit(mscorlib: &_Assembly) -> Result<()> {
         PAGE_EXECUTE_READWRITE,
         &mut old,
     )) {
-        return Err(ClrError::GenericError(
-            "Failed to change memory protection to RWX",
+        return Err(ClrError::Msg(
+            "failed to change memory protection to RWX",
         ));
     }
 
@@ -296,8 +296,8 @@ pub fn patch_exit(mscorlib: &_Assembly) -> Result<()> {
         old,
         &mut old,
     )) {
-        return Err(ClrError::GenericError(
-            "Failed to restore memory protection",
+        return Err(ClrError::Msg(
+            "failed to restore memory protection",
         ));
     }
 

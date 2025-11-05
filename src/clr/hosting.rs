@@ -144,7 +144,7 @@ impl IHostAssemblyStore_Impl for RustClrStore_Impl<'_> {
 
         Err(Error::new(
             HRESULT(0x80070002u32 as i32),
-            s!("Assembly not recognized"),
+            s!("assembly not recognized"),
         ))
     }
 
@@ -157,7 +157,7 @@ impl IHostAssemblyStore_Impl for RustClrStore_Impl<'_> {
     ) -> Result<()> {
         Err(Error::new(
             HRESULT(0x80070002u32 as i32),
-            s!("Module not recognized"),
+            s!("module not recognized"),
         ))
     }
 }

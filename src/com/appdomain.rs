@@ -95,7 +95,7 @@ impl _AppDomain {
             }
         }
 
-        Err(ClrError::GenericError("Assembly Not Found"))
+        Err(ClrError::Msg("Assembly Not Found"))
     }
 
     /// Retrieves all assemblies currently loaded in the AppDomain.

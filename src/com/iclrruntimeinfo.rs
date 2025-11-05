@@ -213,7 +213,7 @@ impl ICLRRuntimeInfo {
         unsafe {
             let mut result = core::mem::zeroed();
             let cstr =
-                CString::new(pszProcName).map_err(|_| ClrError::GenericError("Invalid String"))?;
+                CString::new(pszProcName).map_err(|_| ClrError::Msg("invalid String"))?;
             let hr = (Interface::vtable(self).GetProcAddress)(
                 Interface::as_raw(self),
                 PCSTR(cstr.as_ptr().cast()),

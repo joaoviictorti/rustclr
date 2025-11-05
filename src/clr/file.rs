@@ -53,7 +53,7 @@ pub fn validate_file(buffer: &[u8]) -> Result<()> {
 /// Containing the file's contents on success.
 pub fn read_file(name: &str) -> Result<Vec<u8>> {
     let file_name = CString::new(name)
-        .map_err(|_| ClrError::GenericError("Invalid cstring"))?;
+        .map_err(|_| ClrError::Msg("invalid cstring"))?;
     let h_file = unsafe {
         CreateFileA(
             file_name.as_ptr().cast(),
@@ -67,12 +67,12 @@ pub fn read_file(name: &str) -> Result<Vec<u8>> {
     };
 
     if h_file == INVALID_HANDLE_VALUE {
-        return Err(ClrError::GenericError("Failed to open file"));
+        return Err(ClrError::Msg("failed to open file"));
     }
 
     let size = unsafe { GetFileSize(h_file, null_mut()) };
     if size == INVALID_FILE_SIZE {
-        return Err(ClrError::GenericError("Invalid file size"));
+        return Err(ClrError::Msg("invalid file size"));
     }
 
     let mut out = vec![0; size as usize];
