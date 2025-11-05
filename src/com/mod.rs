@@ -1,3 +1,6 @@
+// Copyright (c) 2025 joaoviictorti
+// Licensed under the MIT License. See LICENSE file in the project root for details.
+
 //! Raw COM interface bindings for interacting with the .NET CLR runtime.
 
 use core::ffi::c_void;

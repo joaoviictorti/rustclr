@@ -1,3 +1,6 @@
+// Copyright (c) 2025 joaoviictorti
+// Licensed under the MIT License. See LICENSE file in the project root for details.
+
 //! Helper to convert Rust types into COM `VARIANT` and build `SAFEARRAY`.
 
 use alloc::{string::String, vec::Vec};
@@ -24,8 +27,10 @@ use windows_sys::Win32::{
     },
 };
 
-use super::string::ComString;
-use super::error::{ClrError, Result};
+use super::{
+    error::{ClrError, Result},
+    string::ComString
+};
 
 /// Trait to convert various Rust types to Windows COM-compatible `VARIANT` types.
 pub trait Variant {

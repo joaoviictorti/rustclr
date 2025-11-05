@@ -1,3 +1,6 @@
+// Copyright (c) 2025 joaoviictorti
+// Licensed under the MIT License. See LICENSE file in the project root for details.
+
 //! Manages specific error types used when interacting with the CLR and COM APIs.
 
 use alloc::string::String;
