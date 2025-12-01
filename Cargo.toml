@@ -25,6 +25,7 @@ thiserror = { version = "2.0.12", default-features = false }
 windows-core = { version = "0.61.2", default-features = false }
 uuid = { version = "1.16.0", default-features = false }
 spin = { version = "0.10.0", default-features = false }
+bitflags = { version = "2.10.0", default-features = false }
 
 [dependencies.windows-sys]
 version = "0.59.0"

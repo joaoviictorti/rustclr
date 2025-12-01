@@ -1,7 +1,8 @@
 use alloc::{string::String, vec::Vec};
+use bitflags::bitflags;
 use core::{
     ffi::c_void,
-    ops::{BitOr, Deref},
+    ops::Deref,
     ptr::{null, null_mut},
 };
 
@@ -11,19 +12,15 @@ use windows_sys::{
     Win32::System::{
         Com::SAFEARRAY,
         Variant::VARIANT,
-        Ole::{
-            SafeArrayGetElement, 
-            SafeArrayGetLBound, 
-            SafeArrayGetUBound
-        },
+        Ole::{SafeArrayGetElement, SafeArrayGetLBound, SafeArrayGetUBound},
     },
 };
 
-use crate::Invocation;
+use crate::com::{_MethodInfo, _PropertyInfo};
+use crate::error::{ClrError, Result};
 use crate::string::ComString;
 use crate::variant::create_safe_args;
-use crate::error::{ClrError, Result};
-use crate::com::{_MethodInfo, _PropertyInfo};
+use crate::Invocation;
 
 /// This struct represents the COM `_Type` interface.
 #[repr(C)]
@@ -336,82 +333,52 @@ impl Deref for _Type {
     }
 }
 
-/// Specifies flags that control binding and the way in which members are searched and invoked.
-#[repr(C)]
-pub enum BindingFlags {
-    /// Default binding, no special options.
-    Default = 0,
-
-    /// Ignores case when looking up members.
-    IgnoreCase = 1,
-
-    /// Only members declared at the level of the supplied type's hierarchy should be considered.
-    DeclaredOnly = 2,
-
-    /// Specifies instance members.
-    Instance = 4,
-
-    /// Specifies static members.
-    Static = 8,
-
-    /// Specifies public members.
-    Public = 16,
-
-    /// Specifies non-public members.
-    NonPublic = 32,
-
-    /// Includes inherited members in the search.
-    FlattenHierarchy = 64,
-
-    /// Specifies that the member to invoke is a method.
-    InvokeMethod = 256,
-
-    /// Creates an instance of the object.
-    CreateInstance = 512,
-
-    /// Specifies that the member to retrieve is a field.
-    GetField = 1024,
-
-    /// Specifies that the member to set is a field.
-    SetField = 2048,
-
-    /// Specifies that the member to retrieve is a property.
-    GetProperty = 4096,
-
-    /// Specifies that the member to set is a property.
-    SetProperty = 8192,
-
-    /// Sets a COM object property.
-    PutDispProperty = 16384,
-
-    /// Sets a COM object reference property.
-    PutRefDispProperty = 32768,
-
-    /// Uses the most precise match during binding.
-    ExactBinding = 65536,
-
-    /// Suppresses coercion of argument types during method invocation.
-    SuppressChangeType = 131072,
-
-    /// Allows binding to optional parameters.
-    OptionalParamBinding = 262144,
-
-    /// Ignores the return value of a method.
-    IgnoreReturn = 16777216,
-}
-
-impl BitOr for BindingFlags {
-    type Output = Self;
-
-    /// Enables combining multiple `BindingFlags` using bitwise OR.
+bitflags! {
+    /// Flags that control binding and the way in which members are searched and invoked.
     ///
-    /// # Example
-    ///
-    /// ```ignore
-    /// let flags = BindingFlags::Public | BindingFlags::Instance;
-    /// ```
-    fn bitor(self, rhs: Self) -> Self::Output {
-        unsafe { core::mem::transmute::<u32, BindingFlags>(self as u32 | rhs as u32) }
+    /// Uses a bitflag-backed type to avoid invalid enum transmute panics on Nightly.
+    #[repr(transparent)]
+    pub struct BindingFlags: u32 {
+        /// Default binding, no special options.
+        const Default = 0;
+        /// Ignores case when looking up members.
+        const IgnoreCase = 1;
+        /// Only members declared at the level of the supplied type's hierarchy should be considered.
+        const DeclaredOnly = 2;
+        /// Specifies instance members.
+        const Instance = 4;
+        /// Specifies static members.
+        const Static = 8;
+        /// Specifies public members.
+        const Public = 16;
+        /// Specifies non-public members.
+        const NonPublic = 32;
+        /// Includes inherited members in the search.
+        const FlattenHierarchy = 64;
+        /// Specifies that the member to invoke is a method.
+        const InvokeMethod = 256;
+        /// Creates an instance of the object.
+        const CreateInstance = 512;
+        /// Specifies that the member to retrieve is a field.
+        const GetField = 1024;
+        /// Specifies that the member to set is a field.
+        const SetField = 2048;
+        /// Specifies that the member to retrieve is a property.
+        const GetProperty = 4096;
+        /// Specifies that the member to set is a property.
+        const SetProperty = 8192;
+        /// Sets a COM object property.
+        const PutDispProperty = 16384;
+        /// Sets a COM object reference property.
+        const PutRefDispProperty = 32768;
+        /// Uses the most precise match during binding.
+        const ExactBinding = 65536;
+        /// Suppresses coercion of argument types during method invocation.
+        const SuppressChangeType = 131072;
+        /// Allows binding to optional parameters.
+        const OptionalParamBinding = 262144;
+        /// Ignores the return value of a method.
+        const IgnoreReturn = 16777216;
     }
 }
 
