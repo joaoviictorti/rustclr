@@ -1,6 +1,3 @@
-// Copyright (c) 2025 joaoviictorti
-// Licensed under the MIT License. See LICENSE file in the project root for details.
-
 use alloc::{string::String, vec::Vec};
 use core::{
     ffi::c_void,
@@ -24,16 +21,7 @@ pub struct _PropertyInfo(windows_core::IUnknown);
 
 impl _PropertyInfo {
     /// Retrieves the value of the property.
-    ///
-    /// # Arguments
-    ///
-    /// * `instance` - An optional `VARIANT` representing the target object on which
-    ///   the property is being accessed. If `None`, a default zeroed variant is used.
-    /// * `args` - An optional `Vec<VARIANT>` containing index arguments, such as for indexer properties.
-    ///
-    /// # Returns
-    ///
-    /// The value of the property if successfully retrieved.
+    #[inline]
     pub fn value(&self, instance: Option<VARIANT>, args: Option<Vec<VARIANT>>) -> Result<VARIANT> {
         let args = args
             .as_ref()
@@ -44,15 +32,7 @@ impl _PropertyInfo {
     }
 
     /// Creates an `_PropertyInfo` instance from a raw COM interface pointer.
-    ///
-    /// # Arguments
-    ///
-    /// * `raw` - A raw pointer to an `IUnknown` COM interface.
-    ///
-    /// # Returns
-    ///
-    /// Wraps the given COM interface as `_PropertyInfo`.
-    #[inline(always)]
+    #[inline]
     pub fn from_raw(raw: *mut c_void) -> Result<_PropertyInfo> {
         let iunknown = unsafe { IUnknown::from_raw(raw) };
         iunknown
@@ -61,10 +41,7 @@ impl _PropertyInfo {
     }
 
     /// Retrieves the string representation of the method (equivalent to `ToString` in .NET).
-    ///
-    /// # Returns
-    ///
-    /// The string representation of the method.
+    #[inline]
     pub fn ToString(&self) -> Result<String> {
         unsafe {
             let mut result = null::<u16>();
@@ -84,14 +61,7 @@ impl _PropertyInfo {
     }
 
     /// Retrieves a method by name.
-    ///
-    /// # Arguments
-    ///
-    /// * `name` - The name of the method as a `BSTR`.
-    ///
-    /// # Returns
-    ///
-    /// The `_MethodInfo` for the method.
+    #[inline]
     pub fn GetValue(&self, instance: VARIANT, args: *mut SAFEARRAY) -> Result<VARIANT> {
         unsafe {
             let mut result = core::mem::zeroed();

@@ -1,6 +1,3 @@
-// Copyright (c) 2025 joaoviictorti
-// Licensed under the MIT License. See LICENSE file in the project root for details.
-
 //! Defines the `ComString` trait for converting between Rust strings and BSTRs.
 
 use alloc::{string::String, vec::Vec};

@@ -1,6 +1,3 @@
-// Copyright (c) 2025 joaoviictorti
-// Licensed under the MIT License. See LICENSE file in the project root for details.
-
 use core::{ffi::c_void, mem::transmute_copy, ops::Deref};
 use windows_core::{GUID, Interface};
 
@@ -12,14 +9,6 @@ pub struct IHostAssemblyStore(windows_core::IUnknown);
 /// Trait representing the implementation of the `IHostAssemblyStore` interface.
 pub trait IHostAssemblyStore_Impl: windows_core::IUnknownImpl {
     /// Provides an assembly image in response to a bind request.
-    ///
-    /// # Arguments
-    ///
-    /// * `pbindinfo` - Binding information for the assembly.
-    /// * `passemblyid` - Output assembly identifier.
-    /// * `pcontext` - Output context handle.
-    /// * `ppstmassemblyimage` - Output pointer to the in-memory assembly image.
-    /// * `ppstmpdb` - Output pointer to the PDB (debug symbols).
     fn ProvideAssembly(
         &self,
         pbindinfo: *const AssemblyBindInfo,
@@ -30,13 +19,6 @@ pub trait IHostAssemblyStore_Impl: windows_core::IUnknownImpl {
     ) -> windows_core::Result<()>;
 
     /// Provides a module image in response to a bind request.
-    ///
-    /// # Arguments
-    ///
-    /// * `pbindinfo` - Binding information for the module.
-    /// * `pdwmoduleid` - Output module identifier.
-    /// * `ppstmmoduleimage` - Output pointer to the in-memory module image.
-    /// * `ppstmpdb` - Output pointer to the PDB (debug symbols).
     fn ProvideModule(
         &self,
         pbindinfo: *const ModuleBindInfo,

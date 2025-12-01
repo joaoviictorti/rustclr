@@ -1,11 +1,10 @@
-// Copyright (c) 2025 joaoviictorti
-// Licensed under the MIT License. See LICENSE file in the project root for details.
-
 use alloc::string::{String, ToString};
 use core::{ffi::c_void, ptr::null_mut};
+
 use obfstr::obfstr as s;
 use windows_core::*;
 use windows_sys::Win32::UI::Shell::SHCreateMemStream;
+
 use crate::com::*;
 
 /// Implements `IHostControl`.
@@ -16,7 +15,7 @@ pub struct RustClrControl {
 }
 
 impl RustClrControl {
-    /// Creates a new [`RustClrControl`] with the target assembly and buffer.
+    /// Creates a new `RustClrControl` with the target assembly and buffer.
     pub fn new(buffer: &[u8], assembly: &str) -> Self {
         Self {
             manager: RustClrManager::new(buffer, assembly.to_string()).into(),
@@ -26,15 +25,6 @@ impl RustClrControl {
 
 impl IHostControl_Impl for RustClrControl_Impl {
     /// Returns `IHostAssemblyManager` when requested.
-    ///
-    /// # Arguments
-    ///
-    /// * `riid` - requested interface IID
-    /// * `ppobject` - out pointer
-    ///
-    /// # Returns
-    ///
-    /// If IID matches `IHostAssemblyManager`
     fn GetHostManager(&self, riid: *const GUID, ppobject: *mut *mut c_void) -> Result<()> {
         unsafe {
             if *riid == IHostAssemblyManager::IID {
@@ -87,7 +77,7 @@ impl IHostAssemblyManager_Impl for RustClrManager_Impl {
         Ok(())
     }
 
-    /// Returns the custom `IHostAssemblyStore`.
+    /// Returns the custom assembly store used to resolve in-memory assemblies.
     fn GetAssemblyStore(&self) -> Result<IHostAssemblyStore> {
         Ok(self.store.clone())
     }
@@ -104,25 +94,14 @@ pub struct RustClrStore<'a> {
 }
 
 impl<'a> RustClrStore<'a> {
-    /// Creates a new [`RustClrStore`].
+    /// Creates a new `RustClrManager`.
     pub fn new(buffer: &'a [u8], assembly: String) -> Self {
         Self { buffer, assembly }
     }
 }
 
 impl IHostAssemblyStore_Impl for RustClrStore_Impl<'_> {
-    /// Returns the in-memory assembly if identity matches.
-    ///
-    /// # Arguments
-    ///
-    /// * `pbindinfo` - binding info (post-policy identity must match)
-    /// * `passemblyid` - returned ID (set to 500)
-    /// * `pcontext` - always set to 0
-    /// * `ppstmassemblyimage` - returned SHCreateMemStream
-    ///
-    /// # Returns
-    ///
-    /// If identity matches.
+    /// Returns the managed assembly image from memory when the identity matches.
     fn ProvideAssembly(
         &self,
         pbindinfo: *const AssemblyBindInfo,
@@ -148,6 +127,8 @@ impl IHostAssemblyStore_Impl for RustClrStore_Impl<'_> {
         ))
     }
 
+    /// Always returns `ERROR_FILE_NOT_FOUND` as this implementation does not
+    /// support module resolution.
     fn ProvideModule(
         &self,
         _pbindinfo: *const ModuleBindInfo,

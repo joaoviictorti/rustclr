@@ -1,6 +1,3 @@
-// Copyright (c) 2025 joaoviictorti
-// Licensed under the MIT License. See LICENSE file in the project root for details.
-
 use alloc::ffi::CString;
 use core::{ffi::c_void, ops::Deref};
 
@@ -19,10 +16,6 @@ pub struct ICLRRuntimeInfo(windows_core::IUnknown);
 
 impl ICLRRuntimeInfo {
     /// Checks if the CLR runtime has been started.
-    ///
-    /// # Returns
-    ///
-    /// If the runtime has been started.
     #[inline]
     pub fn is_started(&self) -> bool {
         let mut started = 0;
@@ -31,10 +24,7 @@ impl ICLRRuntimeInfo {
     }
 
     /// Checks if the .NET runtime is loadable in the current process.
-    ///
-    /// # Returns
-    ///
-    /// If the runtime is loadable.
+    #[inline]
     pub fn IsLoadable(&self) -> Result<BOOL> {
         unsafe {
             let mut result = 0;
@@ -48,14 +38,7 @@ impl ICLRRuntimeInfo {
     }
 
     /// Retrieves a COM interface by its class identifier.
-    ///
-    /// # Arguments
-    ///
-    /// * `rclsid` - The class identifier (`GUID`) for the COM interface.
-    ///
-    /// # Returns
-    ///
-    /// An instance of the requested interface type `T`.
+    #[inline]
     pub fn GetInterface<T>(&self, rclsid: *const GUID) -> Result<T>
     where
         T: Interface,
@@ -77,12 +60,7 @@ impl ICLRRuntimeInfo {
     }
 
     /// Retrieves the version string of the CLR runtime.
-    ///
-    /// # Arguments
-    ///
-    /// * `pwzbuffer` - A mutable `PWSTR` buffer for the version string.
-    /// * `pcchbuffer` - A pointer to an unsigned integer that specifies
-    ///   the buffer size and receives the actual length of the version string.
+    #[inline]
     pub fn GetVersionString(&self, pwzbuffer: PWSTR, pcchbuffer: *mut u32) -> Result<()> {
         unsafe {
             let hr = (Interface::vtable(self).GetVersionString)(
@@ -99,11 +77,7 @@ impl ICLRRuntimeInfo {
     }
 
     /// Retrieves the directory where the CLR runtime is installed.
-    ///
-    /// # Arguments
-    ///
-    /// * `pwzbuffer` - A mutable `PWSTR` buffer to store the runtime directory path.
-    /// * `pcchbuffer` - A pointer to an unsigned integer specifying the buffer size.
+    #[inline]
     pub fn GetRuntimeDirectory(&self, pwzbuffer: PWSTR, pcchbuffer: *mut u32) -> Result<()> {
         unsafe {
             let hr = (Interface::vtable(self).GetRuntimeDirectory)(
@@ -120,14 +94,7 @@ impl ICLRRuntimeInfo {
     }
 
     /// Checks if the runtime is loaded in a specified process.
-    ///
-    /// # Arguments
-    ///
-    /// * `hndProcess` - Handle to the process to check.
-    ///
-    /// # Returns
-    ///
-    /// If the runtime is loaded.
+    #[inline]
     pub fn IsLoaded(&self, hndProcess: HANDLE) -> Result<BOOL> {
         unsafe {
             let mut pbLoaded = 0;
@@ -145,13 +112,7 @@ impl ICLRRuntimeInfo {
     }
 
     /// Loads an error string by its resource ID.
-    ///
-    /// # Arguments
-    ///
-    /// * `iResourceID` - Resource ID of the error message to load.
-    /// * `pwzBuffer` - A buffer to store the error message.
-    /// * `pcchBuffer` - Pointer to the buffer size.
-    /// * `iLocaleID` - Locale ID for the message.
+    #[inline]
     pub fn LoadErrorString(
         &self,
         iResourceID: u32,
@@ -176,14 +137,7 @@ impl ICLRRuntimeInfo {
     }
 
     /// Loads a DLL by name.
-    ///
-    /// # Arguments
-    ///
-    /// * `pwzDllName` - The name of the DLL to load.
-    ///
-    /// # Returns
-    ///
-    /// A handle to the loaded module.
+    #[inline]
     pub fn LoadLibraryA(&self, pwzDllName: PCWSTR) -> Result<HMODULE> {
         unsafe {
             let mut result = core::mem::zeroed();
@@ -201,14 +155,7 @@ impl ICLRRuntimeInfo {
     }
 
     /// Retrieves the address of a procedure in a loaded DLL.
-    ///
-    /// # Arguments
-    ///
-    /// * `pszProcName` - Name of the procedure to retrieve.
-    ///
-    /// # Returns
-    ///
-    /// A pointer to the procedure.
+    #[inline]
     pub fn GetProcAddress(&self, pszProcName: &str) -> Result<*mut c_void> {
         unsafe {
             let mut result = core::mem::zeroed();
@@ -228,11 +175,7 @@ impl ICLRRuntimeInfo {
     }
 
     /// Sets the default startup flags for the runtime.
-    ///
-    /// # Arguments
-    ///
-    /// * `dwstartupflags` - Startup flags for the runtime.
-    /// * `pwzhostconfigfile` - Path to a configuration file for the runtime.
+    #[inline]
     pub fn SetDefaultStartupFlags(
         &self,
         dwstartupflags: u32,
@@ -253,12 +196,7 @@ impl ICLRRuntimeInfo {
     }
 
     /// Retrieves the default startup flags for the runtime.
-    ///
-    /// # Arguments
-    ///
-    /// * `pdwstartupflags` - Pointer to store the startup flags.
-    /// * `pwzhostconfigfile` - Buffer to receive the configuration file path.
-    /// * `pcchhostconfigfile` - Pointer to the size of the configuration file path buffer.
+    #[inline]
     pub fn GetDefaultStartupFlags(
         &self,
         pdwstartupflags: *mut u32,
@@ -281,6 +219,7 @@ impl ICLRRuntimeInfo {
     }
 
     /// Configures the runtime to behave as a legacy v2 runtime.
+    #[inline]
     pub fn BindAsLegacyV2Runtime(&self) -> Result<()> {
         unsafe {
             let hr = (Interface::vtable(self).BindAsLegacyV2Runtime)(Interface::as_raw(self));
@@ -293,11 +232,7 @@ impl ICLRRuntimeInfo {
     }
 
     /// Checks if the runtime has started and retrieves startup flags.
-    ///
-    /// # Arguments
-    ///
-    /// * `pbstarted` - Pointer to a `BOOL` that receives the runtime's started status.
-    /// * `pdwstartupflags` - Pointer to an unsigned integer to receive the startup flags.
+    #[inline]
     pub fn IsStarted(&self, pbstarted: *mut BOOL, pdwstartupflags: *mut u32) -> Result<()> {
         unsafe {
             let hr = (Interface::vtable(self).IsStarted)(

@@ -22,9 +22,9 @@ checksum = "baf1de4339761588bc0619e3cbc0120ee582ebb74b53b4efbf79117bd2da40fd"
 
 [[package]]
 name = "dinvk"
-version = "0.3.1"
+version = "0.4.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "91eaaa6645d9f59464500fe0c3b3f65308456d38f18de09fa0547f8eaea3643e"
+checksum = "0ddcae11e0e69466a318b2ca7e9e8c0ddf3ccdb7d282ca2dbdf263ba4e0a4e19"
 dependencies = [
  "bitflags",
  "cfg-if",
@@ -69,7 +69,7 @@ dependencies = [
 
 [[package]]
 name = "rustclr"
-version = "0.3.3"
+version = "0.3.4"
 dependencies = [
  "dinvk",
  "obfstr",

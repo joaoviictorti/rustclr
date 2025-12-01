@@ -1,6 +1,3 @@
-// Copyright (c) 2025 joaoviictorti
-// Licensed under the MIT License. See LICENSE file in the project root for details.
-
 use alloc::{string::String, vec::Vec};
 use core::{ffi::c_void, ops::Deref, ptr::null_mut};
 
@@ -29,48 +26,21 @@ pub struct _AppDomain(windows_core::IUnknown);
 
 impl _AppDomain {
     /// Loads an assembly into the current application domain from a byte slice.
-    ///
-    /// This method creates a `SAFEARRAY` from the given byte buffer and loads it using
-    /// the `Load_3` method.
-    ///
-    /// # Arguments
-    ///
-    /// * `buffer` - A slice of bytes representing the raw assembly data.
-    ///
-    /// # Returns
-    ///
-    /// If successful, returns an `_Assembly` instance.
+    #[inline]
     pub fn load_bytes(&self, buffer: &[u8]) -> Result<_Assembly> {
         let safe_array = create_safe_array_buffer(buffer)?;
         self.Load_3(safe_array)
     }
 
     /// Loads an assembly by its name in the current application domain.
-    ///
-    /// This method converts the assembly name to a `BSTR` and uses the `Load_2` method.
-    ///
-    /// # Arguments
-    ///
-    /// * `name` - The name of the assembly as a string slice.
-    ///
-    /// # Returns
-    ///
-    /// If successful, returns an `_Assembly` instance.
+    #[inline]
     pub fn load_name(&self, name: &str) -> Result<_Assembly> {
         let lib_name = name.to_bstr();
         self.Load_2(lib_name)
     }
 
     /// Creates an `_AppDomain` instance from a raw COM interface pointer.
-    ///
-    /// # Arguments
-    ///
-    /// * `raw` - A raw pointer to an `IUnknown` COM interface.
-    ///
-    /// # Returns
-    ///
-    /// Wraps the given COM interface as `_AppDomain`.
-    #[inline(always)]
+    #[inline]
     pub fn from_raw(raw: *mut c_void) -> Result<_AppDomain> {
         let iunknown = unsafe { IUnknown::from_raw(raw) };
         iunknown
@@ -79,14 +49,7 @@ impl _AppDomain {
     }
 
     /// Searches for an assembly by name within the current AppDomain.
-    ///
-    /// # Arguments
-    ///
-    /// * `assembly_name` – A substring to look for in the assembly's full display name.
-    ///
-    /// # Returns
-    ///
-    /// If an assembly is found matching the name.
+    #[inline]
     pub fn get_assembly(&self, assembly_name: &str) -> Result<_Assembly> {
         let assemblies = self.assemblies()?;
         for (name, assembly) in assemblies {
@@ -99,10 +62,7 @@ impl _AppDomain {
     }
 
     /// Retrieves all assemblies currently loaded in the AppDomain.
-    ///
-    /// # Returns
-    ///
-    /// A list of loaded assemblies and their display names.
+    #[inline]
     pub fn assemblies(&self) -> Result<Vec<(String, _Assembly)>> {
         let sa_assemblies = self.GetAssemblies()?;
         if sa_assemblies.is_null() {
@@ -134,14 +94,7 @@ impl _AppDomain {
     }
 
     /// Calls the `Load_3` method from the vtable of the `_AppDomain` interface.
-    ///
-    /// # Arguments
-    ///
-    /// * `rawAssembly` - The raw assembly data as a `SAFEARRAY` pointer.
-    ///
-    /// # Returns
-    ///
-    /// If successful, returns a `_Assembly` instance.
+    #[inline]
     pub fn Load_3(&self, rawAssembly: *mut SAFEARRAY) -> Result<_Assembly> {
         let mut result = null_mut();
         let hr = unsafe {
@@ -155,14 +108,7 @@ impl _AppDomain {
     }
 
     /// Calls the `Load_2` method from the vtable of the `_AppDomain` interface.
-    ///
-    /// # Arguments
-    ///
-    /// * `rawAssembly` - The raw assembly data as a `SAFEARRAY` pointer.
-    ///
-    /// # Returns
-    ///
-    /// If successful, returns a `_Assembly` instance.
+    #[inline]
     pub fn Load_2(&self, assemblyString: BSTR) -> Result<_Assembly> {
         let mut result = null_mut();
         let hr = unsafe {
@@ -176,10 +122,7 @@ impl _AppDomain {
     }
 
     /// Calls the `GetHashCode` method from the vtable of the `_AppDomain` interface.
-    ///
-    /// # Returns
-    ///
-    /// The hash code as a 32-bit unsigned integer.
+    #[inline]
     pub fn GetHashCode(&self) -> Result<u32> {
         let mut result = 0;
         let hr = unsafe { 
@@ -193,10 +136,7 @@ impl _AppDomain {
     }
 
     /// Retrieves the primary type associated with the current app domain.
-    ///
-    /// # Returns
-    ///
-    /// The `_Type` associated with the app domain.
+    #[inline]
     pub fn GetType(&self) -> Result<_Type> {
         let mut result = null_mut();
         let hr  = unsafe { 
@@ -210,10 +150,7 @@ impl _AppDomain {
     }
 
     /// Retrieves the assemblies currently loaded into the current AppDomain.
-    ///
-    /// # Returns
-    ///
-    /// Pointer to a COM SAFEARRAY of `_Assembly` references.
+    #[inline]
     pub fn GetAssemblies(&self) -> Result<*mut SAFEARRAY> {
         let mut result = null_mut();
         let hr: i32 = unsafe {
@@ -255,14 +192,10 @@ impl Deref for _AppDomain {
 #[repr(C)]
 pub struct _AppDomainVtbl {
     pub base__: windows_core::IUnknown_Vtbl,
-
-    // IDispatch methods
     GetTypeInfoCount: *const c_void,
     GetTypeInfo: *const c_void,
     GetIDsOfNames: *const c_void,
     Invoke: *const c_void,
-
-    // Methods specific to the COM interface
     get_ToString: *const c_void,
     Equals: *const c_void,
     GetHashCode: unsafe extern "system" fn(this: *mut c_void, pRetVal: *mut u32) -> HRESULT,

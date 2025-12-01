@@ -1,6 +1,3 @@
-// Copyright (c) 2025 joaoviictorti
-// Licensed under the MIT License. See LICENSE file in the project root for details.
-
 use alloc::string::String;
 use core::{
     ffi::c_void,
@@ -27,15 +24,6 @@ pub struct _MethodInfo(windows_core::IUnknown);
 
 impl _MethodInfo {
     /// Invokes the method represented by this `_MethodInfo` instance.
-    ///
-    /// # Arguments
-    ///
-    /// * `obj` - An optional `VARIANT` representing the target object for instance methods.
-    /// * `parameters` - An optional pointer to a `SAFEARRAY` containing the parameters for the method.
-    ///
-    /// # Returns
-    ///
-    /// The result as a `VARIANT`.
     #[inline]
     pub fn invoke(
         &self,
@@ -47,14 +35,6 @@ impl _MethodInfo {
     }
 
     /// Creates an `_MethodInfo` instance from a raw COM interface pointer.
-    ///
-    /// # Arguments
-    ///
-    /// * `raw` - A raw pointer to an `IUnknown` COM interface.
-    ///
-    /// # Returns
-    ///
-    /// Wraps the given COM interface as `_MethodInfo`.
     #[inline]
     pub fn from_raw(raw: *mut c_void) -> Result<_MethodInfo> {
         let iunknown = unsafe { IUnknown::from_raw(raw) };
@@ -64,10 +44,7 @@ impl _MethodInfo {
     }
 
     /// Retrieves the string representation of the method (equivalent to `ToString` in .NET).
-    ///
-    /// # Returns
-    ///
-    /// The string representation of the method.
+    #[inline]
     pub fn ToString(&self) -> Result<String> {
         unsafe {
             let mut result = null::<u16>();
@@ -87,10 +64,7 @@ impl _MethodInfo {
     }
 
     /// Retrieves the name of the method.
-    ///
-    /// # Returns
-    ///
-    /// The name of the method.
+    #[inline]
     pub fn get_name(&self) -> Result<String> {
         unsafe {
             let mut result = null::<u16>();
@@ -110,15 +84,7 @@ impl _MethodInfo {
     }
 
     /// Internal invocation method for the method, used by `invoke`.
-    ///
-    /// # Arguments
-    ///
-    /// * `obj` - A `VARIANT` representing the target instance or null for static methods.
-    /// * `parameters` - A pointer to a `SAFEARRAY` containing the parameters for the method.
-    ///
-    /// # Returns
-    ///
-    /// The result of the method invocation.
+    #[inline]
     pub fn Invoke_3(&self, obj: VARIANT, parameters: *mut SAFEARRAY) -> Result<VARIANT> {
         unsafe {
             let mut result = core::mem::zeroed();
@@ -138,10 +104,7 @@ impl _MethodInfo {
     }
 
     /// Retrieves the parameters of the method as a `SAFEARRAY`.
-    ///
-    /// # Returns
-    ///
-    /// Pointer to the `SAFEARRAY` containing the method's parameters.
+    #[inline]
     pub fn GetParameters(&self) -> Result<*mut SAFEARRAY> {
         let mut result = null_mut();
         let hr = unsafe {
@@ -155,10 +118,7 @@ impl _MethodInfo {
     }
 
     /// Calls the `GetHashCode` method from the vtable of the `_MethodInfo` interface.
-    ///
-    /// # Returns
-    ///
-    /// The hash code as a 32-bit unsigned integer.
+    #[inline]
     pub fn GetHashCode(&self) -> Result<u32> {
         let mut result = 0;
         let hr = unsafe { 
@@ -175,13 +135,7 @@ impl _MethodInfo {
     }
 
     /// Calls the `GetBaseDefinition` method from the vtable of the `_MethodInfo` interface.
-    ///
-    /// This method retrieves the base definition of the current method,
-    /// which represents the original declaration of the method in the inheritance chain.
-    ///
-    /// # Returns
-    ///
-    /// Instance of `_MethodInfo`, representing the base method.
+    #[inline]
     pub fn GetBaseDefinition(&self) -> Result<_MethodInfo> {
         let mut result = null_mut();
         let hr = unsafe {
@@ -195,10 +149,7 @@ impl _MethodInfo {
     }
 
     /// Retrieves the main type associated with the method.
-    ///
-    /// # Returns
-    ///
-    /// The `_Type` associated with the method.
+    #[inline]
     pub fn GetType(&self) -> Result<_Type> {
         let mut result = null_mut();
         let hr = unsafe { (Interface::vtable(self).GetType)(Interface::as_raw(self), &mut result) };

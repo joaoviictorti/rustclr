@@ -1,6 +1,6 @@
 [package]
 name = "rustclr"
-version = "0.3.3"
+version = "0.3.4"
 edition = "2024"
 license = "MIT"
 readme = "README.md"
@@ -19,7 +19,7 @@ include = [
 ]
 
 [dependencies]
-dinvk = "0.3.1"
+dinvk = "0.4.2"
 obfstr = "0.4.4"
 thiserror = { version = "2.0.12", default-features = false }
 windows-core = { version = "0.61.2", default-features = false }

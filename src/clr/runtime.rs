@@ -1,6 +1,3 @@
-// Copyright (c) 2025 joaoviictorti
-// Licensed under the MIT License. See LICENSE file in the project root for details.
-
 use core::{
     mem::transmute,
     ffi::c_void, 
@@ -13,7 +10,7 @@ use alloc::{
 };
 
 use obfstr::obfstr as s;
-use dinvk::{
+use dinvk::winapis::{
     NtCurrentProcess, 
     NtProtectVirtualMemory, 
     NT_SUCCESS
@@ -25,12 +22,8 @@ use windows_sys::Win32::{
 };
 
 use super::hosting::RustClrControl;
-use crate::com::*;
-use crate::error::ClrError;
-use super::{ 
-    Result, 
-    Variant,
-};
+use crate::{com::*, variant::Variant};
+use crate::error::{ClrError, Result};
 
 /// Holds the runtime state and execution configuration for the CLR.
 #[derive(Default, Debug, Clone)]
@@ -55,7 +48,7 @@ pub struct RustClrRuntime<'a> {
 }
 
 impl<'a> RustClrRuntime<'a> {
-    /// Creates a new `RustClrRuntime`.
+    /// Creates a new [`RustClrRuntime`].
     pub fn new(buffer: &'a [u8]) -> Self {
         Self {
             buffer,
@@ -68,6 +61,9 @@ impl<'a> RustClrRuntime<'a> {
     }
 
     /// Initializes the CLR environment and prepares it for execution.
+    ///
+    /// This loads the requested CLR version, resolves the assembly identity,
+    /// starts the runtime if needed, and creates the initial application domain.
     pub fn prepare(&mut self) -> Result<()> {
         // Creates the MetaHost to access the available CLR versions
         let meta_host = self.create_meta_host()?;
@@ -110,14 +106,14 @@ impl<'a> RustClrRuntime<'a> {
         Ok(())
     }
 
-    /// Returns the currently active AppDomain.
+    /// Returns the active application domain.
     pub fn get_app_domain(&mut self) -> Result<_AppDomain> {
         self.app_domain
             .clone()
             .ok_or(ClrError::NoDomainAvailable)
     }
 
-    /// Creates an instance of `ICLRMetaHost`.
+    /// Creates an instance of [`ICLRMetaHost`].
     fn create_meta_host(&self) -> Result<ICLRMetaHost> {
         CLRCreateInstance::<ICLRMetaHost>(&CLSID_CLRMETAHOST)
             .map_err(|e| ClrError::MetaHostCreationError(format!("{e}")))
@@ -155,7 +151,8 @@ impl<'a> RustClrRuntime<'a> {
         Ok(())
     }
 
-    /// Initializes the application domain with the specified name or uses the default domain.
+    /// Initializes the application domain with the specified domain name or
+    /// creates a unique default domain.
     fn init_app_domain(&mut self, cor_runtime_host: &ICorRuntimeHost) -> Result<()> {
         let app_domain = if let Some(domain_name) = &self.domain_name {
             let wide_domain_name = domain_name
@@ -244,7 +241,10 @@ pub fn uuid() -> uuid::Uuid {
     uuid::Uuid::from_bytes(buf)
 }
 
-/// Patches `System.Environment.Exit` to prevent the .NET process from terminating.
+/// Patches `System.Environment.Exit` to prevent the CLR from terminating the host process.
+///
+/// This replaces the first byte of `Environment.Exit` with `0xC3` (`ret`), effectively
+/// neutralizing the method.
 pub fn patch_exit(mscorlib: &_Assembly) -> Result<()> {
     // Resolve System.Environment type and the Exit method
     let env = mscorlib.resolve_type(s!("System.Environment"))?;

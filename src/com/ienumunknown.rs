@@ -1,6 +1,3 @@
-// Copyright (c) 2025 joaoviictorti
-// Licensed under the MIT License. See LICENSE file in the project root for details.
-
 use core::{
     ffi::c_void, 
     mem::transmute, 
@@ -20,15 +17,6 @@ pub struct IEnumUnknown(windows_core::IUnknown);
 
 impl IEnumUnknown {
     /// Retrieves the next set of interfaces from the enumerator.
-    ///
-    /// # Arguments
-    ///
-    /// * `rgelt` - A mutable slice of `Option<IUnknown>` where the results will be stored.
-    /// * `pceltfetched` - An optional pointer that receives the number of elements fetched.
-    ///
-    /// # Returns
-    ///
-    /// An HRESULT indicating success or failure.
     #[inline]
     pub fn Next(
         &self,
@@ -46,10 +34,6 @@ impl IEnumUnknown {
     }
 
     /// Skips a specified number of elements in the enumeration sequence.
-    ///
-    /// # Arguments
-    ///
-    /// * `celt` - The number of elements to skip.
     #[inline]
     pub fn Skip(&self, celt: u32) -> Result<()> {
         let hr = unsafe { (Interface::vtable(self).Skip)(Interface::as_raw(self), celt) };
@@ -72,10 +56,6 @@ impl IEnumUnknown {
     }
 
     /// Creates a new enumerator with the same state as the current one.
-    ///
-    /// # Returns
-    ///
-    /// A pointer to the new `IEnumUnknown`.
     #[inline]
     pub fn Clone(&self) -> Result<*mut IEnumUnknown> {
         let mut result = null_mut();

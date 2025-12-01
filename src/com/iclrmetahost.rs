@@ -1,6 +1,3 @@
-// Copyright (c) 2025 joaoviictorti
-// Licensed under the MIT License. See LICENSE file in the project root for details.
-
 use alloc::{collections::BTreeMap, string::String, vec};
 use core::{ffi::c_void, ops::Deref, ptr::null_mut};
 
@@ -32,10 +29,6 @@ pub struct ICLRMetaHost(windows_core::IUnknown);
 
 impl ICLRMetaHost {
     /// Retrieves a map of available runtime versions and corresponding runtime information.
-    ///
-    /// # Returns
-    ///
-    /// A map where keys are runtime versions.
     #[inline]
     pub fn runtimes(&self) -> Result<BTreeMap<String, ICLRRuntimeInfo>> {
         let enum_unknown = self.EnumerateInstalledRuntimes()?;
@@ -64,14 +57,6 @@ impl ICLRMetaHost {
     }
 
     /// Retrieves a runtime based on the specified version.
-    ///
-    /// # Arguments
-    ///
-    /// * `pwzversion` - A `PCWSTR` reference to the .NET runtime version to retrieve.
-    ///
-    /// # Returns
-    ///
-    /// The requested runtime as the generic type `T` if successful.
     #[inline]
     pub fn GetRuntime<T>(&self, pwzversion: PCWSTR) -> Result<T>
     where
@@ -94,10 +79,7 @@ impl ICLRMetaHost {
     }
 
     /// Enumerates all installed runtimes on the system.
-    ///
-    /// # Returns
-    ///
-    /// An enumerator containing all installed CLR runtimes.
+    #[inline]
     pub fn EnumerateInstalledRuntimes(&self) -> Result<IEnumUnknown> {
         unsafe {
             let mut result = core::mem::zeroed();
@@ -114,12 +96,7 @@ impl ICLRMetaHost {
     }
 
     /// Retrieves the CLR version from a specified file.
-    ///
-    /// # Arguments
-    ///
-    /// * `pwzfilepath` - A `PCWSTR` pointing to the file path.
-    /// * `pwzbuffer` - A mutable `PWSTR` buffer to store the version string.
-    /// * `pcchbuffer` - A pointer to an unsigned integer representing the buffer size.
+    #[inline]
     pub fn GetVersionFromFile(
         &self,
         pwzfilepath: PCWSTR,
@@ -142,14 +119,7 @@ impl ICLRMetaHost {
     }
 
     /// Enumerates all loaded CLR runtimes in the specified process.
-    ///
-    /// # Arguments
-    ///
-    /// * `hndprocess` - A handle to the process to inspect.
-    ///
-    /// # Returns
-    ///
-    /// An enumerator for loaded runtimes.
+    #[inline]
     pub fn EnumerateLoadedRuntimes(&self, hndprocess: HANDLE) -> Result<IEnumUnknown> {
         unsafe {
             let mut result = core::mem::zeroed();
@@ -167,10 +137,7 @@ impl ICLRMetaHost {
     }
 
     /// Registers a callback notification for when a runtime is loaded.
-    ///
-    /// # Arguments
-    ///
-    /// * `pcallbackfunction` - A pointer to the callback function.
+    #[inline]
     pub fn RequestRuntimeLoadedNotification(
         &self,
         pcallbackfunction: RuntimeLoadedCallbackFnPtr,
@@ -189,10 +156,7 @@ impl ICLRMetaHost {
     }
 
     /// Queries for a legacy .NET v2 runtime binding.
-    ///
-    /// # Returns
-    ///
-    /// An instance of the requested legacy binding as type `T`.
+    #[inline]
     pub fn QueryLegacyV2RuntimeBinding<T>(&self) -> Result<T>
     where
         T: Interface,
@@ -213,10 +177,7 @@ impl ICLRMetaHost {
     }
 
     /// Terminates the process with the specified exit code.
-    ///
-    /// # Arguments
-    ///
-    /// * `iexitcode` - An integer specifying the process exit code.
+    #[inline]
     pub fn ExitProcess(&self, iexitcode: i32) -> Result<()> {
         unsafe {
             let hr = (Interface::vtable(self).ExitProcess)(Interface::as_raw(self), iexitcode);

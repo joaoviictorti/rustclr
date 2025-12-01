@@ -1,6 +1,3 @@
-// Copyright (c) 2025 joaoviictorti
-// Licensed under the MIT License. See LICENSE file in the project root for details.
-
 use alloc::vec::Vec;
 use core::{ffi::c_void, ops::Deref, ptr::null_mut};
 
@@ -20,14 +17,6 @@ pub struct ICorRuntimeHost(windows_core::IUnknown);
 
 impl ICorRuntimeHost {
     /// Creates a new .NET AppDomain with the specified name.
-    ///
-    /// # Arguments
-    ///
-    /// * `name` - A string representing the name of the AppDomain to be created.
-    ///
-    /// # Returns
-    ///
-    /// An instance of `_AppDomain`.
     #[inline]
     pub fn create_domain(&self, name: &str) -> Result<_AppDomain> {
         let name = name.encode_utf16().chain(Some(0)).collect::<Vec<u16>>();
@@ -36,30 +25,18 @@ impl ICorRuntimeHost {
     }
 
     /// Starts the .NET runtime host.
-    ///
-    /// # Returns
-    ///
-    /// An HRESULT indicating success or failure.
     #[inline]
     pub fn Start(&self) -> HRESULT {
         unsafe { (Interface::vtable(self).Start)(Interface::as_raw(self)) }
     }
 
     /// Stops the .NET runtime host.
-    ///
-    /// # Returns
-    ///
-    /// An HRESULT indicating success or failure.
     #[inline]
     pub fn Stop(&self) -> HRESULT {
         unsafe { (Interface::vtable(self).Stop)(Interface::as_raw(self)) }
     }
 
     /// Retrieves the default application domain for the runtime host.
-    ///
-    /// # Returns
-    ///
-    /// The default application domain.
     pub fn GetDefaultDomain(&self) -> Result<_AppDomain> {
         unsafe {
             let mut result = null_mut();
@@ -74,15 +51,7 @@ impl ICorRuntimeHost {
     }
 
     /// Creates a new application domain with the specified name and identity.
-    ///
-    /// # Arguments
-    ///
-    /// * `pwzFriendlyName` - The name for the new application domain.
-    /// * `pIdentityArray` - Pointer to an `IUnknown` array representing the domain identity.
-    ///
-    /// # Returns
-    ///
-    /// The created application domain.
+    #[inline]
     pub fn CreateDomain(
         &self,
         pwzFriendlyName: PCWSTR,
@@ -105,6 +74,7 @@ impl ICorRuntimeHost {
     }
 
     /// Creates a logical thread state within the runtime host.
+    #[inline]
     pub fn CreateLogicalThreadState(&self) -> Result<()> {
         unsafe {
             let hr = (Interface::vtable(self).CreateLogicalThreadState)(Interface::as_raw(self));
@@ -117,6 +87,7 @@ impl ICorRuntimeHost {
     }
 
     /// Deletes the current logical thread state.
+    #[inline]
     pub fn DeleteLogicalThreadState(&self) -> Result<()> {
         unsafe {
             let hr = (Interface::vtable(self).DeleteLogicalThreadState)(Interface::as_raw(self));
@@ -129,10 +100,7 @@ impl ICorRuntimeHost {
     }
 
     /// Switches into the logical thread state.
-    ///
-    /// # Returns
-    ///
-    /// The fiber cookie.
+    #[inline]
     pub fn SwitchInLogicalThreadState(&self) -> Result<u32> {
         unsafe {
             let mut result = 0;
@@ -149,10 +117,7 @@ impl ICorRuntimeHost {
     }
 
     /// Switches out of the logical thread state.
-    ///
-    /// # Returns
-    ///
-    /// A pointer to the fiber cookie.
+    #[inline]
     pub fn SwitchOutLogicalThreadState(&self) -> Result<*mut u32> {
         unsafe {
             let mut result = null_mut();
@@ -169,10 +134,7 @@ impl ICorRuntimeHost {
     }
 
     /// Retrieves the number of locks held by the current logical thread.
-    ///
-    /// # Returns
-    ///
-    /// The count of locks.
+    #[inline]
     pub fn LocksHeldByLogicalThread(&self) -> Result<u32> {
         unsafe {
             let mut result = 0;
@@ -189,14 +151,7 @@ impl ICorRuntimeHost {
     }
 
     /// Maps a file handle to an `HMODULE`.
-    ///
-    /// # Arguments
-    ///
-    /// * `h_file` - A handle to the file to be mapped.
-    ///
-    /// # Returns
-    ///
-    /// An `HMODULE` for the mapped file.
+    #[inline]
     pub fn MapFile(&self, h_file: HANDLE) -> Result<HMODULE> {
         unsafe {
             let mut result = null_mut();
@@ -211,10 +166,7 @@ impl ICorRuntimeHost {
     }
 
     /// Retrieves the configuration for the runtime host.
-    ///
-    /// # Returns
-    ///
-    /// A pointer to the configuration object.
+    #[inline]
     pub fn GetConfiguration(&self) -> Result<*mut c_void> {
         unsafe {
             let mut result = null_mut();
@@ -229,10 +181,7 @@ impl ICorRuntimeHost {
     }
 
     /// Enumerates application domains managed by the runtime host.
-    ///
-    /// # Returns
-    ///
-    /// An enumeration handle.
+    #[inline]
     pub fn EnumDomains(&self) -> Result<*mut c_void> {
         unsafe {
             let mut result = null_mut();
@@ -246,14 +195,7 @@ impl ICorRuntimeHost {
     }
 
     /// Retrieves the next application domain in the enumeration.
-    ///
-    /// # Arguments
-    ///
-    /// * `hEnum` - Handle to the ongoing enumeration.
-    ///
-    /// # Returns
-    ///
-    /// The next app domain.
+    #[inline]
     pub fn NextDomain(&self, hEnum: *mut c_void) -> Result<IUnknown> {
         unsafe {
             let mut result = null_mut();
@@ -267,10 +209,7 @@ impl ICorRuntimeHost {
     }
 
     /// Closes an application domain enumeration.
-    ///
-    /// # Arguments
-    ///
-    /// * `hEnum` - Handle to the enumeration to be closed.
+    #[inline]
     pub fn CloseEnum(&self, hEnum: *mut c_void) -> Result<()> {
         unsafe {
             let hr = (Interface::vtable(self).CloseEnum)(Interface::as_raw(self), hEnum);
@@ -283,16 +222,7 @@ impl ICorRuntimeHost {
     }
 
     /// Creates a new application domain with specified configuration.
-    ///
-    /// # Arguments
-    ///
-    /// * `pwzFriendlyName` - The friendly name for the new app domain.
-    /// * `psSetup` - Pointer to setup configuration.
-    /// * `pEvidence` - Pointer to evidence object.
-    ///
-    /// # Returns
-    ///
-    /// The new app domain.
+    #[inline]
     pub fn CreateDomainEx(
         &self,
         pwzFriendlyName: PCWSTR,
@@ -317,10 +247,7 @@ impl ICorRuntimeHost {
     }
 
     /// Creates a setup configuration object for application domains.
-    ///
-    /// # Returns
-    ///
-    /// The setup configuration object.
+    #[inline]
     pub fn CreateDomainSetup(&self) -> Result<IUnknown> {
         unsafe {
             let mut result = null_mut();
@@ -335,10 +262,7 @@ impl ICorRuntimeHost {
     }
 
     /// Creates an evidence object for application domains.
-    ///
-    /// # Returns
-    ///
-    /// The evidence object.
+    #[inline]
     pub fn CreateEvidence(&self) -> Result<IUnknown> {
         unsafe {
             let mut result = null_mut();
@@ -352,10 +276,7 @@ impl ICorRuntimeHost {
     }
 
     /// Unloads the specified application domain.
-    ///
-    /// # Arguments
-    ///
-    /// * `pAppDomain` - Pointer to the app domain to unload.
+    #[inline]
     pub fn UnloadDomain(&self, pAppDomain: *mut IUnknown) -> Result<()> {
         unsafe {
             let hr = (Interface::vtable(self).UnloadDomain)(Interface::as_raw(self), pAppDomain);
@@ -368,10 +289,7 @@ impl ICorRuntimeHost {
     }
 
     /// Retrieves the current application domain.
-    ///
-    /// # Returns
-    ///
-    /// The current app domain.
+    #[inline]
     pub fn CurrentDomain(&self) -> Result<_AppDomain> {
         unsafe {
             let mut result = null_mut();

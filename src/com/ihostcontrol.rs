@@ -1,6 +1,3 @@
-// Copyright (c) 2025 joaoviictorti
-// Licensed under the MIT License. See LICENSE file in the project root for details.
-
 use core::{ffi::c_void, ops::Deref};
 use windows_core::{GUID, Interface};
 
@@ -12,11 +9,6 @@ pub struct IHostControl(windows_core::IUnknown);
 /// Trait representing the implementation of the `IHostControl` interface.
 pub trait IHostControl_Impl: windows_core::IUnknownImpl {
     /// Requests a host-provided manager object that implements the interface specified by `riid`.
-    ///
-    /// # Arguments
-    ///
-    /// * `riid` - The interface identifier (IID) of the requested manager.
-    /// * `ppobject` - Output pointer that receives the interface pointer.
     fn GetHostManager(
         &self,
         riid: *const GUID,
@@ -24,11 +16,6 @@ pub trait IHostControl_Impl: windows_core::IUnknownImpl {
     ) -> windows_core::Result<()>;
 
     /// Notifies the host that the CLR has created an `AppDomainManager` for a new AppDomain.
-    ///
-    /// # Arguments
-    ///
-    /// * `dwappdomainid` - The ID of the AppDomain.
-    /// * `punkappdomainmanager` - A pointer to the AppDomainManager COM object.
     fn SetAppDomainManager(
         &self,
         dwappdomainid: u32,

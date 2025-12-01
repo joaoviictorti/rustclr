@@ -1,6 +1,3 @@
-// Copyright (c) 2025 joaoviictorti
-// Licensed under the MIT License. See LICENSE file in the project root for details.
-
 use core::ptr::null_mut;
 use alloc::{
     boxed::Box,
@@ -12,20 +9,14 @@ use alloc::{
 
 use obfstr::obfstr as s;
 use windows_core::{Interface, PCWSTR};
-use windows_sys::Win32::System::Variant::{
-    VARIANT, 
-    VariantClear
-};
+use windows_sys::Win32::System::Variant::{VARIANT, VariantClear};
 
+use crate::com::*;
+use crate::error::{ClrError, Result};
+use crate::string::ComString;
+use crate::variant::create_safe_array_args;
 use self::file::{read_file, validate_file};
 use self::runtime::{RustClrRuntime, uuid};
-use super::com::*;
-use super::error::{ClrError, Result};
-use super::string::ComString;
-use super::variant::{
-    Variant, 
-    create_safe_array_args
-};
 
 mod hosting;
 mod file;
@@ -34,6 +25,24 @@ mod runtime;
 pub use runtime::RuntimeVersion;
 
 /// Represents a Rust interface to the Common Language Runtime (CLR).
+/// 
+/// # Example
+///
+/// ```
+/// use rustclr::{RustClr, RuntimeVersion};
+/// use std::fs;
+/// 
+/// // Load a sample .NET assembly into a buffer
+/// let buffer = fs::read("examples/sample.exe")?;
+/// let mut clr = RustClr::new(&buffer)?
+///     .with_runtime_version(RuntimeVersion::V4)
+///     .with_domain("CustomDomain")
+///     .with_args(vec!["arg1", "arg2"])
+///     .with_output();
+/// 
+/// let output = clr.run()?;
+/// println!("Output: {}", output);
+/// ```
 #[derive(Default, Debug, Clone)]
 pub struct RustClr<'a> {
     /// Encapsulates all runtime-related state and preparation logic.
@@ -50,29 +59,12 @@ pub struct RustClr<'a> {
 }
 
 impl<'a> RustClr<'a> {
-    /// Creates a new `RustClr`.
+    /// Creates a new [`RustClr`].
     ///
-    /// # Arguments
+    /// # Errors
     ///
-    /// * `source` - A value convertible into [`ClrSource`], representing either a file path or a byte buffer.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// use rustclr::{RustClr, RuntimeVersion};
-    /// use std::fs;
-    /// 
-    /// // Load a sample .NET assembly into a buffer
-    /// let buffer = fs::read("examples/sample.exe")?;
-    /// let mut clr = RustClr::new(&buffer)?
-    ///     .with_runtime_version(RuntimeVersion::V4)
-    ///     .with_domain("CustomDomain")
-    ///     .with_args(vec!["arg1", "arg2"])
-    ///     .with_output();
-    /// 
-    /// let output = clr.run()?;
-    /// println!("Output: {}", output);
-    /// ```
+    /// Returned when the file cannot be read or when the buffer does not represent
+    /// a valid .NET executable.
     pub fn new<T: Into<ClrSource<'a>>>(source: T) -> Result<Self> {
         let buffer = match source.into() {
             // Try reading the file
@@ -99,13 +91,13 @@ impl<'a> RustClr<'a> {
         self
     }
 
-    /// Sets the application domain name to use.
+    /// Sets the application domain name.
     pub fn with_domain(mut self, domain_name: &str) -> Self {
         self.runtime.domain_name = Some(domain_name.to_string());
         self
     }
 
-    /// Sets the arguments to pass to the .NET assembly's entry point.
+    /// Sets arguments to be passed to the assembly's entry point.
     pub fn with_args(mut self, args: Vec<&str>) -> Self {
         self.args = Some(args.iter().map(|&s| s.to_string()).collect());
         self
@@ -125,27 +117,10 @@ impl<'a> RustClr<'a> {
 
     /// Loads the .NET assembly and runs its entry point.
     ///
-    /// # Returns
+    /// # Errors
     ///
-    /// The output from the .NET assembly if executed successfully.
-    /// 
-    /// # Example
-    /// 
-    /// ```
-    /// use rustclr::{RustClr, RuntimeVersion};
-    /// use std::fs;
-    ///
-    /// // Load a sample .NET assembly into a buffer
-    /// let buffer = fs::read("examples/sample.exe")?;
-    /// let mut clr = RustClr::new(&buffer)?
-    ///     .with_runtime_version(RuntimeVersion::V4)
-    ///     .with_domain("CustomDomain")
-    ///     .with_args(vec!["arg1", "arg2"])
-    ///     .with_output();
-    ///
-    /// let output = clr.run()?;
-    /// println!("Output: {}", output);
-    /// ```
+    /// Returned when CLR initialization fails, when the assembly cannot be loaded,
+    /// when `Main` cannot be invoked, or when output capture is enabled but fails.
     pub fn run(&mut self) -> Result<String> {
         // Prepare the CLR environment
         self.runtime.prepare()?;
@@ -156,10 +131,9 @@ impl<'a> RustClr<'a> {
         // Loads the .NET assembly specified by name
         let assembly = domain.load_name(&self.runtime.identity_assembly)?;
 
-        // Prepares the parameters for the `Main` method
-        let parameters = self.args.as_ref().map_or_else(
-            || Ok(null_mut()),
-            |args| create_safe_array_args(args.to_vec()),
+        // Prepares the args for the `Main` method
+        let args = create_safe_array_args(
+            self.args.clone().unwrap_or_default()
         )?;
 
         // Retrieves the mscorlib library
@@ -180,7 +154,7 @@ impl<'a> RustClr<'a> {
         };
 
         // Invokes the `Main` method of the assembly
-        assembly.run(parameters)?;
+        assembly.run(args)?;
 
         // Optionally capture redirected output
         let output = match output_manager {
@@ -211,16 +185,12 @@ pub struct ClrOutput<'a> {
 }
 
 impl<'a> ClrOutput<'a> {
-    /// Creates a new `ClrOutput`.
-    ///
-    /// # Arguments
-    ///
-    /// * `mscorlib` - An instance of the `_Assembly` representing `mscorlib`.
+    /// Creates a new [`ClrOutput`].
     pub fn new(mscorlib: &'a _Assembly) -> Self {
         Self { string_writer: None, mscorlib }
     }
 
-    /// Redirects standard output and error streams to a `StringWriter`.
+    /// Redirects standard output and error streams to a new `StringWriter`.
     pub fn redirect(&mut self) -> Result<()> {
         let console = self.mscorlib.resolve_type(s!("System.Console"))?;
         let string_writer = self.mscorlib.create_instance(s!("System.IO.StringWriter"))?;
@@ -246,10 +216,6 @@ impl<'a> ClrOutput<'a> {
     }
 
     /// Captures the content of the `StringWriter` as a `String`.
-    ///
-    /// # Returns
-    ///
-    /// The captured output as a string if successful.
     pub fn capture(&self) -> Result<String> {
         // Ensure that the StringWriter instance is available
         let mut instance = self.string_writer
@@ -294,10 +260,6 @@ pub struct RustClrEnv {
 
 impl RustClrEnv {
     /// Creates a new `RustClrEnv`.
-    ///
-    /// # Arguments
-    ///
-    /// * `runtime_version` - The .NET runtime version to use.
     pub fn new(runtime_version: Option<RuntimeVersion>) -> Result<Self> {
         // Initialize MetaHost
         let meta_host = CLRCreateInstance::<ICLRMetaHost>(&CLSID_CLRMETAHOST)
@@ -377,30 +339,78 @@ pub enum ClrSource<'a> {
 }
 
 impl<'a> From<&'a str> for ClrSource<'a> {
-    /// Converts a file path (`&'a str`) into a [`ClrSource::File`].
     fn from(file: &'a str) -> Self {
         ClrSource::File(file)
     }
 }
 
 impl<'a, const N: usize> From<&'a [u8; N]> for ClrSource<'a> {
-    /// Converts a fixed-size byte array into a [`ClrSource::Buffer`].
     fn from(buffer: &'a [u8; N]) -> Self {
         ClrSource::Buffer(buffer)
     }
 }
 
 impl<'a> From<&'a [u8]> for ClrSource<'a> {
-    /// Converts a byte slice into a [`ClrSource::Buffer`].
     fn from(buffer: &'a [u8]) -> Self {
         ClrSource::Buffer(buffer)
     }
 }
 
 impl<'a> From<&'a Vec<u8>> for ClrSource<'a> {
-    /// Converts a [`Vec<u8>`] reference into a [`ClrSource::Buffer`].
     fn from(buffer: &'a Vec<u8>) -> Self {
         ClrSource::Buffer(buffer.as_slice())
     }
 }
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_create_domain() -> Result<()> {
+        let output = RustClr::new("files/RustClr/bin/Release/RustClr.exe")?
+            .with_domain("CustomDomain")
+            .with_output()
+            .run()?;
+
+        assert!(output.contains("[CLR] AppDomain: CustomDomain"));
+        Ok(())
+    }
+
+    #[test]
+    fn test_with_args() -> Result<()> {
+        let output = RustClr::new("files/RustClr/bin/Release/RustClr.exe")?
+            .with_args(vec!["rustclr"])
+            .with_output()
+            .run()?;
+
+        assert!(
+            output.contains("[CLR] Args:") 
+            && output.contains("- rustclr")
+        );
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_without_args() -> Result<()> {
+        let output = RustClr::new("files/RustClr/bin/Release/RustClr.exe")?
+            .with_output()
+            .run()?;
+
+        assert!(output.contains("[CLR] No args provided"));
+        Ok(())
+    }
+
+    #[test]
+    fn test_with_patch_exit() -> Result<()> {
+        let output = RustClr::new("files/RustClr/bin/Release/RustClr.exe")?
+            .with_output()
+            .with_patch_exit()
+            .run()?;
+
+        assert!(output.contains("[CLR] Exit was intercepted"));
+
+        Ok(())
+    }
+}

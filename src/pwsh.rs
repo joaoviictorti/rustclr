@@ -1,19 +1,21 @@
-// Copyright (c) 2025 joaoviictorti
-// Licensed under the MIT License. See LICENSE file in the project root for details.
-
 use alloc::{format, string::String, vec};
 use obfstr::obfstr as s;
 
-use super::error::Result;
-use super::com::_Assembly;
-use super::string::ComString;
-use super::{Invocation, RustClrEnv};
-use super::variant::{
-    Variant,
-    create_safe_args
-};
+use crate::error::Result;
+use crate::com::_Assembly;
+use crate::string::ComString;
+use crate::{Invocation, RustClrEnv};
+use crate::variant::{Variant, create_safe_args};
 
 /// Provides a persistent interface for executing PowerShell commands.
+/// 
+/// # Example
+/// 
+/// ```
+/// let pwsh = PowerShell::new()?;
+/// let out = pwsh.execute("whoami")?;
+/// print!("Output: {}", out);
+/// ```
 pub struct PowerShell {
     /// The loaded .NET automation assembly.
     automation: _Assembly,
@@ -48,14 +50,6 @@ impl PowerShell {
     }
 
     /// Executes a PowerShell command and returns its output as a string.
-    ///
-    /// # Arguments
-    ///
-    /// * `command` - A PowerShell command to be executed.
-    ///
-    /// # Returns
-    ///
-    /// The textual output of the PowerShell command.
     pub fn execute(&self, command: &str) -> Result<String> {
         // Invoke `CreateRunspace` method.
         let runspace_factory = self.automation.resolve_type(
@@ -150,5 +144,26 @@ impl PowerShell {
                 .bstrVal
                 .to_string()
         })
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::error::Result;
+    use super::PowerShell;
+
+    #[test]
+    fn test_powershell() -> Result<()> {
+        let pwsh = PowerShell::new()?;
+        let output = pwsh.execute("whoami /all")?;
+        assert!(
+            output.contains("\\")
+                || output.contains("User")
+                || output.contains("Account")
+                || output.contains("Authority"),
+            "whoami output does not look valid: {output}"
+        );
+
+        Ok(())
     }
 }

@@ -1,6 +1,3 @@
-// Copyright (c) 2025 joaoviictorti
-// Licensed under the MIT License. See LICENSE file in the project root for details.
-
 use alloc::{string::String, vec::Vec};
 use core::{
     ffi::c_void,
@@ -35,28 +32,14 @@ pub struct _Type(windows_core::IUnknown);
 
 impl _Type {
     /// Retrieves a method by its name from the type.
-    ///
-    /// # Arguments
-    ///
-    /// * `name` - A string slice representing the method name.
-    ///
-    /// # Returns
-    ///
-    /// The method's `_MethodInfo`.
+    #[inline]
     pub fn method(&self, name: &str) -> Result<_MethodInfo> {
         let method_name = name.to_bstr();
         self.GetMethod_6(method_name)
     }
 
     /// Finds a method by signature from the type.
-    ///
-    /// # Arguments
-    ///
-    /// * `name` - A string slice representing the method signature.
-    ///
-    /// # Returns
-    ///
-    /// The matching `_MethodInfo`.
+    #[inline]
     pub fn method_signature(&self, name: &str) -> Result<_MethodInfo> {
         let methods = self.methods();
         if let Ok(methods) = methods {
@@ -71,14 +54,7 @@ impl _Type {
     }
 
     /// Finds a property by signature from the type.
-    ///
-    /// # Arguments
-    ///
-    /// * `name` - A string slice representing the property signature.
-    ///
-    /// # Returns
-    ///
-    /// The matching `_PropertyInfo`.
+    #[inline]
     pub fn property_signature(&self, name: &str) -> Result<_PropertyInfo> {
         let properties = self.properties();
         if let Ok(properties) = properties {
@@ -93,14 +69,7 @@ impl _Type {
     }
 
     /// Retrieves a property by name from the type.
-    ///
-    /// # Arguments
-    ///
-    /// * `name` - A string slice representing the property name.
-    ///
-    /// # Returns
-    ///
-    /// The COM pointer to the property.
+    #[inline]
     pub fn property(&self, name: &str) -> Result<_PropertyInfo> {
         unsafe {
             let binding_flags = BindingFlags::Public
@@ -127,17 +96,7 @@ impl _Type {
     }
 
     /// Invokes a method on the type.
-    ///
-    /// # Arguments
-    ///
-    /// * `name` - The name of the method to invoke.
-    /// * `instance` - An optional `VARIANT` representing the instance.
-    /// * `args` - Optional vector of `VARIANT` arguments.
-    /// * `invocation_type` - The `Invocation`, indicating if it's a static or instance method.
-    ///
-    /// # Returns
-    ///
-    /// The result as `VARIANT`.
+    #[inline]
     pub fn invoke(
         &self,
         name: &str,
@@ -170,10 +129,7 @@ impl _Type {
     }
 
     /// Retrieves all methods of the type.
-    ///
-    /// # Returns
-    ///
-    /// A vector of method names and `_MethodInfo`.
+    #[inline]
     pub fn methods(&self) -> Result<Vec<(String, _MethodInfo)>> {
         let binding_flags = BindingFlags::Public
             | BindingFlags::Instance
@@ -210,10 +166,7 @@ impl _Type {
     }
 
     /// Retrieves all properties of the type.
-    ///
-    /// # Returns
-    ///
-    /// A vector of property names and `_PropertyInfo`.
+    #[inline]
     pub fn properties(&self) -> Result<Vec<(String, _PropertyInfo)>> {
         let binding_flags = BindingFlags::Public
             | BindingFlags::Instance
@@ -251,15 +204,7 @@ impl _Type {
     }
 
     /// Creates an `_Type` instance from a raw COM interface pointer.
-    ///
-    /// # Arguments
-    ///
-    /// * `raw` - A raw pointer to an `IUnknown` COM interface.
-    ///
-    /// # Returns
-    ///
-    /// The `_Type` wrapping the COM interface.
-    #[inline(always)]
+    #[inline]
     pub fn from_raw(raw: *mut c_void) -> Result<_Type> {
         let iunknown = unsafe { IUnknown::from_raw(raw) };
         iunknown
@@ -268,10 +213,7 @@ impl _Type {
     }
 
     /// Retrieves the string representation of the type.
-    ///
-    /// # Returns
-    ///
-    /// The type's name as a `String`.
+    #[inline]
     pub fn ToString(&self) -> Result<String> {
         unsafe {
             let mut result = null::<u16>();
@@ -291,14 +233,7 @@ impl _Type {
     }
 
     /// Retrieves all properties matching the specified `BindingFlags`.
-    ///
-    /// # Arguments
-    ///
-    /// * `bindingAttr` - The `BindingFlags` to filter which properties to retrieve.
-    ///
-    /// # Returns
-    ///
-    /// Pointer to SAFEARRAY of properties.
+    #[inline]
     pub fn GetProperties(&self, bindingAttr: BindingFlags) -> Result<*mut SAFEARRAY> {
         unsafe {
             let mut result = null_mut();
@@ -317,14 +252,7 @@ impl _Type {
     }
 
     /// Retrieves all methods matching the specified `BindingFlags`.
-    ///
-    /// # Arguments
-    ///
-    /// * `bindingAttr` - The `BindingFlags` specifying which methods to retrieve.
-    ///
-    /// # Returns
-    ///
-    /// Pointer to a `SAFEARRAY` of methods.
+    #[inline]
     pub fn GetMethods(&self, bindingAttr: BindingFlags) -> Result<*mut SAFEARRAY> {
         unsafe {
             let mut result = null_mut();
@@ -342,14 +270,7 @@ impl _Type {
     }
 
     /// Retrieves a method by name.
-    ///
-    /// # Arguments
-    ///
-    /// * `name` - The name of the method as a `BSTR`.
-    ///
-    /// # Returns
-    ///
-    /// The `_MethodInfo` for the method.
+    #[inline]
     pub fn GetMethod_6(&self, name: BSTR) -> Result<_MethodInfo> {
         unsafe {
             let mut result = core::mem::zeroed();
@@ -363,18 +284,7 @@ impl _Type {
     }
 
     /// Invokes a method (static or instance) by name on the specified type or object.
-    ///
-    /// # Arguments
-    ///
-    /// * `name` - The name of the member to invoke, provided as a `BSTR`.
-    /// * `invoke_attr` - `BindingFlags` that specify invocation options.
-    /// * `instance` - A `VARIANT` representing the object instance on which to invoke
-    ///   the member, or a `null`/default value for static members.
-    /// * `args` - A pointer to a `SAFEARRAY` containing the arguments for the method invocation.
-    ///
-    /// # Returns
-    ///
-    /// The result of the invocation as a `VARIANT`.
+    #[inline]
     pub fn InvokeMember_3(
         &self,
         name: BSTR,

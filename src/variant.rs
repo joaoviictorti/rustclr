@@ -1,6 +1,3 @@
-// Copyright (c) 2025 joaoviictorti
-// Licensed under the MIT License. See LICENSE file in the project root for details.
-
 //! Helper to convert Rust types into COM `VARIANT` and build `SAFEARRAY`.
 
 use alloc::{string::String, vec::Vec};
@@ -27,10 +24,8 @@ use windows_sys::Win32::{
     },
 };
 
-use super::{
-    error::{ClrError, Result},
-    string::ComString
-};
+use crate::error::{ClrError, Result};
+use crate::string::ComString;
 
 /// Trait to convert various Rust types to Windows COM-compatible `VARIANT` types.
 pub trait Variant {
@@ -140,14 +135,6 @@ impl Variant for windows_core::IUnknown {
 }
 
 /// Creates a `SAFEARRAY` from a vector of elements implementing the `Variant` trait.
-///
-/// # Arguments
-///
-/// * `args` - A vector of elements implementing the `Variant` trait.
-///
-/// # Returns
-///
-/// The created `SAFEARRAY`.
 pub fn create_safe_array_args<T: Variant>(args: Vec<T>) -> Result<*mut SAFEARRAY> {
     unsafe {
         let vartype = T::var_type();
@@ -198,14 +185,6 @@ pub fn create_safe_array_args<T: Variant>(args: Vec<T>) -> Result<*mut SAFEARRAY
 }
 
 /// Creates a `SAFEARRAY` from a vector of `VARIANT` elements.
-///
-/// # Arguments
-///
-/// * `args` - A vector of `VARIANT` elements.
-///
-/// # Returns
-///
-/// The created `SAFEARRAY`.
 pub fn create_safe_args(args: Vec<VARIANT>) -> Result<*mut SAFEARRAY> {
     unsafe {
         let arg = SafeArrayCreateVector(VT_VARIANT, 0, args.len() as u32);
@@ -227,14 +206,6 @@ pub fn create_safe_args(args: Vec<VARIANT>) -> Result<*mut SAFEARRAY> {
 }
 
 /// Creates a `SAFEARRAY` from a byte buffer for loading assemblies.
-///
-/// # Arguments
-///
-/// * `data` - A byte slice representing the data.
-///
-/// # Returns
-///
-/// The created `SAFEARRAY`.
 pub fn create_safe_array_buffer(data: &[u8]) -> Result<*mut SAFEARRAY> {
     let len: u32 = data.len() as u32;
     let bounds = SAFEARRAYBOUND {

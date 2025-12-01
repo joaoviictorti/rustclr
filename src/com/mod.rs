@@ -1,12 +1,12 @@
-// Copyright (c) 2025 joaoviictorti
-// Licensed under the MIT License. See LICENSE file in the project root for details.
-
 //! Raw COM interface bindings for interacting with the .NET CLR runtime.
 
 use core::ffi::c_void;
-use dinvk::{GetProcAddress, LoadLibraryA};
+
 use windows_core::{GUID, Interface};
 use windows_sys::core::HRESULT;
+use dinvk::module::get_proc_address; 
+use dinvk::winapis::LoadLibraryA;
+
 use crate::error::{ClrError, Result};
 
 mod appdomain;
@@ -22,7 +22,7 @@ mod ienumunknown;
 mod ihostcontrol;
 mod ipropertyinfo;
 mod itype;
-mod methodinfo;
+mod method_info;
 
 pub use appdomain::*;
 pub use assembly::*;
@@ -37,7 +37,7 @@ pub use ienumunknown::*;
 pub use ihostcontrol::*;
 pub use ipropertyinfo::*;
 pub use itype::*;
-pub use methodinfo::*;
+pub use method_info::*;
 
 /// Caches the address of the `CLRCreateInstance` function on first use.
 static CLR_CREATE_INSTANCE: spin::Once<Option<CLRCreateInstanceType>> = spin::Once::new();
@@ -51,13 +51,11 @@ pub const CLSID_COR_RUNTIME_HOST: GUID = GUID::from_u128(0xCB2F6723_AB3A_11D2_9C
 /// CLSID for the ICLR Runtime Host (`ICLRRuntimeHost`).
 pub const CLSID_ICLR_RUNTIME_HOST: GUID = GUID::from_u128(0x90F1_A06E_7712_4762_86B5_7A5E_BA6B_DB02);
 
-/// Function pointer type for retrieving the CLR identity of the current thread.
 pub(crate) type CLRIdentityManagerType = fn(
     riid: *const GUID, 
     ppv: *mut *mut c_void
 ) -> HRESULT;
 
-/// Signature of the `CLRCreateInstance` function exported by `mscoree.dll`.
 type CLRCreateInstanceType = fn(
     clsid: *const GUID,
     riid: *const GUID,
@@ -73,7 +71,7 @@ where
     let CLRCreateInstance = CLR_CREATE_INSTANCE.call_once(|| {
         let module = LoadLibraryA(obfstr::obfstr!("mscoree.dll"));
         if !module.is_null() {
-            let addr = GetProcAddress(module, 2672818687u32, Some(dinvk::hash::murmur3));
+            let addr = get_proc_address(module, 2672818687u32, Some(dinvk::hash::murmur3));
             return Some(unsafe {
                 core::mem::transmute::<*mut c_void, CLRCreateInstanceType>(addr)
             });

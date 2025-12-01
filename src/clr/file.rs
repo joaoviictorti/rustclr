@@ -1,10 +1,7 @@
-// Copyright (c) 2025 joaoviictorti
-// Licensed under the MIT License. See LICENSE file in the project root for details.
-
 use alloc::{ffi::CString, vec, vec::Vec};
 use core::ptr::null_mut;
 
-use dinvk::{data::IMAGE_NT_HEADERS, pe::PE};
+use dinvk::{types::IMAGE_NT_HEADERS, helper::PE};
 use windows_sys::Win32::System::Diagnostics::Debug::{
     IMAGE_DIRECTORY_ENTRY_COM_DESCRIPTOR, IMAGE_FILE_DLL, 
     IMAGE_FILE_EXECUTABLE_IMAGE, IMAGE_SUBSYSTEM_NATIVE,
@@ -43,14 +40,6 @@ pub fn validate_file(buffer: &[u8]) -> Result<()> {
 }
 
 /// Reads the entire contents of a file from disk into memory using the Win32 API.
-///
-/// # Arguments
-/// 
-/// * `name` - Path to the file to read.
-///
-/// # Returns
-/// 
-/// Containing the file's contents on success.
 pub fn read_file(name: &str) -> Result<Vec<u8>> {
     let file_name = CString::new(name)
         .map_err(|_| ClrError::Msg("invalid cstring"))?;

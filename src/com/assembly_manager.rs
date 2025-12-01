@@ -1,6 +1,3 @@
-// Copyright (c) 2025 joaoviictorti
-// Licensed under the MIT License. See LICENSE file in the project root for details.
-
 use core::{ffi::c_void, ops::Deref, ptr::null_mut};
 use windows_core::{GUID, Interface};
 use crate::com::IHostAssemblyStore;

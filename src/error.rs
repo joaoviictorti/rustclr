@@ -1,6 +1,3 @@
-// Copyright (c) 2025 joaoviictorti
-// Licensed under the MIT License. See LICENSE file in the project root for details.
-
 //! Error definitions for CLR and COM runtime interaction.
 
 use alloc::string::String;

@@ -1,6 +1,3 @@
-// Copyright (c) 2025 joaoviictorti
-// Licensed under the MIT License. See LICENSE file in the project root for details.
-
 use alloc::{string::String, vec::Vec};
 use core::{
     ffi::c_void,
@@ -37,14 +34,7 @@ pub struct _Assembly(windows_core::IUnknown);
 
 impl _Assembly {
     /// Resolves a type by name within the assembly.
-    ///
-    /// # Arguments
-    ///
-    /// * `name` - A string slice representing the name of the type to resolve.
-    ///
-    /// # Returns
-    ///
-    /// The `_Type` instance.
+    #[inline]
     pub fn resolve_type(&self, name: &str) -> Result<_Type> {
         let type_name = name.to_bstr();
         self.GetType_2(type_name)
@@ -55,50 +45,26 @@ impl _Assembly {
     /// The `run` method identifies the main entry point of the assembly and attempts
     /// to invoke it. It distinguishes between `Main()` and `Main(System.String[])` entry points,
     /// allowing optional arguments to be passed when the latter is detected.
-    ///
-    /// # Arguments
-    ///
-    /// * `args` - An `*mut SAFEARRAY` containing arguments to be passed to
-    ///   `Main(System.String[])`. If `Main()` is invoked, this should be `None`.
-    ///
-    /// # Returns
-    ///
-    /// On successful invocation, returns the result as a `VARIANT`.
+    #[inline]
     pub fn run(&self, args: *mut SAFEARRAY) -> Result<VARIANT> {
         let entrypoint = self.get_EntryPoint()?;
         let str = entrypoint.ToString()?;
         match str.as_str() {
             str if str.ends_with(s!("Main()")) => entrypoint.invoke(None, None),
-            str if str.ends_with(s!("Main(System.String[])")) => {
-                if args.is_null() {
-                    return Err(ClrError::MissingArguments);
-                }
-
-                entrypoint.invoke(None, Some(args))
-            }
+            str if str.ends_with(s!("Main(System.String[])")) => entrypoint.invoke(None, Some(args)),
             _ => Err(ClrError::MethodNotFound),
         }
     }
 
     /// Creates an instance of a type within the assembly.
-    ///
-    /// # Arguments
-    ///
-    /// * `name` - A string slice representing the name of the type.
-    ///
-    /// # Returns
-    ///
-    /// If successful, returns a `VARIANT` containing the created instance.
+    #[inline]
     pub fn create_instance(&self, name: &str) -> Result<VARIANT> {
         let type_name = name.to_bstr();
         self.CreateInstance(type_name)
     }
 
     /// Retrieves all types within the assembly.
-    ///
-    /// # Returns
-    ///
-    /// On success, returns a vector of type names as `String`.
+    #[inline]
     pub fn types(&self) -> Result<Vec<String>> {
         let sa_types = self.GetTypes()?;
         if sa_types.is_null() {
@@ -129,15 +95,7 @@ impl _Assembly {
     }
 
     /// Creates an `_Assembly` instance from a raw COM interface pointer.
-    ///
-    /// # Arguments
-    ///
-    /// * `raw` - A raw pointer to an `IUnknown` COM interface.
-    ///
-    /// # Returns
-    ///
-    /// Wraps the given COM interface as `_Assembly`.
-    #[inline(always)]
+    #[inline]
     pub fn from_raw(raw: *mut c_void) -> Result<_Assembly> {
         let iunknown = unsafe { IUnknown::from_raw(raw) };
         iunknown
@@ -146,10 +104,7 @@ impl _Assembly {
     }
 
     /// Retrieves the string representation of the assembly.
-    ///
-    /// # Returns
-    ///
-    /// The assembly's name as a `String`.
+    #[inline]
     pub fn ToString(&self) -> Result<String> {
         unsafe {
             let mut result = null::<u16>();
@@ -169,10 +124,7 @@ impl _Assembly {
     }
 
     /// Calls the `GetHashCode` method from the vtable of the `_Assembly` interface.
-    ///
-    /// # Returns
-    ///
-    /// The hash code as a 32-bit unsigned integer.
+    #[inline]
     pub fn GetHashCode(&self) -> Result<u32> {
         let mut result = 0;
         let hr =
@@ -185,10 +137,7 @@ impl _Assembly {
     }
 
     /// Retrieves the entry point method of the assembly.
-    ///
-    /// # Returns
-    ///
-    /// The entry point as `_MethodInfo`.
+    #[inline]
     pub fn get_EntryPoint(&self) -> Result<_MethodInfo> {
         let mut result = null_mut();
         let hr = unsafe {
@@ -202,14 +151,7 @@ impl _Assembly {
     }
 
     /// Resolves a specific type by name within the assembly.
-    ///
-    /// # Arguments
-    ///
-    /// * `name` - The name of the type as a `BSTR`.
-    ///
-    /// # Returns
-    ///
-    /// The `_Type` instance.
+    #[inline]
     pub fn GetType_2(&self, name: BSTR) -> Result<_Type> {
         let mut result = null_mut();
         let hr = unsafe {
@@ -223,10 +165,7 @@ impl _Assembly {
     }
 
     /// Retrieves all types defined within the assembly as a `SAFEARRAY`.
-    ///
-    /// # Returns
-    ///
-    /// Pointer to the `SAFEARRAY`.
+    #[inline]
     pub fn GetTypes(&self) -> Result<*mut SAFEARRAY> {
         let mut result = null_mut();
         let hr =
@@ -239,14 +178,7 @@ impl _Assembly {
     }
 
     /// Creates an instance of a type using its name as a `BSTR`.
-    ///
-    /// # Arguments
-    ///
-    /// * `typeName` - The name of the type to create, as a `BSTR`.
-    ///
-    /// # Returns
-    ///
-    /// The created instance as a `VARIANT`.
+    #[inline]
     pub fn CreateInstance(&self, typeName: BSTR) -> Result<VARIANT> {
         let mut result = unsafe { core::mem::zeroed::<VARIANT>() };
         let hr = unsafe {
@@ -260,10 +192,7 @@ impl _Assembly {
     }
 
     /// Retrieves the main type associated with the assembly.
-    ///
-    /// # Returns
-    ///
-    /// The `_Type` associated with the assembly.
+    #[inline]
     pub fn GetType(&self) -> Result<_Type> {
         let mut result = null_mut();
         let hr = unsafe { (Interface::vtable(self).GetType)(Interface::as_raw(self), &mut result) };
@@ -275,10 +204,7 @@ impl _Assembly {
     }
 
     /// Retrieves the assembly's codebase as a URI.
-    ///
-    /// # Returns
-    ///
-    /// The codebase as a `String`.
+    #[inline]
     pub fn get_CodeBase(&self) -> Result<String> {
         unsafe {
             let mut result = null::<u16>();
@@ -298,10 +224,7 @@ impl _Assembly {
     }
 
     /// Retrieves the escaped codebase of the assembly as a URI.
-    ///
-    /// # Returns
-    ///
-    /// The escaped codebase as a `String`.
+    #[inline]
     pub fn get_EscapedCodeBase(&self) -> Result<String> {
         unsafe {
             let mut result = null::<u16>();
@@ -322,10 +245,7 @@ impl _Assembly {
     }
 
     /// Retrieves the name of the assembly.
-    ///
-    /// # Returns
-    ///
-    /// Pointer to the assembly's name.
+    #[inline]
     pub fn GetName(&self) -> Result<*mut c_void> {
         unsafe {
             let mut result = null_mut();
@@ -339,14 +259,7 @@ impl _Assembly {
     }
 
     /// Retrieves the name of the assembly, with an option to copy the name.
-    ///
-    /// # Arguments
-    ///
-    /// * `copiedName` - A `VARIANT_BOOL` indicating if the name should be copied.
-    ///
-    /// # Returns
-    ///
-    /// Pointer to the name.
+    #[inline]
     pub fn GetName_2(&self, copiedName: VARIANT_BOOL) -> Result<*mut c_void> {
         unsafe {
             let mut result = null_mut();
@@ -364,10 +277,7 @@ impl _Assembly {
     }
 
     /// Retrieves the full name of the assembly.
-    ///
-    /// # Returns
-    ///
-    /// The full name as a `String`.
+    #[inline]
     pub fn get_FullName(&self) -> Result<String> {
         unsafe {
             let mut result = null::<u16>();
@@ -387,10 +297,7 @@ impl _Assembly {
     }
 
     /// Retrieves the file location of the assembly.
-    ///
-    /// # Returns
-    ///
-    /// The location as a `String`.
+    #[inline]
     pub fn get_Location(&self) -> Result<String> {
         unsafe {
             let mut result = null::<u16>();

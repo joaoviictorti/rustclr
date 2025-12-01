@@ -1,6 +1,3 @@
-// Copyright (c) 2025 joaoviictorti
-// Licensed under the MIT License. See LICENSE file in the project root for details.
-
 #![no_std]
 #![doc = include_str!("../README.md")]
 #![allow(non_snake_case, non_camel_case_types)]
@@ -11,6 +8,9 @@
 )]
 
 extern crate alloc;
+
+#[cfg(test)]
+extern crate std;
 
 pub mod com;
 pub mod error;

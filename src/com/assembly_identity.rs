@@ -1,6 +1,3 @@
-// Copyright (c) 2025 joaoviictorti
-// Licensed under the MIT License. See LICENSE file in the project root for details.
-
 use alloc::{string::String, vec};
 use core::{ffi::c_void, ops::Deref};
 use windows_core::{GUID, IUnknown, Interface, PWSTR};
@@ -14,15 +11,7 @@ pub struct ICLRAssemblyIdentityManager(windows_core::IUnknown);
 
 impl ICLRAssemblyIdentityManager {
     /// Extracts the textual identity of an assembly from a binary stream.
-    ///
-    /// # Arguments
-    ///
-    /// * `pstream` - Pointer to a `IStream` containing the assembly data.
-    /// * `dwFlags` - Flags to control the extraction behavior.
-    ///
-    /// # Returns
-    ///
-    /// The string representation of the assembly's identity.
+    #[inline]
     pub fn get_identity_stream(&self, pstream: *mut c_void, dwFlags: u32) -> Result<String> {
         let mut buffer = vec![0; 2048];
         let mut size = buffer.len() as u32;
@@ -32,15 +21,7 @@ impl ICLRAssemblyIdentityManager {
     }
 
     /// Creates an `ICLRAssemblyIdentityManager` instance from a raw COM interface pointer.
-    ///
-    /// # Arguments
-    ///
-    /// * `raw` - A raw pointer to an `IUnknown` COM interface.
-    ///
-    /// # Returns
-    ///
-    /// Wraps the given COM interface as `ICLRAssemblyIdentityManager`.
-    #[inline(always)]
+    #[inline]
     pub fn from_raw(raw: *mut c_void) -> Result<ICLRAssemblyIdentityManager> {
         let iunknown = unsafe { IUnknown::from_raw(raw) };
         iunknown
@@ -49,13 +30,7 @@ impl ICLRAssemblyIdentityManager {
     }
 
     /// Retrieves the binding identity from a binary stream representing an assembly.
-    ///
-    /// # Arguments
-    ///
-    /// * `pstream` - Pointer to a `IStream` with assembly contents.
-    /// * `dwFlags` - Control flags.
-    /// * `pwzBuffer` - Buffer that receives the resulting identity string.
-    /// * `pcchbuffersize` - Input/output buffer size.
+    #[inline]
     pub fn GetBindingIdentityFromStream(
         &self,
         pstream: *mut c_void,
