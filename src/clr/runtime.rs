@@ -48,7 +48,7 @@ pub struct RustClrRuntime<'a> {
 }
 
 impl<'a> RustClrRuntime<'a> {
-    /// Creates a new [`RustClrRuntime`].
+    /// Creates a new `RustClrRuntime`.
     pub fn new(buffer: &'a [u8]) -> Self {
         Self {
             buffer,

@@ -59,7 +59,7 @@ pub struct RustClr<'a> {
 }
 
 impl<'a> RustClr<'a> {
-    /// Creates a new [`RustClr`].
+    /// Creates a new `RustClr`.
     ///
     /// # Errors
     ///
