@@ -1,14 +1,12 @@
-# rustclr 🦀
+# rustclr
 
 ![Rust](https://img.shields.io/badge/made%20with-Rust-red)
 ![crate](https://img.shields.io/crates/v/rustclr.svg)
 ![docs](https://docs.rs/rustclr/badge.svg)
-[![build](https://github.com/joaoviictorti/rustclr/actions/workflows/ci.yml/badge.svg)](https://github.com/joaoviictorti/rustclr/actions/workflows/ci.yml)
-![Forks](https://img.shields.io/github/forks/joaoviictorti/rustclr)
-![Stars](https://img.shields.io/github/stars/joaoviictorti/rustclr)
-![License](https://img.shields.io/github/license/joaoviictorti/rustclr)
+![License](https://img.shields.io/badge/license-MIT%2FApache--2.0-brightgreen)
+[![Actions status](https://github.com/joaoviictorti/rustclr/actions/workflows/ci.yml/badge.svg)](https://github.com/joaoviictorti/rustclr/actions)
 
-`rustclr` is a powerful library for hosting the Common Language Runtime (CLR) and executing .NET binaries directly with Rust, among other operations.
+Library for hosting the Common Language Runtime (CLR) and executing .NET binaries directly with Rust, among other operations.
 
 ## Features
 
@@ -124,10 +122,6 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 }
 ```
 
-## Additional Resources
-
-For more examples, check the [examples](https://github.com/joaoviictorti/rustclr/tree/main/examples) folder in the repository.
-
 ## CLI
 
 `rustclr` also includes a command-line interface (CLI) for running .NET assemblies with various configuration options. Below is a description of the available flags and usage examples.
@@ -171,4 +165,14 @@ I want to express my gratitude to these projects that inspired me to create `rus
 
 ## License
 
-This project is licensed under the MIT License. See the [LICENSE](https://github.com/joaoviictorti/rustclr/tree/main/LICENSE) file for details.
+rustclr is licensed under either of
+
+- Apache License, Version 2.0, ([LICENSE-APACHE](https://github.com/joaoviictorti/rustclr/tree/main/LICENSE-APACHE) or
+  <https://www.apache.org/licenses/LICENSE-2.0>)
+- MIT license ([LICENSE-MIT](https://github.com/joaoviictorti/rustclr/tree/main/LICENSE-MIT) or <https://opensource.org/licenses/MIT>)
+
+at your option.
+
+Unless you explicitly state otherwise, any contribution intentionally submitted for inclusion in rustclr
+by you, as defined in the Apache-2.0 license, shall be dually licensed as above, without any
+additional terms or conditions.
