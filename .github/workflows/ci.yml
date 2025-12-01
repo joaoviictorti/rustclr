@@ -46,26 +46,3 @@ jobs:
           cd cli
           cargo build --release
 
-  build:
-    # Builds selected examples and uploads the compiled executables as artifacts
-    name: Build Examples
-    runs-on: windows-latest
-
-    strategy:
-      matrix:
-        example: [Writeline, Powershell]
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Set up Rust
-        run: rustup default stable
-
-      - name: Build example ${{ matrix.example }}
-        run: cargo build --release --example ${{ matrix.example }}
-
-      - name: Upload ${{ matrix.example }}.exe
-        uses: actions/upload-artifact@v4
-        with:
-          name: ${{ matrix.example }}.exe
-          path: target/release/examples/${{ matrix.example }}.exe
